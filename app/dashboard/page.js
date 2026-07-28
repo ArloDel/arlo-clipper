@@ -9,6 +9,7 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const url = searchParams.get('url');
+  const ratio = searchParams.get('ratio') || 'mobile';
   
   const [status, setStatus] = useState('initializing'); // initializing, downloading, complete, error
   const [clips, setClips] = useState([]);
@@ -26,7 +27,7 @@ function DashboardContent() {
         const res = await fetch('/api/clip', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, ratio })
         });
         
         const data = await res.json();

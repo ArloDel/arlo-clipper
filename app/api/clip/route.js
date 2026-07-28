@@ -14,7 +14,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url } = await request.json();
+    const { url, ratio } = await request.json();
 
     if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
@@ -140,12 +140,19 @@ export async function POST(request) {
     // Save SRT
     fs.writeFileSync(srtPath, srtContent);
 
-    console.log('[6/6] Burning Subtitles into Video...');
+    console.log('[6/6] Burning Subtitles and Applying Ratio...');
     // Use relative path for subtitles filter to avoid Windows absolute path issues in ffmpeg
     const relativeSrtPath = `public/clips/${sessionId}-subtitle.srt`;
+    const filters = [];
+    if (ratio === 'mobile') {
+      // Center crop for 9:16 vertical video
+      filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
+    }
+    filters.push(`subtitles=${relativeSrtPath}`);
+
     await new Promise((resolve, reject) => {
       ffmpeg(finalClipPath)
-        .videoFilters(`subtitles=${relativeSrtPath}`)
+        .videoFilters(filters)
         .output(finalSubtitledPath)
         .on('end', resolve)
         .on('error', reject)

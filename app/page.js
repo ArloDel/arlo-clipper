@@ -6,6 +6,7 @@ import styles from './page.module.css';
 
 export default function LandingPage() {
   const [url, setUrl] = useState('');
+  const [ratio, setRatio] = useState('mobile');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -14,8 +15,8 @@ export default function LandingPage() {
     if (!url) return;
     
     setIsLoading(true);
-    // Navigate to dashboard with the URL parameter
-    router.push(`/dashboard?url=${encodeURIComponent(url)}`);
+    // Navigate to dashboard with the URL parameter and ratio
+    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}`);
   };
 
   return (
@@ -37,10 +38,21 @@ export default function LandingPage() {
             onChange={(e) => setUrl(e.target.value)}
             required
           />
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'center' }}>
+            <label style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input type="radio" name="ratio" value="mobile" checked={ratio === 'mobile'} onChange={() => setRatio('mobile')} />
+              Mobile (9:16)
+            </label>
+            <label style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input type="radio" name="ratio" value="desktop" checked={ratio === 'desktop'} onChange={() => setRatio('desktop')} />
+              Desktop (16:9)
+            </label>
+          </div>
           <button 
             type="submit" 
             className={`btn btn-primary ${styles.submitBtn}`}
             disabled={isLoading}
+            style={{ marginTop: '1rem' }}
           >
             {isLoading ? 'Processing...' : 'Generate Clips'}
           </button>

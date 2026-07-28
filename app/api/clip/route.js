@@ -7,6 +7,7 @@ import path from 'path';
 import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
+import Groq from 'groq-sdk';
 
 // Configure ffmpeg path
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
@@ -23,6 +24,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'GEMINI_API_KEY is missing in .env.local' }, { status: 500 });
     }
 
+    if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key_here') {
+      return NextResponse.json({ error: 'GROQ_API_KEY is missing in .env.local' }, { status: 500 });
+    }
+
     const sessionId = uuidv4();
     const clipsDir = path.join(process.cwd(), 'public', 'clips');
     
@@ -33,8 +38,11 @@ export async function POST(request) {
     const audioPath = path.join(clipsDir, `${sessionId}-audio.m4a`);
     const videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
     const finalClipPath = path.join(clipsDir, `${sessionId}-highlight.mp4`);
+    const clipAudioPath = path.join(clipsDir, `${sessionId}-clip-audio.mp3`);
+    const srtPath = path.join(clipsDir, `${sessionId}-subtitle.srt`);
+    const finalSubtitledPath = path.join(clipsDir, `${sessionId}-highlight-subbed.mp4`);
 
-    console.log('[1/4] Downloading Audio for Gemini...');
+    console.log('[1/6] Downloading Audio for Gemini...');
     await youtubedl(url, {
       output: audioPath,
       format: 'bestaudio[ext=m4a]',
@@ -42,18 +50,16 @@ export async function POST(request) {
       noWarnings: true,
     });
 
-    console.log('[2/4] Uploading and Analyzing Audio with Gemini 1.5 Flash...');
+    console.log('[2/6] Uploading and Analyzing Audio with Gemini 1.5 Flash...');
     const fileManager = new GoogleAIFileManager(process.env.GEMINI_API_KEY);
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     
-    // Upload the audio file to Gemini
     const uploadResult = await fileManager.uploadFile(audioPath, {
       mimeType: 'audio/mp4',
       displayName: `Audio-${sessionId}`,
     });
 
     const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-
     const systemPrompt = `You are an expert video editor. Listen to the audio and find the single most engaging, viral-worthy segment (15 to 45 seconds long). Return ONLY a valid JSON object with this exact structure:
 {
   "title": "A catchy title for the clip",
@@ -62,7 +68,6 @@ export async function POST(request) {
   "score": "98%"
 }`;
 
-    // Prompt Gemini with the uploaded file
     const result = await model.generateContent([
       { fileData: { mimeType: uploadResult.file.mimeType, fileUri: uploadResult.file.uri } },
       { text: systemPrompt }
@@ -80,15 +85,15 @@ export async function POST(request) {
     const startSec = highlightData.start_time;
     const durationSec = highlightData.end_time - highlightData.start_time;
 
-    console.log(`[3/4] Downloading Full Video... (Highlight found at ${startSec}s, duration: ${durationSec}s)`);
+    console.log(`[3/6] Downloading Full Video... (Highlight found at ${startSec}s, duration: ${durationSec}s)`);
     await youtubedl(url, {
       output: videoPath,
-      format: 'worst[ext=mp4]/worst', // Using worst quality to speed up local demo
+      format: 'worst[ext=mp4]/worst', 
       noCheckCertificates: true,
       noWarnings: true,
     });
 
-    console.log('[4/4] Slicing Video with FFMPEG...');
+    console.log('[4/6] Slicing Video with FFMPEG...');
     await new Promise((resolve, reject) => {
       ffmpeg(videoPath)
         .setStartTime(startSec)
@@ -99,13 +104,61 @@ export async function POST(request) {
         .run();
     });
 
-    console.log('Processing complete! Cleaning up...');
+    console.log('[5/6] Extracting Audio & Generating Subtitles via Groq Whisper...');
+    // Extract audio from the short clip for Whisper
+    await new Promise((resolve, reject) => {
+      ffmpeg(finalClipPath)
+        .noVideo()
+        .format('mp3')
+        .output(clipAudioPath)
+        .on('end', resolve)
+        .on('error', reject)
+        .run();
+    });
+
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const transcription = await groq.audio.transcriptions.create({
+      file: fs.createReadStream(clipAudioPath),
+      model: 'whisper-large-v3',
+      response_format: 'verbose_json'
+    });
     
-    // Clean up temporary files
+    // Convert verbose_json to SRT format
+    const formatTime = (secs) => {
+      const d = new Date(secs * 1000);
+      const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+      const m = String(d.getUTCMinutes()).padStart(2, '0');
+      const s = String(d.getUTCSeconds()).padStart(2, '0');
+      const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+      return `${h}:${m}:${s},${ms}`;
+    };
+    
+    const srtContent = transcription.segments.map((seg, i) => {
+      return `${i + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\n${seg.text.trim()}\n`;
+    }).join('\n');
+
+    // Save SRT
+    fs.writeFileSync(srtPath, srtContent);
+
+    console.log('[6/6] Burning Subtitles into Video...');
+    // Use relative path for subtitles filter to avoid Windows absolute path issues in ffmpeg
+    const relativeSrtPath = `public/clips/${sessionId}-subtitle.srt`;
+    await new Promise((resolve, reject) => {
+      ffmpeg(finalClipPath)
+        .videoFilters(`subtitles=${relativeSrtPath}`)
+        .output(finalSubtitledPath)
+        .on('end', resolve)
+        .on('error', reject)
+        .run();
+    });
+
+    console.log('Processing complete! Cleaning up temporary files...');
     try {
       fs.unlinkSync(audioPath);
       fs.unlinkSync(videoPath);
-      // Optional: Delete from Gemini File Manager
+      fs.unlinkSync(finalClipPath);
+      fs.unlinkSync(clipAudioPath);
+      fs.unlinkSync(srtPath);
       await fileManager.deleteFile(uploadResult.file.name);
     } catch (e) {
       console.warn("Cleanup warning:", e);
@@ -119,7 +172,7 @@ export async function POST(request) {
           title: highlightData.title,
           duration: `0:${durationSec}`,
           score: highlightData.score,
-          src: `/clips/${sessionId}-highlight.mp4`
+          src: `/clips/${sessionId}-highlight-subbed.mp4`
         }
       ]
     });

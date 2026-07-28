@@ -49,7 +49,7 @@ function DashboardContent() {
 
   const renderStatus = () => {
     const messages = {
-      downloading: 'AI Pipeline Active: Downloading audio -> Gemini Multimodal Analysis -> Video Slicing. (Takes ~1-3 minutes)',
+      downloading: 'AI Pipeline Active: Downloading -> Gemini Analysis -> FFMPEG Slicing -> Groq Auto Subtitles -> FFMPEG Burn-in. (Takes ~2-4 minutes)',
       error: 'Failed to process video. Please check terminal logs.'
     };
 

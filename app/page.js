@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button, Input, Text } from '@cloudflare/kumo';
 import styles from './page.module.css';
 
 export default function LandingPage() {
@@ -13,69 +14,84 @@ export default function LandingPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
-    
+
     setIsLoading(true);
-    // Navigate to dashboard with the URL parameter and ratio
     router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}`);
   };
 
   return (
     <main className={styles.main}>
-      <section className={styles.hero}>
-        <h1 className={styles.title}>
-          Turn videos into <span>viral clips</span> instantly.
-        </h1>
-        <p className={styles.subtitle}>
-          Paste a YouTube link and our AI will automatically find the best moments, crop them, and generate ready-to-post clips.
-        </p>
-
-        <form className={styles.actionForm} onSubmit={handleSubmit}>
-          <input 
-            type="url" 
-            placeholder="https://youtube.com/watch?v=..." 
-            className={styles.urlInput}
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-          />
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', justifyContent: 'center' }}>
-            <label style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="radio" name="ratio" value="mobile" checked={ratio === 'mobile'} onChange={() => setRatio('mobile')} />
-              Mobile (9:16)
-            </label>
-            <label style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="radio" name="ratio" value="desktop" checked={ratio === 'desktop'} onChange={() => setRatio('desktop')} />
-              Desktop (16:9)
-            </label>
-          </div>
-          <button 
-            type="submit" 
-            className={`btn btn-primary ${styles.submitBtn}`}
-            disabled={isLoading}
-            style={{ marginTop: '1rem' }}
-          >
-            {isLoading ? 'Processing...' : 'Generate Clips'}
-          </button>
-        </form>
-
-        <div className={styles.featuresGrid}>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>⚡️</div>
-            <h3 className={styles.featureTitle}>Lightning Fast</h3>
-            <p className={styles.featureDesc}>Get your clips in minutes, not hours. Powered by high-speed processing.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🎯</div>
-            <h3 className={styles.featureTitle}>AI-Driven Highlights</h3>
-            <p className={styles.featureDesc}>Smart algorithms find the most engaging parts of your video automatically.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>📱</div>
-            <h3 className={styles.featureTitle}>Platform Ready</h3>
-            <p className={styles.featureDesc}>Auto-cropped for TikTok, Reels, and Shorts. Just download and post.</p>
+      <div className={styles.splitLayout}>
+        <div className={styles.leftPane}>
+          <div className={styles.heroContent}>
+            <h1 className={styles.title}>
+              Extract.<br />
+              <em>Analyze.</em><br />
+              Clip.
+            </h1>
+            <p className={styles.subtitle}>
+              The editorial tool for the modern creator. Input a video link, and our algorithms will automatically slice the defining moments into ready-to-publish formats.
+            </p>
           </div>
         </div>
-      </section>
+
+        <div className={styles.rightPane}>
+          <form
+            className={styles.actionForm}
+            onSubmit={handleSubmit}
+          >
+            <Text className="text-xl font-medium mb-4">New Project</Text>
+
+            <Input
+              type="url"
+              placeholder="https://youtube.com/watch?v=..."
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              size="lg"
+              label="Source Link"
+            />
+
+            <div className={styles.ratioContainer}>
+              <Text className="text-sm font-medium">Target Format</Text>
+              <div className={styles.ratioGroup}>
+                <label className={styles.ratioLabel}>
+                  <input
+                    type="radio"
+                    name="ratio"
+                    value="mobile"
+                    checked={ratio === 'mobile'}
+                    onChange={() => setRatio('mobile')}
+                  />
+                  9:16 Mobile
+                </label>
+                <label className={styles.ratioLabel}>
+                  <input
+                    type="radio"
+                    name="ratio"
+                    value="desktop"
+                    checked={ratio === 'desktop'}
+                    onChange={() => setRatio('desktop')}
+                  />
+                  16:9 Desktop
+                </label>
+              </div>
+            </div>
+
+            <div className={styles.submitWrapper}>
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                loading={isLoading}
+                style={{ width: '100%', borderRadius: 10 }} // Brutalist sharp button
+              >
+                {isLoading ? 'Processing Pipeline...' : 'Commence Extraction'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
   );
 }

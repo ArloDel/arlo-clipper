@@ -23,8 +23,8 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 4rem; /* 64px */
-  border-right: 1px solid var(--kumo-hairline, #27272a);
+  padding: 2rem 1.5rem; /* Better mobile padding */
+  border-bottom: 1px solid var(--kumo-hairline, #27272a);
   background: var(--kumo-canvas);
   position: relative;
 }
@@ -35,12 +35,25 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 4rem; /* 64px */
+  padding: 3rem 1.5rem; /* Better mobile padding */
   background: var(--kumo-tint, #18181b);
+}
+
+@media (min-width: 1024px) {
+  .leftPane {
+    padding: 4rem; /* 64px */
+    border-bottom: none;
+    border-right: 1px solid var(--kumo-hairline, #27272a);
+  }
+  .rightPane {
+    padding: 4rem; /* 64px */
+  }
 }
 
 .heroContent {
   max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
   animation: fadeSlideRight 600ms var(--ease-out) both;
 }
 
@@ -69,16 +82,24 @@
 .actionForm {
   display: flex;
   flex-direction: column;
-  gap: 2rem; /* 32px */
+  gap: 1.5rem; /* 24px */
   width: 100%;
   max-width: 440px;
   position: relative;
   background: var(--kumo-canvas, #000);
-  padding: 3rem; /* 48px */
+  padding: 2rem 1.5rem; /* Mobile padding */
   border: 1px solid var(--kumo-hairline, #27272a);
   border-radius: 0; /* Brutalist sharp corners */
-  box-shadow: 12px 12px 0 0 var(--kumo-hairline, #27272a); /* Hard brutalist shadow */
+  box-shadow: 8px 8px 0 0 var(--kumo-hairline, #27272a); /* Hard brutalist shadow */
   animation: fadeSlideUp 600ms var(--ease-out) 200ms both;
+}
+
+@media (min-width: 1024px) {
+  .actionForm {
+    padding: 3rem; /* 48px */
+    gap: 2rem; /* 32px */
+    box-shadow: 12px 12px 0 0 var(--kumo-hairline, #27272a);
+  }
 }
 
 .ratioContainer {

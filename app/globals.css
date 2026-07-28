@@ -29,6 +29,16 @@ p, li, dd, blockquote {
   text-wrap: pretty;
 }
 
+/* Fix for Kumo components lacking internal Tailwind padding utilities */
+input, select, textarea {
+  padding-inline: 1rem !important;
+}
+
+button {
+  padding-inline: 1.5rem !important;
+  justify-content: center !important;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;

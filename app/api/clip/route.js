@@ -14,7 +14,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio } = await request.json();
+    const { url, ratio, font = 'Impact', size = '24', color = '#FFFF00' } = await request.json();
 
     if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
@@ -148,7 +148,18 @@ export async function POST(request) {
       // Center crop for 9:16 vertical video
       filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
     }
-    filters.push(`subtitles=${relativeSrtPath}`);
+
+    // Convert hex color #RRGGBB to ASS color &HBBGGRR&
+    let assColor = '&H00FFFF&'; // Default Yellow
+    if (color && color.startsWith('#') && color.length === 7) {
+      const r = color.substring(1, 3);
+      const g = color.substring(3, 5);
+      const b = color.substring(5, 7);
+      assColor = `&H${b}${g}${r}&`;
+    }
+
+    const forceStyle = `FontName=${font},FontSize=${size},PrimaryColour=${assColor}`;
+    filters.push(`subtitles=${relativeSrtPath}:force_style='${forceStyle}'`);
 
     await new Promise((resolve, reject) => {
       ffmpeg(finalClipPath)

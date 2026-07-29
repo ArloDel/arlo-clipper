@@ -129,6 +129,67 @@
   color: var(--kumo-default);
 }
 
+.subtitleOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* 16px */
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--kumo-hairline);
+}
+
+.optionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.optionItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nativeSelect {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--kumo-canvas);
+  border: 1px solid var(--kumo-hairline);
+  color: var(--kumo-default);
+  font-size: 0.875rem;
+  border-radius: 0;
+  outline: none;
+}
+
+.nativeSelect:focus {
+  border-color: var(--kumo-brand);
+}
+
+.colorPickerRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.colorInput {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--kumo-hairline);
+  border-radius: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.colorInput::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorInput::-webkit-color-swatch {
+  border: none;
+}
+
 .submitWrapper {
   margin-top: 1rem; /* 16px */
 }

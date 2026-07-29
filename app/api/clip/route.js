@@ -14,7 +14,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio, font = 'Impact', size = '24', color = '#FFFF00' } = await request.json();
+    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00' } = await request.json();
 
     if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
@@ -104,41 +104,45 @@ export async function POST(request) {
         .run();
     });
 
-    console.log('[5/6] Extracting Audio & Generating Subtitles via Groq Whisper...');
-    // Extract audio from the short clip for Whisper
-    await new Promise((resolve, reject) => {
-      ffmpeg(finalClipPath)
-        .noVideo()
-        .format('mp3')
-        .output(clipAudioPath)
-        .on('end', resolve)
-        .on('error', reject)
-        .run();
-    });
+    if (subtitles) {
+      console.log('[5/6] Extracting Audio & Generating Subtitles via Groq Whisper...');
+      // Extract audio from the short clip for Whisper
+      await new Promise((resolve, reject) => {
+        ffmpeg(finalClipPath)
+          .noVideo()
+          .format('mp3')
+          .output(clipAudioPath)
+          .on('end', resolve)
+          .on('error', reject)
+          .run();
+      });
 
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const transcription = await groq.audio.transcriptions.create({
-      file: fs.createReadStream(clipAudioPath),
-      model: 'whisper-large-v3',
-      response_format: 'verbose_json'
-    });
-    
-    // Convert verbose_json to SRT format
-    const formatTime = (secs) => {
-      const d = new Date(secs * 1000);
-      const h = String(Math.floor(secs / 3600)).padStart(2, '0');
-      const m = String(d.getUTCMinutes()).padStart(2, '0');
-      const s = String(d.getUTCSeconds()).padStart(2, '0');
-      const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
-      return `${h}:${m}:${s},${ms}`;
-    };
-    
-    const srtContent = transcription.segments.map((seg, i) => {
-      return `${i + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\n${seg.text.trim()}\n`;
-    }).join('\n');
+      const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+      const transcription = await groq.audio.transcriptions.create({
+        file: fs.createReadStream(clipAudioPath),
+        model: 'whisper-large-v3',
+        response_format: 'verbose_json'
+      });
+      
+      // Convert verbose_json to SRT format
+      const formatTime = (secs) => {
+        const d = new Date(secs * 1000);
+        const h = String(Math.floor(secs / 3600)).padStart(2, '0');
+        const m = String(d.getUTCMinutes()).padStart(2, '0');
+        const s = String(d.getUTCSeconds()).padStart(2, '0');
+        const ms = String(d.getUTCMilliseconds()).padStart(3, '0');
+        return `${h}:${m}:${s},${ms}`;
+      };
+      
+      const srtContent = transcription.segments.map((seg, i) => {
+        return `${i + 1}\n${formatTime(seg.start)} --> ${formatTime(seg.end)}\n${seg.text.trim()}\n`;
+      }).join('\n');
 
-    // Save SRT
-    fs.writeFileSync(srtPath, srtContent);
+      // Save SRT
+      fs.writeFileSync(srtPath, srtContent);
+    } else {
+      console.log('[5/6] Subtitles disabled. Skipping extraction and transcription...');
+    }
 
     console.log('[6/6] Burning Subtitles and Applying Ratio...');
     // Use relative path for subtitles filter to avoid Windows absolute path issues in ffmpeg
@@ -149,17 +153,19 @@ export async function POST(request) {
       filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
     }
 
-    // Convert hex color #RRGGBB to ASS color &HBBGGRR&
-    let assColor = '&H00FFFF&'; // Default Yellow
-    if (color && color.startsWith('#') && color.length === 7) {
-      const r = color.substring(1, 3);
-      const g = color.substring(3, 5);
-      const b = color.substring(5, 7);
-      assColor = `&H${b}${g}${r}&`;
-    }
+    if (subtitles) {
+      // Convert hex color #RRGGBB to ASS color &HBBGGRR&
+      let assColor = '&H00FFFF&'; // Default Yellow
+      if (color && color.startsWith('#') && color.length === 7) {
+        const r = color.substring(1, 3);
+        const g = color.substring(3, 5);
+        const b = color.substring(5, 7);
+        assColor = `&H${b}${g}${r}&`;
+      }
 
-    const forceStyle = `FontName=${font},FontSize=${size},PrimaryColour=${assColor}`;
-    filters.push(`subtitles=${relativeSrtPath}:force_style='${forceStyle}'`);
+      const forceStyle = `FontName=${font},FontSize=${size},PrimaryColour=${assColor}`;
+      filters.push(`subtitles=${relativeSrtPath}:force_style='${forceStyle}'`);
+    }
 
     await new Promise((resolve, reject) => {
       ffmpeg(finalClipPath)
@@ -172,11 +178,11 @@ export async function POST(request) {
 
     console.log('Processing complete! Cleaning up temporary files...');
     try {
-      fs.unlinkSync(audioPath);
-      fs.unlinkSync(videoPath);
-      fs.unlinkSync(finalClipPath);
-      fs.unlinkSync(clipAudioPath);
-      fs.unlinkSync(srtPath);
+      if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+      if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+      if (fs.existsSync(finalClipPath)) fs.unlinkSync(finalClipPath);
+      if (fs.existsSync(clipAudioPath)) fs.unlinkSync(clipAudioPath);
+      if (fs.existsSync(srtPath)) fs.unlinkSync(srtPath);
       await fileManager.deleteFile(uploadResult.file.name);
     } catch (e) {
       console.warn("Cleanup warning:", e);

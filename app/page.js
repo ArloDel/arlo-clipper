@@ -8,6 +8,7 @@ import styles from './page.module.css';
 export default function LandingPage() {
   const [url, setUrl] = useState('');
   const [ratio, setRatio] = useState('mobile');
+  const [useSubtitles, setUseSubtitles] = useState(true);
   const [font, setFont] = useState('Impact');
   const [size, setSize] = useState('24');
   const [color, setColor] = useState('#FFFF00');
@@ -19,7 +20,7 @@ export default function LandingPage() {
     if (!url) return;
 
     setIsLoading(true);
-    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}`);
+    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}`);
   };
 
   return (
@@ -82,48 +83,62 @@ export default function LandingPage() {
             </div>
 
             <div className={styles.subtitleOptions}>
-              <Text className="text-sm font-medium">Subtitle Styling</Text>
-              
-              <div className={styles.optionsGrid}>
-                <div className={styles.optionItem}>
-                  <Text className="text-xs text-kumo-subtle">Typography</Text>
-                  <select 
-                    className={styles.nativeSelect} 
-                    value={font} 
-                    onChange={(e) => setFont(e.target.value)}
-                  >
-                    <option value="Arial">Arial (Clean)</option>
-                    <option value="Impact">Impact (Bold)</option>
-                    <option value="Tahoma">Tahoma (Modern)</option>
-                    <option value="Times New Roman">Times (Editorial)</option>
-                  </select>
-                </div>
-                
-                <div className={styles.optionItem}>
-                  <Text className="text-xs text-kumo-subtle">Scale</Text>
-                  <select 
-                    className={styles.nativeSelect} 
-                    value={size} 
-                    onChange={(e) => setSize(e.target.value)}
-                  >
-                    <option value="16">Small</option>
-                    <option value="24">Medium</option>
-                    <option value="32">Large</option>
-                    <option value="42">Display</option>
-                  </select>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <Text className="text-sm font-medium">Auto-Generate Subtitles</Text>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={useSubtitles} 
+                    onChange={(e) => setUseSubtitles(e.target.checked)}
+                    style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--kumo-brand)' }}
+                  />
+                </label>
               </div>
               
-              <div className={styles.colorPickerRow}>
-                <input 
-                  type="color" 
-                  className={styles.colorInput} 
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  title="Choose Subtitle Color"
-                />
-                <Text className="text-sm">{color.toUpperCase()}</Text>
-              </div>
+              {useSubtitles && (
+                <>
+                  <div className={styles.optionsGrid}>
+                    <div className={styles.optionItem}>
+                      <Text className="text-xs text-kumo-subtle">Typography</Text>
+                      <select 
+                        className={styles.nativeSelect} 
+                        value={font} 
+                        onChange={(e) => setFont(e.target.value)}
+                      >
+                        <option value="Arial">Arial (Clean)</option>
+                        <option value="Impact">Impact (Bold)</option>
+                        <option value="Tahoma">Tahoma (Modern)</option>
+                        <option value="Times New Roman">Times (Editorial)</option>
+                      </select>
+                    </div>
+                    
+                    <div className={styles.optionItem}>
+                      <Text className="text-xs text-kumo-subtle">Scale</Text>
+                      <select 
+                        className={styles.nativeSelect} 
+                        value={size} 
+                        onChange={(e) => setSize(e.target.value)}
+                      >
+                        <option value="16">Small</option>
+                        <option value="24">Medium</option>
+                        <option value="32">Large</option>
+                        <option value="42">Display</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.colorPickerRow}>
+                    <input 
+                      type="color" 
+                      className={styles.colorInput} 
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                      title="Choose Subtitle Color"
+                    />
+                    <Text className="text-sm">{color.toUpperCase()}</Text>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className={styles.submitWrapper}>

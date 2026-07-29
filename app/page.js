@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button, Input, Text } from '@cloudflare/kumo';
 import styles from './page.module.css';
 
 export default function LandingPage() {
   const [url, setUrl] = useState('');
   const [ratio, setRatio] = useState('mobile');
+  const [folderId, setFolderId] = useState('');
+  const [folders, setFolders] = useState([]);
   const [useSubtitles, setUseSubtitles] = useState(true);
   const [font, setFont] = useState('Impact');
   const [size, setSize] = useState('24');
@@ -15,12 +18,16 @@ export default function LandingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    fetch('/api/folders').then(res => res.json()).then(setFolders).catch(() => {});
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
-
+    
     setIsLoading(true);
-    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}`);
+    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}&folderId=${folderId}`);
   };
 
   return (
@@ -40,11 +47,31 @@ export default function LandingPage() {
         </div>
 
         <div className={styles.rightPane}>
+          <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
+            <Link href="/library" className={styles.navLink} style={{ color: 'var(--kumo-subtle)', fontWeight: 'bold', textDecoration: 'none', letterSpacing: '0.1em' }}>LIBRARY →</Link>
+          </div>
+          
           <form
             className={styles.actionForm}
             onSubmit={handleSubmit}
           >
-            <Text className="text-xl font-medium mb-4">New Project</Text>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <Text className="text-xl font-medium">New Project</Text>
+              
+              {folders.length > 0 && (
+                <select 
+                  className={styles.nativeSelect} 
+                  style={{ width: 'auto', padding: '0.25rem 0.5rem' }}
+                  value={folderId}
+                  onChange={(e) => setFolderId(e.target.value)}
+                >
+                  <option value="">No Folder</option>
+                  {folders.map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
 
             <Input
               type="url"

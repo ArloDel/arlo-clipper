@@ -11,6 +11,7 @@ function DashboardContent() {
   const router = useRouter();
   const url = searchParams.get('url');
   const ratio = searchParams.get('ratio') || 'mobile';
+  const folderId = searchParams.get('folderId') || null;
   const subtitles = searchParams.get('subtitles') !== 'false'; // default true
   const font = searchParams.get('font') || 'Impact';
   const size = searchParams.get('size') || '24';
@@ -32,7 +33,7 @@ function DashboardContent() {
         const res = await fetch('/api/clip', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, ratio, subtitles, font, size, color })
+          body: JSON.stringify({ url, ratio, subtitles, font, size, color, folderId })
         });
         
         const data = await res.json();

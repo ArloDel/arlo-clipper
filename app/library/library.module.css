@@ -1,0 +1,90 @@
+.main {
+  min-height: 100vh;
+  background: var(--kumo-canvas, #000);
+  padding: 4rem;
+  color: var(--kumo-default, #fff);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid var(--kumo-default, #fff);
+  padding-bottom: 2rem;
+  margin-bottom: 3rem;
+}
+
+.headerNav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.navLink {
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  color: var(--kumo-subtle, #a1a1aa);
+  text-decoration: none;
+}
+
+.navLink:hover {
+  color: var(--kumo-default, #fff);
+}
+
+.title {
+  font-family: var(--font-display, serif);
+  font-size: 4rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.createForm {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.input {
+  border-radius: 0;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.folderCard {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  background: var(--kumo-canvas);
+  border: 2px solid var(--kumo-hairline);
+  box-shadow: 8px 8px 0 0 var(--kumo-hairline);
+  text-decoration: none;
+  color: var(--kumo-default);
+  min-height: 200px;
+  transition: all 0.2s var(--ease-out);
+}
+
+.folderCard:hover {
+  border-color: var(--kumo-default);
+  box-shadow: 12px 12px 0 0 var(--kumo-default);
+  transform: translate(-4px, -4px);
+}
+
+.folderName {
+  font-family: var(--font-display, serif);
+  font-size: 2rem;
+  line-height: 1.1;
+  word-wrap: break-word;
+}
+
+.folderDate {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--kumo-subtle);
+  margin-top: 1rem;
+}

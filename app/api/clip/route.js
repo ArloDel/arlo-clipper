@@ -8,13 +8,14 @@ import fs from 'fs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GoogleAIFileManager } from '@google/generative-ai/server';
 import Groq from 'groq-sdk';
+import { saveClip } from '../../../lib/db';
 
 // Configure ffmpeg path
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00' } = await request.json();
+    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00', folderId } = await request.json();
 
     if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
@@ -188,15 +189,23 @@ export async function POST(request) {
       console.warn("Cleanup warning:", e);
     }
 
+    const videoSrc = `/clips/${sessionId}-highlight-subbed.mp4`;
+    const savedClip = saveClip({
+      folderId: folderId || null,
+      title: highlightData.title,
+      videoPath: videoSrc,
+      duration: durationSec
+    });
+
     return NextResponse.json({
       success: true,
       clips: [
         {
-          id: 1,
+          id: savedClip.id,
           title: highlightData.title,
           duration: `0:${durationSec}`,
           score: highlightData.score,
-          src: `/clips/${sessionId}-highlight-subbed.mp4`
+          src: videoSrc
         }
       ]
     });

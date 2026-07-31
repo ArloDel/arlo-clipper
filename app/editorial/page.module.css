@@ -1,0 +1,221 @@
+/* app/editorial/page.module.css */
+.container {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  background-color: hsl(0, 0%, 5%);
+  color: hsl(0, 0%, 95%);
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.videoSection {
+  flex: 1;
+  border-right: 4px solid hsl(0, 0%, 15%);
+  display: flex;
+  flex-direction: column;
+}
+
+.iframeWrapper {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: hsl(0, 0%, 8%);
+}
+
+.iframeWrapper iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 4px solid hsl(0, 0%, 25%);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 4px hsl(0, 0%, 8%); /* Concentric radius */
+}
+
+.sidebar {
+  width: 450px;
+  background-color: hsl(0, 0%, 10%);
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+  overflow-y: auto;
+  border-left: 2px solid hsl(0, 0%, 20%);
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  text-wrap: balance;
+  margin-bottom: 2rem;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+  color: hsl(0, 0%, 100%);
+  text-shadow: 2px 2px 0px hsl(0, 0%, 40%);
+}
+
+.analyzing {
+  font-size: 4rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-align: center;
+  animation: blink 1s infinite alternate;
+  color: hsl(0, 100%, 50%); /* Brutal red */
+  text-wrap: balance;
+}
+
+@keyframes blink {
+  0% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.clipList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.clipItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border: 2px solid hsl(0, 0%, 30%);
+  background: hsl(0, 0%, 12%);
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px hsl(0, 0%, 10%); /* Concentric radius */
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.clipItem:hover {
+  border-color: hsl(0, 100%, 50%);
+}
+
+.clipCheckbox {
+  width: 1.5rem;
+  height: 1.5rem;
+  accent-color: hsl(0, 100%, 50%);
+  margin-top: 0.25rem;
+  cursor: pointer;
+}
+
+.clipContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.clipText {
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.clipTime {
+  font-size: 0.9rem;
+  color: hsl(0, 0%, 60%);
+  font-family: monospace;
+}
+
+.optionsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-top: 2rem;
+  border-top: 4px solid hsl(0, 0%, 20%);
+}
+
+.optionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.optionLabel {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.optionInput {
+  background: hsl(0, 0%, 15%);
+  color: hsl(0, 0%, 95%);
+  border: 2px solid hsl(0, 0%, 30%);
+  padding: 0.5rem 1rem;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1rem;
+}
+
+.optionInput:focus {
+  outline: none;
+  border-color: hsl(0, 100%, 50%);
+}
+
+.giantButton {
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background-color: hsl(0, 100%, 50%);
+  color: hsl(0, 0%, 100%);
+  border: 4px solid hsl(0, 100%, 30%);
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.2s;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 4px hsl(0, 0%, 10%); /* Concentric radius */
+  font-family: 'Times New Roman', Times, serif;
+  letter-spacing: 0.05em;
+}
+
+.giantButton:hover {
+  background-color: hsl(0, 100%, 45%);
+}
+
+.giantButton:active {
+  transform: scale(0.98);
+}
+
+.giantButton:disabled {
+  background-color: hsl(0, 0%, 20%);
+  border-color: hsl(0, 0%, 15%);
+  cursor: not-allowed;
+  color: hsl(0, 0%, 50%);
+}
+
+.loading {
+  font-size: 3rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-align: center;
+  color: hsl(60, 100%, 50%); /* Brutal yellow */
+  animation: blink 1s infinite alternate;
+  text-wrap: balance;
+}
+
+.navButton {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+  padding: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  background-color: hsl(120, 100%, 25%);
+  color: hsl(0, 0%, 100%);
+  border: 4px solid hsl(120, 100%, 15%);
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 4px hsl(0, 0%, 10%);
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.navButton:hover {
+  background-color: hsl(120, 100%, 30%);
+}
+
+.navButton:active {
+  transform: scale(0.98);
+}

@@ -27,7 +27,7 @@ export default function LandingPage() {
     if (!url) return;
     
     setIsLoading(true);
-    router.push(`/dashboard?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}&folderId=${folderId}`);
+    router.push(`/editorial?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}&folderId=${folderId}`);
   };
 
   return (

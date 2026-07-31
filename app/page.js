@@ -48,7 +48,7 @@ export default function LandingPage() {
 
         <div className={styles.rightPane}>
           <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
-            <Link href="/library" className={styles.navLink} style={{ color: 'var(--kumo-subtle)', fontWeight: 'bold', textDecoration: 'none', letterSpacing: '0.1em' }}>LIBRARY →</Link>
+            <Link href="/library" className={styles.navLink}>Library →</Link>
           </div>
           
           <form
@@ -174,7 +174,7 @@ export default function LandingPage() {
                 variant="primary"
                 size="lg"
                 loading={isLoading}
-                style={{ width: '100%', borderRadius: 10 }} // Brutalist sharp button
+                style={{ width: '100%' }}
               >
                 {isLoading ? 'Processing Pipeline...' : 'Commence Extraction'}
               </Button>

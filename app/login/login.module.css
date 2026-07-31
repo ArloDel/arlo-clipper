@@ -10,36 +10,37 @@
 .loginForm {
   width: 100%;
   max-width: 400px;
-  padding: 3rem;
-  background: var(--kumo-canvas, #000);
-  border: 4px solid var(--kumo-default, #fff); /* Brutalist border */
-  box-shadow: 16px 16px 0 0 var(--kumo-default, #fff);
+  padding: 2.5rem;
+  background: var(--kumo-tint, #111);
+  border: 1px solid var(--kumo-hairline);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 4px 12px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .title {
-  font-family: var(--font-display, serif);
-  font-size: 3rem;
-  text-transform: uppercase;
-  letter-spacing: -0.05em;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
   text-align: center;
-  margin-bottom: 1rem;
+  color: var(--kumo-default);
+  margin-bottom: 0.5rem;
 }
 
 .error {
-  color: #ff0000;
-  font-weight: bold;
+  color: var(--kumo-brand, #e5484d);
+  font-weight: 500;
+  font-size: 0.875rem;
   text-align: center;
-  border: 1px solid #ff0000;
-  padding: 0.5rem;
-  background: rgba(255, 0, 0, 0.1);
+  border: 1px solid var(--kumo-hairline);
+  border-radius: 6px;
+  padding: 0.625rem 0.75rem;
+  background: rgba(229, 72, 77, 0.08);
 }
 
 .input {
-  border-radius: 0;
-  font-size: 1.5rem;
-  text-align: center;
-  letter-spacing: 0.2em;
+  border-radius: 6px;
+  font-size: 1rem;
 }

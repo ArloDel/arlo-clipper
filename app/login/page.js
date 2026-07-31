@@ -27,10 +27,10 @@ export default function LoginPage() {
         router.push('/');
         router.refresh();
       } else {
-        setError('ACCESS DENIED');
+        setError('Invalid password');
       }
     } catch (err) {
-      setError('SYSTEM ERROR');
+      setError('Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export default function LoginPage() {
   return (
     <main className={styles.main}>
       <form onSubmit={handleLogin} className={styles.loginForm}>
-        <h1 className={styles.title}>IDENTIFY</h1>
+        <h1 className={styles.title}>Sign in</h1>
         
         {error && <Text className={styles.error}>{error}</Text>}
         
@@ -47,7 +47,7 @@ export default function LoginPage() {
           type="password" 
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="SECRET KEY"
+          placeholder="Password"
           className={styles.input}
           size="lg"
           required
@@ -58,9 +58,9 @@ export default function LoginPage() {
           variant="primary" 
           size="lg"
           loading={loading}
-          style={{ width: '100%', borderRadius: 0, marginTop: '1rem', fontWeight: 'bold' }}
+          style={{ width: '100%', marginTop: '0.5rem' }}
         >
-          ENTER
+          Sign in
         </Button>
       </form>
     </main>

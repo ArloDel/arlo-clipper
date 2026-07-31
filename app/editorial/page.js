@@ -125,19 +125,19 @@ export default function EditorialPage() {
               allowFullScreen
             ></iframe>
           ) : (
-            <div style={{ color: 'hsl(0, 0%, 50%)', fontSize: '2rem', fontFamily: 'monospace' }}>
-              NO VIDEO URL PROVIDED
+            <div style={{ color: 'var(--kumo-subtle)', fontSize: '0.875rem' }}>
+              No video URL provided
             </div>
           )}
         </div>
       </div>
 
       <div className={styles.sidebar}>
-        <h1 className={styles.title}>Editorial<br/>Suite</h1>
+        <h1 className={styles.title}>Editorial Suite</h1>
         
         {status === 'analyzing' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className={styles.analyzing}>ANALYZING...</div>
+          <div className={styles.statusContainer}>
+            <div className={styles.analyzing}>Analyzing video...</div>
           </div>
         )}
 
@@ -209,24 +209,24 @@ export default function EditorialPage() {
               onClick={handleExecute}
               disabled={selectedClips.length === 0}
             >
-              Execute Selected
+              Render Selected
             </button>
           </>
         )}
 
         {status === 'rendering' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className={styles.loading}>EXECUTING...</div>
+          <div className={styles.statusContainer}>
+            <div className={styles.loading}>Rendering clips...</div>
           </div>
         )}
 
         {status === 'done' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '2rem' }}>
-            <div className={styles.title} style={{ fontSize: '2.5rem', textAlign: 'center', color: 'hsl(120, 100%, 50%)' }}>
-              RENDER<br/>COMPLETE
+          <div className={styles.statusContainer}>
+            <div className={styles.doneTitle}>
+              Render Complete
             </div>
             <Link href="/library" className={styles.navButton}>
-              Go to Library →
+              View in Library →
             </Link>
           </div>
         )}

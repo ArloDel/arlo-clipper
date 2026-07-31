@@ -38,24 +38,24 @@ export default function LibraryPage() {
     <main className={styles.main}>
       <header className={styles.header}>
         <div className={styles.headerNav}>
-          <Link href="/" className={styles.navLink}>← EXTRACTOR</Link>
-          <h1 className={styles.title}>LIBRARY</h1>
+          <Link href="/" className={styles.navLink}>← Home</Link>
+          <h1 className={styles.title}>Library</h1>
         </div>
         
         <form onSubmit={handleCreate} className={styles.createForm}>
           <Input 
             value={newFolderName} 
             onChange={(e) => setNewFolderName(e.target.value)} 
-            placeholder="NEW FOLDER NAME"
+            placeholder="New folder name"
             className={styles.input}
             required
           />
-          <Button type="submit" variant="primary" style={{ borderRadius: 0, fontWeight: 'bold' }}>CREATE</Button>
+          <Button type="submit" variant="primary">Create</Button>
         </form>
       </header>
 
       {loading ? (
-        <Text>LOADING...</Text>
+        <Text>Loading...</Text>
       ) : (
         <div className={styles.grid}>
           {folders.map(folder => (
@@ -64,7 +64,7 @@ export default function LibraryPage() {
               <span className={styles.folderDate}>{new Date(folder.createdAt).toLocaleDateString()}</span>
             </Link>
           ))}
-          {folders.length === 0 && <Text>EMPTY LIBRARY</Text>}
+          {folders.length === 0 && <Text>No folders yet</Text>}
         </div>
       )}
     </main>

@@ -31,13 +31,13 @@ export default function FolderPage(props) {
     <main className={styles.main}>
       <header className={styles.header}>
         <div className={styles.headerNav}>
-          <Link href="/library" className={styles.navLink}>← BACK TO LIBRARY</Link>
-          <h1 className={styles.title}>{folderName || 'FOLDER'}</h1>
+          <Link href="/library" className={styles.navLink}>← Library</Link>
+          <h1 className={styles.title}>{folderName || 'Folder'}</h1>
         </div>
       </header>
 
       {loading ? (
-        <Text>LOADING...</Text>
+        <Text>Loading...</Text>
       ) : (
         <div className={styles.grid}>
           {clips.map(clip => (
@@ -48,7 +48,7 @@ export default function FolderPage(props) {
                 className={styles.videoPlayer}
               />
               <div className={styles.clipMeta}>
-                <h3 className={styles.clipTitle}>{clip.title || 'UNTITLED CLIP'}</h3>
+                <h3 className={styles.clipTitle}>{clip.title || 'Untitled clip'}</h3>
                 <div className={styles.clipStats}>
                   <span>DUR_{clip.duration}</span>
                   <span>{new Date(clip.createdAt).toLocaleDateString()}</span>
@@ -56,7 +56,7 @@ export default function FolderPage(props) {
               </div>
             </div>
           ))}
-          {clips.length === 0 && <Text>NO CLIPS EXTRACTED YET.</Text>}
+          {clips.length === 0 && <Text>No clips yet</Text>}
         </div>
       )}
     </main>

@@ -27,6 +27,20 @@ export default function EditorialPage() {
   const [folders, setFolders] = useState([]);
 
   useEffect(() => {
+    // Fix for Next.js 15 client hydration where searchParams might be empty on initial render
+    const urlSub = searchParams.get('subtitles');
+    if (urlSub !== null) setUseSubtitles(urlSub === 'true');
+    const urlFont = searchParams.get('font');
+    if (urlFont) setFont(urlFont);
+    const urlSize = searchParams.get('size');
+    if (urlSize) setSize(urlSize);
+    const urlColor = searchParams.get('color');
+    if (urlColor) setColor(urlColor);
+    const urlFolder = searchParams.get('folderId');
+    if (urlFolder) setFolderId(urlFolder);
+  }, [searchParams]);
+
+  useEffect(() => {
     fetch('/api/folders').then(res => res.json()).then(setFolders).catch(() => {});
   }, []);
 

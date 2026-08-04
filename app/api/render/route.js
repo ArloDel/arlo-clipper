@@ -12,7 +12,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00', folderId, clips } = await request.json();
+    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00', clips } = await request.json();
 
     if (!url || !clips || !Array.isArray(clips) || clips.length === 0) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
@@ -157,7 +157,6 @@ export async function POST(request) {
       const videoSrc = `/clips/${path.basename(finalOutput)}`;
       
       const savedClip = saveClip({
-        folderId: folderId || null,
         title: title || `Clip ${index}`,
         videoPath: videoSrc,
         duration: durationSec

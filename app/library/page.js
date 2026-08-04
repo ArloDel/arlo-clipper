@@ -2,69 +2,66 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button, Input, Text } from '@cloudflare/kumo';
+import { Text } from '@cloudflare/kumo';
 import styles from './library.module.css';
 
 export default function LibraryPage() {
-  const [folders, setFolders] = useState([]);
-  const [newFolderName, setNewFolderName] = useState('');
+  const [clips, setClips] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchFolders = async () => {
-    const res = await fetch('/api/folders');
-    const data = await res.json();
-    setFolders(data);
-    setLoading(false);
+  const fetchClips = async () => {
+    try {
+      const res = await fetch('/api/clips');
+      const data = await res.json();
+      setClips(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchFolders();
+    fetchClips();
   }, []);
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!newFolderName) return;
-    
-    await fetch('/api/folders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newFolderName })
-    });
-    setNewFolderName('');
-    fetchFolders();
-  };
 
   return (
     <main className={styles.main}>
       <header className={styles.header}>
         <div className={styles.headerNav}>
           <Link href="/" className={styles.navLink}>← Home</Link>
-          <h1 className={styles.title}>Library</h1>
+          <h1 className={styles.title}>My Library</h1>
         </div>
-        
-        <form onSubmit={handleCreate} className={styles.createForm}>
-          <Input 
-            value={newFolderName} 
-            onChange={(e) => setNewFolderName(e.target.value)} 
-            placeholder="New folder name"
-            className={styles.input}
-            required
-          />
-          <Button type="submit" variant="primary">Create</Button>
-        </form>
       </header>
 
       {loading ? (
-        <Text>Loading...</Text>
+        <Text>Loading clips...</Text>
       ) : (
         <div className={styles.grid}>
-          {folders.map(folder => (
-            <Link key={folder.id} href={`/library/${folder.id}`} className={styles.folderCard}>
-              <h2 className={styles.folderName}>{folder.name}</h2>
-              <span className={styles.folderDate}>{new Date(folder.createdAt).toLocaleDateString()}</span>
-            </Link>
+          {clips.map(clip => (
+            <div key={clip.id} className={styles.clipCard}>
+              <div className={styles.videoWrapper}>
+                <video 
+                  src={clip.videoPath} 
+                  controls 
+                  className={styles.videoPreview}
+                  preload="metadata"
+                />
+              </div>
+              <div className={styles.clipInfo}>
+                <h2 className={styles.clipTitle}>{clip.title}</h2>
+                <div className={styles.clipMeta}>
+                  <span>{Math.round(clip.duration)}s</span>
+                  <span>{new Date(clip.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
           ))}
-          {folders.length === 0 && <Text>No folders yet</Text>}
+          {clips.length === 0 && (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 0', color: 'var(--kumo-subtle)' }}>
+              <Text>No clips generated yet. Go to Home to start extracting.</Text>
+            </div>
+          )}
         </div>
       )}
     </main>

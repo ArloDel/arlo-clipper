@@ -45,7 +45,7 @@ export async function POST(request) {
       displayName: `Audio-${sessionId}`,
     });
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
     const systemPrompt = `You are an expert video editor. Listen to the audio and find the top 3 most engaging, viral-worthy segments (15 to 45 seconds long each). Return ONLY a valid JSON array with EXACTLY 3 objects containing this exact structure:
 [
   {

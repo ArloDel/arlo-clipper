@@ -2,25 +2,26 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Input, Text } from '@cloudflare/kumo';
 import styles from './login.module.css';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    setIsLoading(true);
+    setError(null);
 
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ password }),
       });
 
       if (res.ok) {
@@ -30,39 +31,52 @@ export default function LoginPage() {
         setError('Invalid password');
       }
     } catch (err) {
-      setError('Something went wrong');
+      setError('An error occurred. Please try again.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <main className={styles.main}>
-      <form onSubmit={handleLogin} className={styles.loginForm}>
-        <h1 className={styles.title}>Sign in</h1>
-        
-        {error && <Text className={styles.error}>{error}</Text>}
-        
-        <Input 
-          type="password" 
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className={styles.input}
-          size="lg"
-          required
-        />
-        
-        <Button 
-          type="submit" 
-          variant="primary" 
-          size="lg"
-          loading={loading}
-          style={{ width: '100%', marginTop: '0.5rem' }}
-        >
-          Sign in
-        </Button>
-      </form>
-    </main>
+    <div className={styles.container}>
+      <div className={styles.backgroundGlow} />
+      
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <h1 className={styles.brand}>
+            Arlo <span className={styles.brandHighlight}>Clipper</span>
+          </h1>
+          <p className={styles.subtitle}>Sign in to your account</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className={styles.input}
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          {error && <div className={styles.error}>{error}</div>}
+
+          <button
+            type="submit"
+            className={styles.button}
+            disabled={isLoading || !password}
+          >
+            {isLoading ? (
+              <span className={styles.spinner} aria-label="Loading" />
+            ) : (
+              'Sign in'
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

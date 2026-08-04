@@ -1,167 +1,161 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button, Input, Text } from '@cloudflare/kumo';
 import styles from './page.module.css';
 
-export default function LandingPage() {
-  const [url, setUrl] = useState('');
-  const [ratio, setRatio] = useState('mobile');
-  const [useSubtitles, setUseSubtitles] = useState(true);
-  const [font, setFont] = useState('Impact');
-  const [size, setSize] = useState('24');
-  const [color, setColor] = useState('#FFFF00');
-  const [isLoading, setIsLoading] = useState(false);
+export default function HomePage() {
   const router = useRouter();
+  const [url, setUrl] = useState('');
+  const [ratio, setRatio] = useState('9:16');
+  const [subtitles, setSubtitles] = useState(true);
+  const [font, setFont] = useState('Inter');
+  const [size, setSize] = useState('Medium');
+  const [color, setColor] = useState('#ffffff');
+  const [showOptions, setShowOptions] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
     
-    setIsLoading(true);
-    router.push(`/editorial?url=${encodeURIComponent(url)}&ratio=${ratio}&subtitles=${useSubtitles}&font=${encodeURIComponent(font)}&size=${size}&color=${encodeURIComponent(color)}`);
+    const params = new URLSearchParams({
+      url,
+      ratio,
+      subtitles: subtitles.toString(),
+      font,
+      size,
+      color,
+    });
+    
+    router.push(`/editorial?${params.toString()}`);
   };
 
   return (
-    <main className={styles.main}>
-      <div className={styles.splitLayout}>
-        <div className={styles.leftPane}>
-          <div className={styles.heroContent}>
-            <h1 className={styles.title}>
-              Extract.<br />
-              <em>Analyze.</em><br />
-              Clip.
-            </h1>
-            <p className={styles.subtitle}>
-              The editorial tool for the modern creator. Input a video link, and our algorithms will automatically slice the defining moments into ready-to-publish formats.
-            </p>
-          </div>
+    <div className={styles.container}>
+      <div className={styles.glow} />
+      
+      <header className={styles.header}>
+        <div className={styles.logo}>Arlo Clipper</div>
+        <Link href="/library" className={styles.libraryLink}>
+          My Library <span className={styles.arrow}>→</span>
+        </Link>
+      </header>
+
+      <main className={styles.main}>
+        <div className={styles.hero}>
+          <h1 className={styles.headline}>
+            Turn long videos into <span className={styles.gradientText}>viral clips</span>
+          </h1>
+          <p className={styles.subtitle}>
+            Upload a video link and our AI will automatically find the best moments, crop them for mobile, and add engaging captions in minutes.
+          </p>
         </div>
 
-        <div className={styles.rightPane}>
-          <div style={{ position: 'absolute', top: '2rem', right: '2rem' }}>
-            <Link href="/library" className={styles.navLink}>Library →</Link>
-          </div>
-          
-          <form
-            className={styles.actionForm}
-            onSubmit={handleSubmit}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <Text className="text-xl font-medium">New Project</Text>
-            </div>
-
-            <Input
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputWrapper}>
+            <input
               type="url"
-              placeholder="https://youtube.com/watch?v=..."
+              className={styles.urlInput}
+              placeholder="Paste a YouTube link to get started..."
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
-              size="lg"
-              label="Source Link"
             />
+          </div>
+          
+          <div className={styles.platforms}>
+            YouTube · Vimeo · Twitch · Facebook
+          </div>
 
-            <div className={styles.ratioContainer}>
-              <Text className="text-sm font-medium">Target Format</Text>
-              <div className={styles.ratioGroup}>
-                <label className={styles.ratioLabel}>
-                  <input
-                    type="radio"
-                    name="ratio"
-                    value="mobile"
-                    checked={ratio === 'mobile'}
-                    onChange={() => setRatio('mobile')}
-                  />
-                  9:16 Mobile
-                </label>
-                <label className={styles.ratioLabel}>
-                  <input
-                    type="radio"
-                    name="ratio"
-                    value="desktop"
-                    checked={ratio === 'desktop'}
-                    onChange={() => setRatio('desktop')}
-                  />
-                  16:9 Desktop
-                </label>
-              </div>
-            </div>
+          <button 
+            type="button" 
+            className={styles.toggleOptions}
+            onClick={() => setShowOptions(!showOptions)}
+          >
+            {showOptions ? 'Hide Options' : 'Show Advanced Options'}
+          </button>
 
-            <div className={styles.subtitleOptions}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <Text className="text-sm font-medium">Auto-Generate Subtitles</Text>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={useSubtitles} 
-                    onChange={(e) => setUseSubtitles(e.target.checked)}
-                    style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--kumo-brand)' }}
-                  />
-                </label>
+          {showOptions && (
+            <div className={styles.options}>
+              <div className={styles.optionGroup}>
+                <label className={styles.label}>Aspect Ratio</label>
+                <div className={styles.ratioSelector}>
+                  <button
+                    type="button"
+                    className={`${styles.ratioBtn} ${ratio === '9:16' ? styles.active : ''}`}
+                    onClick={() => setRatio('9:16')}
+                  >
+                    9:16 Mobile
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.ratioBtn} ${ratio === '16:9' ? styles.active : ''}`}
+                    onClick={() => setRatio('16:9')}
+                  >
+                    16:9 Desktop
+                  </button>
+                </div>
               </div>
-              
-              {useSubtitles && (
-                <>
-                  <div className={styles.optionsGrid}>
-                    <div className={styles.optionItem}>
-                      <Text className="text-xs text-kumo-subtle">Typography</Text>
-                      <select 
-                        className={styles.nativeSelect} 
-                        value={font} 
-                        onChange={(e) => setFont(e.target.value)}
-                      >
-                        <option value="Arial">Arial (Clean)</option>
-                        <option value="Impact">Impact (Bold)</option>
-                        <option value="Tahoma">Tahoma (Modern)</option>
-                        <option value="Times New Roman">Times (Editorial)</option>
-                      </select>
-                    </div>
-                    
-                    <div className={styles.optionItem}>
-                      <Text className="text-xs text-kumo-subtle">Scale</Text>
-                      <select 
-                        className={styles.nativeSelect} 
-                        value={size} 
-                        onChange={(e) => setSize(e.target.value)}
-                      >
-                        <option value="16">Small</option>
-                        <option value="24">Medium</option>
-                        <option value="32">Large</option>
-                        <option value="42">Display</option>
-                      </select>
-                    </div>
+
+              <div className={styles.optionGroup}>
+                <div className={styles.subtitleToggle}>
+                  <label className={styles.label}>Add Subtitles</label>
+                  <button
+                    type="button"
+                    className={`${styles.switch} ${subtitles ? styles.switchOn : ''}`}
+                    onClick={() => setSubtitles(!subtitles)}
+                  >
+                    <span className={styles.switchThumb} />
+                  </button>
+                </div>
+              </div>
+
+              {subtitles && (
+                <div className={styles.subtitleOptions}>
+                  <div className={styles.subOption}>
+                    <label className={styles.label}>Font</label>
+                    <select 
+                      className={styles.select} 
+                      value={font} 
+                      onChange={(e) => setFont(e.target.value)}
+                    >
+                      <option>Inter</option>
+                      <option>Roboto</option>
+                      <option>Montserrat</option>
+                      <option>Bangers</option>
+                    </select>
                   </div>
-                  
-                  <div className={styles.colorPickerRow}>
+                  <div className={styles.subOption}>
+                    <label className={styles.label}>Size</label>
+                    <select 
+                      className={styles.select} 
+                      value={size} 
+                      onChange={(e) => setSize(e.target.value)}
+                    >
+                      <option>Small</option>
+                      <option>Medium</option>
+                      <option>Large</option>
+                    </select>
+                  </div>
+                  <div className={styles.subOption}>
+                    <label className={styles.label}>Color</label>
                     <input 
                       type="color" 
-                      className={styles.colorInput} 
-                      value={color}
-                      onChange={(e) => setColor(e.target.value)}
-                      title="Choose Subtitle Color"
+                      className={styles.colorInput}
+                      value={color} 
+                      onChange={(e) => setColor(e.target.value)} 
                     />
-                    <Text className="text-sm">{color.toUpperCase()}</Text>
                   </div>
-                </>
+                </div>
               )}
             </div>
+          )}
 
-            <div className={styles.submitWrapper}>
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                loading={isLoading}
-                style={{ width: '100%' }}
-              >
-                {isLoading ? 'Processing Pipeline...' : 'Commence Extraction'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </main>
+          <button type="submit" className={styles.submitBtn}>
+            Get Free Clips <span className={styles.arrow}>→</span>
+          </button>
+        </form>
+      </main>
+    </div>
   );
 }

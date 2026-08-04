@@ -1,31 +1,36 @@
-'use client';
+'use client'
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 
+function getYouTubeId(url) {
+  if (!url) return null;
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  return match ? match[1] : null;
+}
+
 function EditorialContent() {
   const searchParams = useSearchParams();
   const url = searchParams.get('url');
-  
-  const initialSubtitles = searchParams.get('subtitles') === 'true';
-  const initialFont = searchParams.get('font') || 'Impact';
-  const initialSize = searchParams.get('size') || '24';
-  const initialColor = searchParams.get('color') || '#FFFF00';
-  const ratio = searchParams.get('ratio') || 'mobile';
+  const ratio = searchParams.get('ratio') || '9:16';
+  const subtitles = searchParams.get('subtitles') || 'true';
+  const font = searchParams.get('font') || 'impact';
+  const size = searchParams.get('size') || 'medium';
+  const color = searchParams.get('color') || 'yellow';
 
-  const [status, setStatus] = useState('analyzing'); // analyzing, rendering, done
-  const [errorMsg, setErrorMsg] = useState('');
+  const [status, setStatus] = useState('analyzing'); // 'analyzing', 'rendering', 'done', 'error'
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  const videoId = getYouTubeId(url);
 
   useEffect(() => {
-    if (!url) return;
-    
     let isMounted = true;
     
-    const processVideo = async () => {
+    async function processVideo() {
       try {
-        setStatus('analyzing');
+        if (!url) throw new Error('No video URL provided.');
         
         // 1. Analyze
         const analyzeRes = await fetch('/api/analyze', {
@@ -35,8 +40,7 @@ function EditorialContent() {
         });
         
         if (!analyzeRes.ok) {
-          const err = await analyzeRes.json();
-          throw new Error(err.error || 'Failed to analyze video');
+          throw new Error('Failed to analyze video');
         }
         
         const analyzeData = await analyzeRes.json();
@@ -46,119 +50,110 @@ function EditorialContent() {
           throw new Error('No engaging clips found by the algorithm.');
         }
 
-        if (!isMounted) return;
-
-        // 2. Render all 3 clips automatically
-        setStatus('rendering');
+        if (isMounted) setStatus('rendering');
         
+        // 2. Render
         const renderRes = await fetch('/api/render', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            url,
-            clips,
-            ratio,
-            subtitles: initialSubtitles,
-            font: initialFont,
-            size: initialSize,
-            color: initialColor
-          })
+          body: JSON.stringify({ url, clips, ratio, subtitles, font, size, color })
         });
-
+        
         if (!renderRes.ok) {
-          const err = await renderRes.json();
-          throw new Error(err.error || 'Failed to render clips');
+          throw new Error('Failed to render clips');
         }
         
-        if (!isMounted) return;
-        setStatus('done');
+        if (isMounted) setStatus('done');
         
       } catch (err) {
-        if (!isMounted) return;
-        console.error('Processing error:', err);
-        setErrorMsg(err.message);
-        setStatus('error');
+        if (isMounted) {
+          setStatus('error');
+          setErrorMessage(err.message || 'An unknown error occurred');
+        }
       }
-    };
+    }
     
     processVideo();
     
-    return () => {
-      isMounted = false;
-    };
-  }, [url, initialSubtitles, initialFont, initialSize, initialColor, ratio]);
+    return () => { isMounted = false; };
+  }, [url, ratio, subtitles, font, size, color]);
 
-  // Helper to extract youtube video ID for iframe
-  const getVideoId = (urlStr) => {
-    try {
-      const match = urlStr.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
-      return match ? match[1] : '';
-    } catch {
-      return '';
-    }
-  };
-
-  const videoId = url ? getVideoId(url) : '';
+  const steps = [
+    { id: 'analyzing', label: 'Analyzing Content', description: 'Transcribing and finding viral moments' },
+    { id: 'rendering', label: 'Rendering Clips', description: 'Applying captions and cropping' },
+    { id: 'done', label: 'Ready', description: 'Clips are saved to your library' }
+  ];
+  
+  const currentStepIndex = steps.findIndex(s => s.id === status);
+  const isDoneOrError = status === 'done' || status === 'error';
 
   return (
     <div className={styles.container}>
       <div className={styles.videoSection}>
-        <div className={styles.iframeWrapper}>
+        <div className={styles.videoHeader}>
+          <h1 className={styles.title}>Processing Your Video</h1>
+          <p className={styles.subtitle}>We're extracting the best moments from your content.</p>
+        </div>
+        
+        <div className={styles.videoWrapper}>
           {videoId ? (
             <iframe
-              src={`https://www.youtube.com/embed/${videoId}`}
+              className={styles.iframe}
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
           ) : (
-            <div style={{ color: 'var(--kumo-subtle)', fontSize: '0.875rem' }}>
-              No video URL provided
+            <div className={styles.placeholder}>
+              <p>Invalid or missing video URL</p>
             </div>
           )}
         </div>
       </div>
 
       <div className={styles.sidebar}>
-        <h1 className={styles.title}>Processing Pipeline</h1>
+        <h2 className={styles.sidebarTitle}>Status</h2>
         
-        {status === 'analyzing' && (
-          <div className={styles.statusContainer}>
-            <div className={styles.analyzing}>1. Analyzing video...</div>
-            <p style={{marginTop: '1rem', color: 'var(--kumo-subtle)'}}>Finding the 3 most viral-worthy moments.</p>
+        {status === 'error' ? (
+          <div className={styles.errorCard}>
+            <div className={styles.errorIcon}>!</div>
+            <h3>Processing Failed</h3>
+            <p>{errorMessage}</p>
+            <Link href="/" className={styles.secondaryButton}>
+              Go Back
+            </Link>
           </div>
-        )}
-
-        {status === 'rendering' && (
-          <div className={styles.statusContainer}>
-            <div className={styles.loading}>2. Rendering clips...</div>
-            <p style={{marginTop: '1rem', color: 'var(--kumo-subtle)'}}>Cutting video, generating subtitles, and applying formats.</p>
+        ) : (
+          <div className={styles.stepper}>
+            {steps.map((step, index) => {
+              const isCompleted = currentStepIndex > index || status === 'done';
+              const isActive = status === step.id;
+              
+              return (
+                <div key={step.id} className={`${styles.step} ${isActive ? styles.stepActive : ''} ${isCompleted ? styles.stepCompleted : ''}`}>
+                  <div className={styles.stepIndicator}>
+                    <div className={styles.dot}></div>
+                    {index < steps.length - 1 && <div className={styles.line}></div>}
+                  </div>
+                  <div className={styles.stepContent}>
+                    <div className={styles.stepLabel}>{step.label}</div>
+                    <div className={styles.stepDesc}>{step.description}</div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 
         {status === 'done' && (
-          <div className={styles.statusContainer}>
-            <div className={styles.doneTitle}>
-              Extraction Complete!
-            </div>
-            <p style={{marginTop: '1rem', marginBottom: '2rem', color: 'var(--kumo-subtle)'}}>
-              We've successfully generated 3 highly engaging clips.
-            </p>
-            <Link href="/library" className={styles.navButton}>
-              View in My Library →
-            </Link>
-          </div>
-        )}
-        
-        {status === 'error' && (
-          <div className={styles.statusContainer}>
-            <div style={{color: 'red', fontWeight: 'bold', marginBottom: '1rem'}}>
-              Processing Failed
-            </div>
-            <p style={{color: 'var(--kumo-subtle)'}}>{errorMsg}</p>
-            <Link href="/" className={styles.navButton} style={{marginTop: '2rem', background: 'transparent', border: '1px solid var(--kumo-border)', color: 'white'}}>
-              ← Back to Home
+          <div className={styles.successCard}>
+            <div className={styles.successIcon}>✓</div>
+            <h3>Extraction Complete!</h3>
+            <p>Your viral clips are ready.</p>
+            <Link href="/library" className={styles.primaryButton}>
+              View in Library &rarr;
             </Link>
           </div>
         )}
@@ -170,8 +165,9 @@ function EditorialContent() {
 export default function EditorialPage() {
   return (
     <Suspense fallback={
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', color: 'white', background: '#0a0a0a' }}>
-        Loading Processing Pipeline...
+      <div className={styles.fallbackContainer}>
+        <div className={styles.spinner}></div>
+        <p>Loading editor...</p>
       </div>
     }>
       <EditorialContent />

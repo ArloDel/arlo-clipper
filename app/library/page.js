@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Text } from '@cloudflare/kumo';
+import { Button, Text } from '@cloudflare/kumo';
 import styles from './library.module.css';
 
 export default function LibraryPage() {
@@ -24,6 +24,28 @@ export default function LibraryPage() {
   useEffect(() => {
     fetchClips();
   }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to permanently delete this clip?')) {
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/clips/${id}`, {
+        method: 'DELETE'
+      });
+      
+      if (res.ok) {
+        setClips(clips.filter(clip => clip.id !== id));
+      } else {
+        const err = await res.json();
+        alert(`Failed to delete clip: ${err.error}`);
+      }
+    } catch (err) {
+      console.error('Delete error', err);
+      alert('An error occurred while deleting the clip.');
+    }
+  };
 
   return (
     <main className={styles.main}>
@@ -53,6 +75,16 @@ export default function LibraryPage() {
                 <div className={styles.clipMeta}>
                   <span>{Math.round(clip.duration)}s</span>
                   <span>{new Date(clip.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div style={{ marginTop: '0.75rem' }}>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => handleDelete(clip.id)}
+                    style={{ background: 'transparent', color: '#ff4d4d', border: '1px solid #ff4d4d', padding: '0.25rem 0.5rem' }}
+                  >
+                    Delete Clip
+                  </Button>
                 </div>
               </div>
             </div>

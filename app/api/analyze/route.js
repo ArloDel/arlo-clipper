@@ -56,10 +56,25 @@ export async function POST(request) {
   }
 ]`;
 
-    const result = await model.generateContent([
-      { fileData: { mimeType: uploadResult.file.mimeType, fileUri: uploadResult.file.uri } },
-      { text: systemPrompt }
-    ]);
+    let result;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        result = await model.generateContent([
+          { fileData: { mimeType: uploadResult.file.mimeType, fileUri: uploadResult.file.uri } },
+          { text: systemPrompt }
+        ]);
+        break;
+      } catch (error) {
+        if (error.message && (error.message.includes('503') || error.message.includes('429')) && retries > 1) {
+          console.warn(`[Analyze] Gemini API error (${error.message.match(/\[\d+\]/)?.[0] || 'High Demand'}), retrying in 5 seconds... (${retries - 1} retries left)`);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          retries--;
+        } else {
+          throw error;
+        }
+      }
+    }
 
     const responseText = result.response.text().trim().replace(/```json/g, '').replace(/```/g, '');
     let highlightData;

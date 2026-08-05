@@ -34,7 +34,8 @@ export async function POST(request) {
     console.log(`[Render] Downloading Full Video...`);
     await youtubedl(url, {
       output: videoPath,
-      format: 'worst[ext=mp4]/worst', 
+      format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+      ffmpegLocation: ffmpegInstaller.path,
       noCheckCertificates: true,
       noWarnings: true,
     });
@@ -116,8 +117,10 @@ export async function POST(request) {
         console.log(`[Render] Burning Subtitles and Applying Ratio for clip ${index}...`);
         const relativeSrtPath = `public/clips/${clipId}-subtitle.srt`;
         const filters = [];
-        if (ratio === 'mobile') {
-          filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
+        if (ratio === '9:16' || ratio === 'mobile') {
+          filters.push('crop=ih*9/16:ih:iw/2-ow/2:0,scale=1080:1920');
+        } else if (ratio === '16:9' || ratio === 'desktop') {
+          filters.push('scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2');
         }
 
         let assColor = '&H00FFFF&';
@@ -134,6 +137,7 @@ export async function POST(request) {
         await new Promise((resolve, reject) => {
           ffmpeg(finalClipPath)
             .videoFilters(filters)
+            .videoBitrate('8000k')
             .output(finalSubtitledPath)
             .on('end', resolve)
             .on('error', reject)
@@ -141,11 +145,18 @@ export async function POST(request) {
         });
         
         finalOutput = finalSubtitledPath;
-      } else if (ratio === 'mobile') {
+      } else {
         console.log(`[Render] Applying Ratio for clip ${index}...`);
+        const filters = [];
+        if (ratio === '9:16' || ratio === 'mobile') {
+          filters.push('crop=ih*9/16:ih:iw/2-ow/2:0,scale=1080:1920');
+        } else if (ratio === '16:9' || ratio === 'desktop') {
+          filters.push('scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2');
+        }
         await new Promise((resolve, reject) => {
           ffmpeg(finalClipPath)
-            .videoFilters(['crop=ih*9/16:ih:iw/2-ow/2:0'])
+            .videoFilters(filters)
+            .videoBitrate('8000k')
             .output(finalSubtitledPath)
             .on('end', resolve)
             .on('error', reject)

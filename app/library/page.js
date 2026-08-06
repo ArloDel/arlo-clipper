@@ -112,11 +112,35 @@ export default function LibraryPage() {
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <div className={styles.videoWrapper}>
+                    {/* Backdrop video for the blur effect */}
+                    <video 
+                      className={styles.videoBackdrop} 
+                      src={clip.videoPath} 
+                      muted
+                      loop
+                      playsInline
+                      autoPlay={false}
+                    />
                     <video 
                       className={styles.video} 
                       src={clip.videoPath} 
                       controls 
                       preload="metadata"
+                      onPlay={(e) => {
+                        const backdrop = e.target.previousElementSibling;
+                        if (backdrop) {
+                          backdrop.currentTime = e.target.currentTime;
+                          backdrop.play().catch(() => {});
+                        }
+                      }}
+                      onPause={(e) => {
+                        const backdrop = e.target.previousElementSibling;
+                        if (backdrop) backdrop.pause();
+                      }}
+                      onSeeked={(e) => {
+                        const backdrop = e.target.previousElementSibling;
+                        if (backdrop) backdrop.currentTime = e.target.currentTime;
+                      }}
                     />
                   </div>
                   <div className={styles.info}>

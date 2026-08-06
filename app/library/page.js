@@ -7,17 +7,26 @@ import styles from './library.module.css';
 export default function LibraryPage() {
   const [clips, setClips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchClips();
-  }, []);
+    fetchClips(currentPage);
+  }, [currentPage]);
 
-  const fetchClips = async () => {
+  const fetchClips = async (page = 1) => {
+    setLoading(true);
     try {
-      const response = await fetch('/api/clips');
+      const response = await fetch(`/api/clips?page=${page}&limit=9`);
       if (response.ok) {
         const data = await response.json();
-        setClips(data);
+        setClips(data.clips);
+        setTotalPages(data.totalPages);
+        if (page > data.totalPages && data.totalPages > 0) {
+          setCurrentPage(data.totalPages);
+        } else {
+          setCurrentPage(data.currentPage);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch clips:', error);
@@ -37,7 +46,7 @@ export default function LibraryPage() {
       });
 
       if (response.ok) {
-        setClips((prev) => prev.filter((clip) => clip.id !== id));
+        fetchClips(currentPage);
       } else {
         console.error('Failed to delete clip');
       }
@@ -94,43 +103,67 @@ export default function LibraryPage() {
             <p>Your library is empty.</p>
           </div>
         ) : (
-          <div className={styles.grid}>
-            {clips.map((clip, index) => (
-              <div 
-                key={clip.id} 
-                className={styles.card}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                <div className={styles.videoWrapper}>
-                  <video 
-                    className={styles.video} 
-                    src={clip.videoPath} 
-                    controls 
-                    preload="metadata"
-                  />
-                </div>
-                <div className={styles.info}>
-                  <h3 className={styles.clipTitle}>{clip.title || 'Untitled Clip'}</h3>
-                  <div className={styles.meta}>
-                    <span>{formatDate(clip.createdAt)}</span>
-                    <span>{formatDuration(clip.duration)}</span>
+          <div className={styles.gridContainer}>
+            <div className={styles.grid}>
+              {clips.map((clip, index) => (
+                <div 
+                  key={clip.id} 
+                  className={styles.card}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className={styles.videoWrapper}>
+                    <video 
+                      className={styles.video} 
+                      src={clip.videoPath} 
+                      controls 
+                      preload="metadata"
+                    />
                   </div>
-                  <div className={styles.actions}>
-                    <button 
-                      className={styles.deleteBtn} 
-                      onClick={() => handleDelete(clip.id)}
-                      aria-label="Delete clip"
-                      title="Delete clip"
-                    >
-                      <svg className={styles.deleteIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-                    </button>
+                  <div className={styles.info}>
+                    <h3 className={styles.clipTitle}>{clip.title || 'Untitled Clip'}</h3>
+                    <div className={styles.meta}>
+                      <span>{formatDate(clip.createdAt)}</span>
+                      <span>{formatDuration(clip.duration)}</span>
+                    </div>
+                    <div className={styles.actions}>
+                      <button 
+                        className={styles.deleteBtn} 
+                        onClick={() => handleDelete(clip.id)}
+                        aria-label="Delete clip"
+                        title="Delete clip"
+                      >
+                        <svg className={styles.deleteIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className={styles.pagination}>
+                <button 
+                  className={styles.pageBtn} 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  ← Previous
+                </button>
+                <span className={styles.pageInfo}>
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button 
+                  className={styles.pageBtn} 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next →
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
       </main>

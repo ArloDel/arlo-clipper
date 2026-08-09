@@ -10,11 +10,11 @@
   --bg-elevated: #1a1a1f;
   --bg-input: #16161a;
 
-  /* Accent (Purple) */
-  --accent: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-subtle: rgba(124, 58, 237, 0.15);
-  --accent-glow: rgba(124, 58, 237, 0.4);
+  /* Accent (Copper) */
+  --accent: #d97756;
+  --accent-hover: #c4664a;
+  --accent-subtle: rgba(217, 119, 86, 0.12);
+  --accent-glow: rgba(217, 119, 86, 0.35);
 
   /* Text */
   --text-primary: #fafafa;
@@ -24,7 +24,7 @@
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.15);
-  --border-focus: rgba(124, 58, 237, 0.5);
+  --border-focus: rgba(217, 119, 86, 0.5);
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.04);
@@ -48,10 +48,10 @@
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3), 0 0 60px rgba(124, 58, 237, 0.1);
+  --shadow-sm: 0 1px 2px rgba(20, 10, 5, 0.35), 0 1px 3px rgba(20, 10, 5, 0.2);
+  --shadow-md: 0 4px 6px rgba(20, 10, 5, 0.35), 0 2px 8px rgba(20, 10, 5, 0.25);
+  --shadow-lg: 0 8px 24px rgba(20, 10, 5, 0.45), 0 4px 12px rgba(20, 10, 5, 0.3);
+  --shadow-glow: 0 0 24px rgba(217, 119, 86, 0.2), 0 0 60px rgba(217, 119, 86, 0.06);
 
   /* Z-Index Scale */
   --z-base: 0;
@@ -79,6 +79,18 @@ html, body {
   text-rendering: optimizeLegibility;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 128px 128px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -154,7 +166,7 @@ button:active {
 /* ── Selection ── */
 ::selection {
   background: var(--accent);
-  color: white;
+  color: #fafafa;
 }
 
 /* ── Keyframe Animations ── */
@@ -198,10 +210,10 @@ button:active {
 
 @keyframes pulseGlow {
   0%, 100% {
-    box-shadow: 0 0 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 0 12px rgba(217, 119, 86, 0.25);
   }
   50% {
-    box-shadow: 0 0 24px rgba(124, 58, 237, 0.6);
+    box-shadow: 0 0 24px rgba(217, 119, 86, 0.45);
   }
 }
 

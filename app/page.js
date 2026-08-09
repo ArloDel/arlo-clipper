@@ -35,7 +35,9 @@ export default function HomePage() {
       <div className={styles.glow} />
       
       <header className={styles.header}>
-        <div className={styles.logo}>Arlo Clipper</div>
+        <div className={styles.logo}>
+          <span className={styles.logoMark}>▶</span> Arlo Clipper
+        </div>
         <Link href="/library" className={styles.libraryLink}>
           My Library <span className={styles.arrow}>→</span>
         </Link>
@@ -43,11 +45,13 @@ export default function HomePage() {
 
       <main className={styles.main}>
         <div className={styles.hero}>
+          <p className={styles.tagline}>YouTube → short clips, done</p>
           <h1 className={styles.headline}>
-            Turn long videos into <span className={styles.gradientText}>viral clips</span>
+            Clip the good parts.
           </h1>
           <p className={styles.subtitle}>
-            Upload a video link and our AI will automatically find the best moments, crop them for mobile, and add engaging captions in minutes.
+            Paste a link. Pick a ratio. Walk away. You get back short clips 
+            with subtitles, cropped for mobile, ready to post.
           </p>
         </div>
 
@@ -56,7 +60,7 @@ export default function HomePage() {
             <input
               type="url"
               className={styles.urlInput}
-              placeholder="Paste a YouTube link to get started..."
+              placeholder="Drop a YouTube link here"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
@@ -64,7 +68,10 @@ export default function HomePage() {
           </div>
           
           <div className={styles.platforms}>
-            YouTube · Vimeo · Twitch · Facebook
+            <span className={styles.platformDot} />YouTube
+            <span className={styles.platformDot} />Vimeo
+            <span className={styles.platformDot} />Twitch
+            <span className={styles.platformDot} />Facebook
           </div>
 
           <button 
@@ -72,13 +79,16 @@ export default function HomePage() {
             className={styles.toggleOptions}
             onClick={() => setShowOptions(!showOptions)}
           >
-            {showOptions ? 'Hide Options' : 'Show Advanced Options'}
+            <span className={`${styles.chevron} ${showOptions ? styles.chevronOpen : ''}`}>
+              ‹
+            </span>
+            {showOptions ? 'Hide options' : 'More options'}
           </button>
 
           {showOptions && (
             <div className={styles.options}>
               <div className={styles.optionGroup}>
-                <label className={styles.label}>Aspect Ratio</label>
+                <label className={styles.label}>Aspect ratio</label>
                 <div className={styles.ratioSelector}>
                   <button
                     type="button"
@@ -99,7 +109,7 @@ export default function HomePage() {
 
               <div className={styles.optionGroup}>
                 <div className={styles.subtitleToggle}>
-                  <label className={styles.label}>Add Subtitles</label>
+                  <label className={styles.label}>Add subtitles</label>
                   <button
                     type="button"
                     className={`${styles.switch} ${subtitles ? styles.switchOn : ''}`}
@@ -152,7 +162,7 @@ export default function HomePage() {
           )}
 
           <button type="submit" className={styles.submitBtn}>
-            Get Free Clips <span className={styles.arrow}>→</span>
+            Start clipping <span className={styles.arrow}>→</span>
           </button>
         </form>
       </main>

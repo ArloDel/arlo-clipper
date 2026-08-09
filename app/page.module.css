@@ -1,5 +1,5 @@
 .container {
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   display: flex;
@@ -10,21 +10,23 @@
   font-family: var(--font-geist-sans), sans-serif;
 }
 
+/* ── Ambient glow — warm, off-center, not the generic AI centered blob ── */
 .glow {
   position: absolute;
-  top: -20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80vw;
-  height: 80vw;
-  max-width: 800px;
-  max-height: 800px;
-  background: radial-gradient(circle, var(--accent-subtle) 0%, transparent 60%);
-  opacity: 0.6;
+  top: -15%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, var(--accent-subtle) 0%, transparent 55%);
+  opacity: 0.5;
   pointer-events: none;
   z-index: 0;
+  filter: blur(20px);
 }
 
+/* ── Header ── */
 .header {
   width: 100%;
   max-width: 1200px;
@@ -40,6 +42,22 @@
   font-weight: 700;
   font-size: 1.25rem;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: var(--accent);
+  color: #fafafa;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 .libraryLink {
@@ -57,59 +75,67 @@
   color: var(--text-primary);
 }
 
+/* ── Main ── */
 .main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 100%;
-  max-width: 800px;
-  padding: 40px 24px 100px;
+  max-width: 720px;
+  padding: 40px 24px 120px;
   z-index: 10;
 }
 
+/* ── Hero — left-aligned, editorial feel ── */
 .hero {
-  text-align: center;
-  margin-bottom: 48px;
+  text-align: left;
+  margin-bottom: 56px;
+}
+
+.tagline {
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 16px;
+  opacity: 0;
+  animation: fadeSlideUp 0.5s var(--ease-out) forwards;
 }
 
 .headline {
-  font-size: clamp(3rem, 5vw, 4.5rem);
+  font-size: clamp(2.8rem, 6vw, 4.8rem);
   font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.04em;
-  margin-bottom: 24px;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
-}
-
-.gradientText {
-  background: linear-gradient(135deg, var(--accent) 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  animation-delay: 60ms;
 }
 
 .subtitle {
   color: var(--text-secondary);
-  font-size: clamp(1.1rem, 2vw, 1.25rem);
-  line-height: 1.6;
-  max-width: 600px;
-  margin: 0 auto;
+  font-size: clamp(1.05rem, 1.8vw, 1.2rem);
+  line-height: 1.65;
+  max-width: 520px;
   opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
-  animation-delay: 80ms;
+  animation-delay: 120ms;
 }
 
+/* ── Form ── */
 .form {
   width: 100%;
-  max-width: 640px;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
-  animation-delay: 160ms;
+  animation-delay: 200ms;
 }
 
 .inputWrapper {
@@ -121,12 +147,14 @@
   width: 100%;
   background-color: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 20px 24px;
-  font-size: 1.125rem;
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  font-size: 1.05rem;
   color: var(--text-primary);
   outline: none;
-  transition: all 0.2s var(--ease-out);
+  transition: border-color 0.25s var(--ease-out),
+              box-shadow 0.25s var(--ease-out),
+              background-color 0.25s var(--ease-out);
   box-shadow: var(--shadow-sm);
   font-family: var(--font-geist-sans), sans-serif;
 }
@@ -141,44 +169,82 @@
   background-color: var(--bg-surface);
 }
 
+/* ── Platform list — with dots instead of interpuncts ── */
 .platforms {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
-  animation-delay: 240ms;
+  animation-delay: 280ms;
 }
 
+.platformDot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--text-muted);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.platformDot:first-child {
+  margin-left: 0;
+}
+
+/* ── Toggle options button ── */
 .toggleOptions {
   background: none;
   border: none;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  padding: 8px;
-  margin-top: 8px;
+  padding: 8px 0;
+  margin-top: 4px;
   transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
-  animation-delay: 320ms;
+  animation-delay: 340ms;
 }
 
 .toggleOptions:hover {
   color: var(--text-primary);
 }
 
+.chevron {
+  display: inline-flex;
+  font-size: 1.1rem;
+  line-height: 1;
+  transform: rotate(-90deg);
+  transition: transform 0.25s var(--ease-out);
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+/* ── Options panel — true glass, not just a colored box ── */
 .options {
-  background-color: var(--bg-surface);
+  background-color: rgba(22, 22, 26, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+              var(--shadow-md);
   border-radius: var(--radius-lg);
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  animation: fadeSlideUp 0.4s var(--ease-out) forwards;
+  animation: fadeSlideUp 0.35s var(--ease-out) forwards;
 }
 
 .optionGroup {
@@ -188,9 +254,10 @@
 }
 
 .label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
 }
 
 .ratioSelector {
@@ -207,7 +274,7 @@
   color: var(--text-secondary);
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s var(--ease-out);
 }
 
 .ratioBtn:hover {
@@ -235,7 +302,7 @@
   border-radius: 12px;
   position: relative;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, border-color 0.2s;
 }
 
 .switchOn {
@@ -249,9 +316,9 @@
   left: 2px;
   width: 18px;
   height: 18px;
-  background-color: white;
+  background-color: #fafafa;
   border-radius: 50%;
-  transition: transform 0.2s;
+  transition: transform 0.25s var(--ease-spring);
 }
 
 .switchOn .switchThumb {
@@ -281,6 +348,7 @@
   font-size: 0.9rem;
   outline: none;
   cursor: pointer;
+  transition: border-color 0.2s var(--ease-out);
 }
 
 .select:focus {
@@ -308,21 +376,24 @@
   border-radius: var(--radius-sm);
 }
 
+/* ── Submit button — solid, confident, not pill-shaped ── */
 .submitBtn {
   background-color: var(--accent);
-  color: white;
+  color: #fafafa;
   border: none;
-  border-radius: var(--radius-xl);
-  padding: 20px;
-  font-size: 1.125rem;
+  border-radius: var(--radius-md);
+  padding: 18px;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s var(--ease-out);
+  transition: background-color 0.2s var(--ease-out),
+              transform 0.15s var(--ease-out),
+              box-shadow 0.25s var(--ease-out);
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  margin-top: 16px;
+  margin-top: 12px;
   opacity: 0;
   animation: fadeSlideUp 0.6s var(--ease-out) forwards;
   animation-delay: 400ms;
@@ -330,25 +401,27 @@
 
 .submitBtn:hover {
   background-color: var(--accent-hover);
-  box-shadow: 0 0 20px var(--accent-glow);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .submitBtn:active {
-  transform: scale(0.97);
+  transform: scale(0.97) translateY(1px);
 }
 
 .arrow {
-  transition: transform 0.2s;
+  transition: transform 0.2s var(--ease-out);
 }
 
 .submitBtn:hover .arrow {
   transform: translateX(4px);
 }
 
+/* ── Keyframes (scoped duplicates for CSS modules) ── */
 @keyframes fadeSlideUp {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   100% {
     opacity: 1;
@@ -359,10 +432,37 @@
 @keyframes fadeSlideDown {
   0% {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-16px);
   }
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ── Responsive: center on mobile ── */
+@media (max-width: 640px) {
+  .main {
+    align-items: center;
+  }
+
+  .hero {
+    text-align: center;
+  }
+
+  .subtitle {
+    max-width: 100%;
+  }
+
+  .platforms {
+    justify-content: center;
+  }
+
+  .toggleOptions {
+    align-self: center;
+  }
+
+  .subtitleOptions {
+    grid-template-columns: 1fr;
   }
 }

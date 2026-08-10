@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
+import editorStyles from './editor.module.css';
 
 function getYouTubeId(url) {
   if (!url) return null;
@@ -11,17 +12,154 @@ function getYouTubeId(url) {
   return match ? match[1] : null;
 }
 
+function SubtitleOverlay({ videoRef, segments, style }) {
+  const [activeText, setActiveText] = useState('');
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      const time = video.currentTime;
+      const activeSeg = segments.find(s => time >= s.start && time <= s.end);
+      setActiveText(activeSeg ? activeSeg.text : '');
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
+  }, [segments, videoRef]);
+
+  if (!activeText) return null;
+
+  // Map sizes to CSS roughly mimicking ASS font sizes
+  const sizeMap = { small: '1.2rem', medium: '2rem', large: '3rem' };
+  const fontSize = sizeMap[style.size?.toLowerCase()] || '2rem';
+
+  const textShadow = [
+    style.shadow ? '0px 4px 10px rgba(0,0,0,0.8)' : '',
+    style.outline ? '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' : ''
+  ].filter(Boolean).join(', ');
+
+  return (
+    <div className={editorStyles.subtitleOverlay} style={{
+      fontFamily: style.font,
+      fontSize: fontSize,
+      color: style.color,
+      textShadow: textShadow || 'none'
+    }}>
+      {activeText}
+    </div>
+  );
+}
+
+function EditorStudio({ clips, onSave }) {
+  const [activeClipIdx, setActiveClipIdx] = useState(0);
+  const [clipStyles, setClipStyles] = useState(
+    clips.map(() => ({ font: 'Impact', size: 'Medium', color: '#FFFF00', outline: true, shadow: true }))
+  );
+  const videoRef = useRef(null);
+
+  const activeClip = clips[activeClipIdx];
+  const activeStyle = clipStyles[activeClipIdx];
+
+  const updateStyle = (key, val) => {
+    const newStyles = [...clipStyles];
+    newStyles[activeClipIdx] = { ...newStyles[activeClipIdx], [key]: val };
+    setClipStyles(newStyles);
+  };
+
+  const handleSave = () => {
+    const finalClips = clips.map((c, i) => ({
+      ...c,
+      style: clipStyles[i]
+    }));
+    onSave(finalClips);
+  };
+
+  return (
+    <div className={editorStyles.editorContainer}>
+      <div className={editorStyles.previewSection}>
+        <div className={editorStyles.tabs}>
+          {clips.map((c, i) => (
+            <button 
+              key={c.id} 
+              className={`${editorStyles.tab} ${i === activeClipIdx ? editorStyles.activeTab : ''}`}
+              onClick={() => setActiveClipIdx(i)}
+            >
+              Clip {i + 1}
+            </button>
+          ))}
+        </div>
+        
+        <div className={editorStyles.videoWrapper}>
+          <video 
+            ref={videoRef}
+            src={activeClip.videoPath} 
+            controls 
+            className={editorStyles.video} 
+            key={activeClip.videoPath}
+          />
+          <SubtitleOverlay videoRef={videoRef} segments={activeClip.segments} style={activeStyle} />
+        </div>
+      </div>
+
+      <div className={editorStyles.controlsSection}>
+        <h3 className={editorStyles.controlsTitle}>Edit Subtitles</h3>
+        
+        <div className={editorStyles.controlGroup}>
+          <label>Font Family</label>
+          <select value={activeStyle.font} onChange={(e) => updateStyle('font', e.target.value)} className={editorStyles.input}>
+            <option>Impact</option>
+            <option>Inter</option>
+            <option>Roboto</option>
+            <option>Montserrat</option>
+            <option>Bangers</option>
+          </select>
+        </div>
+
+        <div className={editorStyles.controlGroup}>
+          <label>Font Size</label>
+          <select value={activeStyle.size} onChange={(e) => updateStyle('size', e.target.value)} className={editorStyles.input}>
+            <option>Small</option>
+            <option>Medium</option>
+            <option>Large</option>
+          </select>
+        </div>
+
+        <div className={editorStyles.controlGroup}>
+          <label>Text Color</label>
+          <input type="color" value={activeStyle.color} onChange={(e) => updateStyle('color', e.target.value)} className={editorStyles.colorInput} />
+        </div>
+
+        <div className={editorStyles.toggleGroup}>
+          <label>Text Outline</label>
+          <input type="checkbox" checked={activeStyle.outline} onChange={(e) => updateStyle('outline', e.target.checked)} />
+        </div>
+
+        <div className={editorStyles.toggleGroup}>
+          <label>Drop Shadow</label>
+          <input type="checkbox" checked={activeStyle.shadow} onChange={(e) => updateStyle('shadow', e.target.checked)} />
+        </div>
+
+        <button className={editorStyles.saveButton} onClick={handleSave}>
+          Save to Library →
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function EditorialContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  
   const url = searchParams.get('url');
   const ratio = searchParams.get('ratio') || '9:16';
-  const subtitles = searchParams.get('subtitles') || 'true';
-  const font = searchParams.get('font') || 'impact';
-  const size = searchParams.get('size') || 'medium';
-  const color = searchParams.get('color') || 'yellow';
-
-  const [status, setStatus] = useState('analyzing'); // 'analyzing', 'rendering', 'done', 'error'
+  
+  // States: analyzing -> preparing -> editing -> rendering -> done
+  const [status, setStatus] = useState('analyzing'); 
   const [errorMessage, setErrorMessage] = useState('');
+  const [preparedClips, setPreparedClips] = useState([]);
   
   const videoId = getYouTubeId(url);
 
@@ -39,31 +177,27 @@ function EditorialContent() {
           body: JSON.stringify({ url })
         });
         
-        if (!analyzeRes.ok) {
-          throw new Error('Failed to analyze video');
-        }
-        
+        if (!analyzeRes.ok) throw new Error('Failed to analyze video');
         const analyzeData = await analyzeRes.json();
         const clips = analyzeData.clips;
-        
-        if (!clips || clips.length === 0) {
-          throw new Error('No engaging clips found by the algorithm.');
-        }
+        if (!clips || clips.length === 0) throw new Error('No engaging clips found by the algorithm.');
 
-        if (isMounted) setStatus('rendering');
+        if (isMounted) setStatus('preparing');
         
-        // 2. Render
-        const renderRes = await fetch('/api/render', {
+        // 2. Prepare Editor (Slice & Transcribe)
+        const prepRes = await fetch('/api/prepare-editor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, clips, ratio, subtitles, font, size, color })
+          body: JSON.stringify({ url, clips, ratio })
         });
         
-        if (!renderRes.ok) {
-          throw new Error('Failed to render clips');
-        }
+        if (!prepRes.ok) throw new Error('Failed to prepare clips for editing');
+        const prepData = await prepRes.json();
         
-        if (isMounted) setStatus('done');
+        if (isMounted) {
+          setPreparedClips(prepData.clips);
+          setStatus('editing');
+        }
         
       } catch (err) {
         if (isMounted) {
@@ -74,17 +208,49 @@ function EditorialContent() {
     }
     
     processVideo();
-    
     return () => { isMounted = false; };
-  }, [url, ratio, subtitles, font, size, color]);
+  }, [url, ratio]);
+
+  const handleSaveFinal = async (finalClips) => {
+    setStatus('rendering');
+    try {
+      const renderRes = await fetch('/api/render-final', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clips: finalClips })
+      });
+      
+      if (!renderRes.ok) throw new Error('Failed to render final clips');
+      
+      setStatus('done');
+    } catch (err) {
+      setStatus('error');
+      setErrorMessage(err.message || 'Failed to render final clips');
+    }
+  };
+
+  if (status === 'editing') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.videoHeader}>
+          <h1 className={styles.title}>Realtime Editor</h1>
+          <p className={styles.subtitle}>Customize your subtitles before saving.</p>
+        </div>
+        <EditorStudio clips={preparedClips} onSave={handleSaveFinal} />
+      </div>
+    );
+  }
 
   const steps = [
     { id: 'analyzing', label: 'Analyzing Content', description: 'Transcribing and finding viral moments' },
-    { id: 'rendering', label: 'Rendering Clips', description: 'Applying captions and cropping' },
+    { id: 'preparing', label: 'Preparing Editor', description: 'Extracting audio and slicing clips' },
+    { id: 'rendering', label: 'Rendering Final', description: 'Burning subtitles' },
     { id: 'done', label: 'Ready', description: 'Clips are saved to your library' }
   ];
   
-  const currentStepIndex = steps.findIndex(s => s.id === status);
+  // Skip editing step in the stepper, we just show the editor UI
+  const effectiveStatus = status === 'error' ? 'analyzing' : status;
+  const currentStepIndex = steps.findIndex(s => s.id === effectiveStatus);
   const isDoneOrError = status === 'done' || status === 'error';
 
   return (
@@ -99,14 +265,14 @@ function EditorialContent() {
           {videoId ? (
             <iframe
               className={styles.iframe}
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1`}
               title="YouTube video player"
               frameBorder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             ></iframe>
           ) : (
-            <div className={styles.placeholder}>
+            <div className={styles.noVideo}>
               <p>Invalid or missing video URL</p>
             </div>
           )}
@@ -148,12 +314,11 @@ function EditorialContent() {
         )}
 
         {status === 'done' && (
-          <div className={styles.successCard}>
-            <div className={styles.successIcon}>✓</div>
+          <div className={styles.doneCard}>
+            <div className={styles.doneIcon}>✓</div>
             <h3>Extraction Complete!</h3>
-            <p>Your viral clips are ready.</p>
             <Link href="/library" className={styles.primaryButton}>
-              View in Library &rarr;
+              View in Library →
             </Link>
           </div>
         )}
@@ -164,12 +329,7 @@ function EditorialContent() {
 
 export default function EditorialPage() {
   return (
-    <Suspense fallback={
-      <div className={styles.fallbackContainer}>
-        <div className={styles.spinner}></div>
-        <p>Loading editor...</p>
-      </div>
-    }>
+    <Suspense fallback={<div className={styles.loadingPulse}>Loading...</div>}>
       <EditorialContent />
     </Suspense>
   );

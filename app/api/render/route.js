@@ -12,7 +12,15 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00', clips } = await request.json();
+    let { url, ratio, subtitles = true, font = 'Impact', size = '24', color = '#FFFF00', clips } = await request.json();
+    subtitles = subtitles === true || subtitles === 'true';
+
+    let fontSize = 24;
+    const sizeLower = String(size).toLowerCase();
+    if (sizeLower === 'small') fontSize = 16;
+    else if (sizeLower === 'medium') fontSize = 24;
+    else if (sizeLower === 'large') fontSize = 32;
+    else fontSize = parseInt(size) || 24;
 
     if (!url || !clips || !Array.isArray(clips) || clips.length === 0) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
@@ -123,15 +131,15 @@ export async function POST(request) {
           filters.push('scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2');
         }
 
-        let assColor = '&H00FFFF&';
+        let assColor = '&H0000FFFF&';
         if (color && color.startsWith('#') && color.length === 7) {
           const r = color.substring(1, 3);
           const g = color.substring(3, 5);
           const b = color.substring(5, 7);
-          assColor = `&H${b}${g}${r}&`;
+          assColor = `&H00${b}${g}${r}&`;
         }
 
-        const forceStyle = `FontName=${font},FontSize=${size},PrimaryColour=${assColor}`;
+        const forceStyle = `FontName=${font},FontSize=${fontSize},PrimaryColour=${assColor}`;
         filters.push(`subtitles=${relativeSrtPath}:force_style='${forceStyle}'`);
 
         await new Promise((resolve, reject) => {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '../../../../../lib/db';
-const archiver = require('archiver');
+import { ZipArchive } from 'archiver';
 import fs from 'fs';
 import path from 'path';
 
@@ -29,7 +29,7 @@ export async function POST(request) {
     const { PassThrough } = require('stream');
     const passThrough = new PassThrough();
 
-    const archive = archiver('zip', {
+    const archive = new ZipArchive({
       zlib: { level: 9 } // Sets the compression level.
     });
 

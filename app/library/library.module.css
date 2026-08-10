@@ -231,3 +231,146 @@
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
 }
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.selectModeBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selectModeBtn:hover {
+  background: var(--bg-elevated);
+}
+
+.selectModeActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.selectAllRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.selectAllLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.checkboxWrapper {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 20;
+  background: rgba(0,0,0,0.5);
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.cardSelectable {
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.cardSelectable:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+
+.cardSelected {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.floatingActionBar {
+  position: fixed;
+  bottom: 2rem;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+  animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.floatingContent {
+  background: rgba(20, 20, 20, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.selectedCount {
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.floatingActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.floatingBtnPrimary, .floatingBtnDanger {
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s;
+}
+
+.floatingBtnPrimary {
+  background: var(--accent);
+  color: white;
+}
+
+.floatingBtnDanger {
+  background: var(--destructive);
+  color: white;
+}
+
+.floatingBtnPrimary:disabled, .floatingBtnDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

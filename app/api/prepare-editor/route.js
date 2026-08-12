@@ -37,6 +37,7 @@ export async function POST(request) {
       ffmpegLocation: ffmpegInstaller.path,
       noCheckCertificates: true,
       noWarnings: true,
+      extractorArgs: 'youtube:player_client=android',
     });
 
     const processedClips = [];

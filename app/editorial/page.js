@@ -41,12 +41,16 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   ].filter(Boolean).join(', ');
 
   return (
-    <div className={editorStyles.subtitleOverlay} style={{
-      fontFamily: style.font,
-      fontSize: fontSize,
-      color: style.color,
-      textShadow: textShadow || 'none'
-    }}>
+    <div 
+      key={style.animation ? activeText : 'static'} 
+      className={`${editorStyles.subtitleOverlay} ${style.animation ? editorStyles.animatePop : ''}`} 
+      style={{
+        fontFamily: style.font,
+        fontSize: fontSize,
+        color: style.color,
+        textShadow: textShadow || 'none'
+      }}
+    >
       {activeText}
     </div>
   );
@@ -55,7 +59,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
 function EditorStudio({ clips, onSave }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clipStyles, setClipStyles] = useState(
-    clips.map(() => ({ font: 'Impact', size: 'Medium', color: '#FFFF00', outline: true, shadow: true }))
+    clips.map(() => ({ font: 'Impact', size: 'Medium', color: '#FFFF00', outline: true, shadow: true, animation: true }))
   );
   const videoRef = useRef(null);
 
@@ -139,6 +143,11 @@ function EditorStudio({ clips, onSave }) {
         <div className={editorStyles.toggleGroup}>
           <label>Drop Shadow</label>
           <input type="checkbox" checked={activeStyle.shadow} onChange={(e) => updateStyle('shadow', e.target.checked)} />
+        </div>
+
+        <div className={editorStyles.toggleGroup}>
+          <label>Pop Animation</label>
+          <input type="checkbox" checked={activeStyle.animation} onChange={(e) => updateStyle('animation', e.target.checked)} />
         </div>
 
         <button className={editorStyles.saveButton} onClick={handleSave}>

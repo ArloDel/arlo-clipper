@@ -52,7 +52,6 @@
 .videoWrapper {
   position: relative;
   width: 100%;
-  aspect-ratio: 9 / 16;
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -80,7 +79,6 @@
   font-weight: 800;
   text-transform: uppercase;
   z-index: 10;
-  /* Shadow and styling passed inline from React */
 }
 
 @keyframes popIn {
@@ -91,6 +89,35 @@
 
 .animatePop {
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes slideUp {
+  0% { transform: translateY(20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animateSlideUp {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+@keyframes blurIn {
+  0% { filter: blur(10px); opacity: 0; transform: scale(1.05); }
+  100% { filter: blur(0); opacity: 1; transform: scale(1); }
+}
+
+.animateBlur {
+  animation: blurIn 0.6s ease-out forwards;
+}
+
+@keyframes elasticBounce {
+  0% { transform: scale(0.3); opacity: 0; }
+  40% { transform: scale(1.2); opacity: 1; }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.animateBounce {
+  animation: elasticBounce 0.5s cubic-bezier(0.25, 1.5, 0.5, 1) forwards;
 }
 
 .controlsSection {

@@ -40,10 +40,20 @@ function SubtitleOverlay({ videoRef, segments, style }) {
     style.outline ? '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' : ''
   ].filter(Boolean).join(', ');
 
+  const getAnimationClass = (anim) => {
+    switch (anim) {
+      case 'Pop': return editorStyles.animatePop;
+      case 'Slide Up': return editorStyles.animateSlideUp;
+      case 'Blur': return editorStyles.animateBlur;
+      case 'Bounce': return editorStyles.animateBounce;
+      default: return '';
+    }
+  };
+
   return (
     <div 
-      key={style.animation ? activeText : 'static'} 
-      className={`${editorStyles.subtitleOverlay} ${style.animation ? editorStyles.animatePop : ''}`} 
+      key={style.animation !== 'None' ? activeText : 'static'} 
+      className={`${editorStyles.subtitleOverlay} ${getAnimationClass(style.animation)}`} 
       style={{
         fontFamily: style.font,
         fontSize: fontSize,
@@ -56,15 +66,17 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips, onSave }) {
+function EditorStudio({ clips, onSave, ratio }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clipStyles, setClipStyles] = useState(
-    clips.map(() => ({ font: 'Impact', size: 'Medium', color: '#FFFF00', outline: true, shadow: true, animation: true }))
+    clips.map(() => ({ font: 'Impact', size: 'Medium', color: '#FFFF00', outline: true, shadow: true, animation: 'Pop' }))
   );
   const videoRef = useRef(null);
 
   const activeClip = clips[activeClipIdx];
   const activeStyle = clipStyles[activeClipIdx];
+  
+  const isMobile = ratio === '9:16' || ratio === 'mobile';
 
   const updateStyle = (key, val) => {
     const newStyles = [...clipStyles];
@@ -95,7 +107,10 @@ function EditorStudio({ clips, onSave }) {
           ))}
         </div>
         
-        <div className={editorStyles.videoWrapper}>
+        <div 
+          className={editorStyles.videoWrapper} 
+          style={{ aspectRatio: isMobile ? '9 / 16' : '16 / 9' }}
+        >
           <video 
             ref={videoRef}
             src={activeClip.videoPath} 
@@ -145,9 +160,15 @@ function EditorStudio({ clips, onSave }) {
           <input type="checkbox" checked={activeStyle.shadow} onChange={(e) => updateStyle('shadow', e.target.checked)} />
         </div>
 
-        <div className={editorStyles.toggleGroup}>
-          <label>Pop Animation</label>
-          <input type="checkbox" checked={activeStyle.animation} onChange={(e) => updateStyle('animation', e.target.checked)} />
+        <div className={editorStyles.controlGroup}>
+          <label>Animation Style</label>
+          <select value={activeStyle.animation} onChange={(e) => updateStyle('animation', e.target.value)} className={editorStyles.input}>
+            <option>None</option>
+            <option>Pop</option>
+            <option>Slide Up</option>
+            <option>Blur</option>
+            <option>Bounce</option>
+          </select>
         </div>
 
         <button className={editorStyles.saveButton} onClick={handleSave}>
@@ -245,7 +266,7 @@ function EditorialContent() {
           <h1 className={styles.title}>Realtime Editor</h1>
           <p className={styles.subtitle}>Customize your subtitles before saving.</p>
         </div>
-        <EditorStudio clips={preparedClips} onSave={handleSaveFinal} />
+        <EditorStudio clips={preparedClips} onSave={handleSaveFinal} ratio={ratio} />
       </div>
     );
   }

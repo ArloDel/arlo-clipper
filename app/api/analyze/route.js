@@ -58,13 +58,25 @@ export async function POST(request) {
     const audioPath = path.join(clipsDir, `${sessionId}-audio.mp3`);
 
     console.log('[1/4] Downloading Audio for Whisper via yt-dlp...');
-    await youtubedl(url, {
-      output: audioPath,
-      format: 'bestaudio[ext=m4a]/bestaudio/best',
-      noCheckCertificates: true,
-      noWarnings: true,
-      extractorArgs: 'youtube:player_client=android', // proactive fix
-    });
+    let downloadSuccess = false;
+    let dlRetries = 3;
+    while (dlRetries > 0 && !downloadSuccess) {
+      try {
+        await youtubedl(url, {
+          output: audioPath,
+          format: 'bestaudio[ext=m4a]/bestaudio/best',
+          noCheckCertificates: true,
+          noWarnings: true,
+          extractorArgs: 'youtube:player_client=android', // Revert to 'android' for stable audio-only extraction
+        });
+        downloadSuccess = true;
+      } catch (err) {
+        dlRetries--;
+        console.warn(`[Analyze] Audio download failed, retrying... (${dlRetries} left)`);
+        if (dlRetries === 0) throw err;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
 
     console.log('[2/4] Checking audio duration...');
     const getAudioDuration = (filePath) => {

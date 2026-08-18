@@ -31,14 +31,26 @@ export async function POST(request) {
     const videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
 
     console.log(`[Prepare Editor] Downloading Full Video...`);
-    await youtubedl(url, {
-      output: videoPath,
-      format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-      ffmpegLocation: ffmpegInstaller.path,
-      noCheckCertificates: true,
-      noWarnings: true,
-      extractorArgs: 'youtube:player_client=android',
-    });
+    let downloadSuccess = false;
+    let retries = 3;
+    while (retries > 0 && !downloadSuccess) {
+      try {
+        await youtubedl(url, {
+          output: videoPath,
+          format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+          ffmpegLocation: ffmpegInstaller.path,
+          noCheckCertificates: true,
+          noWarnings: true,
+          extractorArgs: 'youtube:player_client=android_vr',
+        });
+        downloadSuccess = true;
+      } catch (err) {
+        retries--;
+        console.warn(`[Prepare Editor] Download failed, retrying... (${retries} left)`);
+        if (retries === 0) throw err;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
 
     const processedClips = [];
     
@@ -65,22 +77,28 @@ export async function POST(request) {
       const rawClipPath = path.join(clipsDir, `${clipId}-raw.mp4`);
       const clipAudioPath = path.join(clipsDir, `${clipId}-clip-audio.mp3`);
 
-      // 1. Slice and apply ratio immediately (so the editor gets the properly sized video)
-      console.log(`[Prepare Editor] Slicing and applying ratio to clip ${index}...`);
+      // 1. Slice and apply ratio preserving original resolution sharpness
+      console.log(`[Prepare Editor] Slicing clip ${index} for ${ratio}...`);
+      
       const filters = [];
       if (ratio === '9:16' || ratio === 'mobile') {
-        filters.push('crop=ih*9/16:ih:iw/2-ow/2:0,scale=1080:1920');
-      } else if (ratio === '16:9' || ratio === 'desktop') {
-        filters.push('scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2');
+        // Crop the center to 9:16 without upscaling it, preserving 100% sharpness
+        filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
       }
 
       await new Promise((resolve, reject) => {
-        ffmpeg(videoPath)
+        let command = ffmpeg(videoPath)
           .setStartTime(startSec)
-          .setDuration(durationSec)
-          .videoFilters(filters)
-          .videoBitrate('8000k')
-          .output(rawClipPath)
+          .setDuration(durationSec);
+
+        if (filters.length > 0) {
+           command = command.videoFilters(filters).outputOptions(['-c:v libx264', '-crf 18', '-preset fast']);
+        } else {
+           // Desktop (16:9): No crop needed, just copy the stream (instant & zero quality loss)
+           command = command.outputOptions(['-c copy']);
+        }
+
+        command.output(rawClipPath)
           .on('end', resolve)
           .on('error', reject)
           .run();

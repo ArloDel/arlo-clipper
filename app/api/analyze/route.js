@@ -62,13 +62,16 @@ export async function POST(request) {
     let dlRetries = 3;
     while (dlRetries > 0 && !downloadSuccess) {
       try {
-        await youtubedl(url, {
+        const ytdlOptions = {
           output: audioPath,
           format: 'bestaudio[ext=m4a]/bestaudio/best',
           noCheckCertificates: true,
           noWarnings: true,
-          extractorArgs: 'youtube:player_client=android', // Revert to 'android' for stable audio-only extraction
-        });
+          noContinue: true,
+          extractorArgs: 'youtube:player_client=android', // ALWAYS use android for stable audio
+        };
+
+        await youtubedl(url, ytdlOptions);
         downloadSuccess = true;
       } catch (err) {
         dlRetries--;

@@ -33,20 +33,36 @@ export async function POST(request) {
     console.log(`[Prepare Editor] Downloading Full Video...`);
     let downloadSuccess = false;
     let retries = 3;
+    let currentClient = 'web';
+
     while (retries > 0 && !downloadSuccess) {
       try {
-        await youtubedl(url, {
+        const ytdlOptions = {
           output: videoPath,
           format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
           ffmpegLocation: ffmpegInstaller.path,
           noCheckCertificates: true,
           noWarnings: true,
-          extractorArgs: 'youtube:player_client=android_vr',
-        });
+          noContinue: true,
+          jsRuntimes: 'node',
+        };
+
+        if (currentClient === 'android') {
+          ytdlOptions.extractorArgs = 'youtube:player_client=android';
+        }
+
+        await youtubedl(url, ytdlOptions);
         downloadSuccess = true;
       } catch (err) {
         retries--;
-        console.warn(`[Prepare Editor] Download failed, retrying... (${retries} left)`);
+        console.warn(`[Prepare Editor] Download failed with ${currentClient}, retrying... (${retries} left)`);
+        
+        // If default web client fails multiple times, gracefully degrade to android (360p but 100% stable)
+        if (retries === 1) {
+          console.warn(`[Prepare Editor] Falling back to stable android client for final attempt...`);
+          currentClient = 'android';
+        }
+
         if (retries === 0) throw err;
         await new Promise(r => setTimeout(r, 2000));
       }

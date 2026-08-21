@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ThemeToggle from '../components/ThemeToggle';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -39,14 +40,15 @@ export default function LoginPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.backgroundGlow} />
-      
+      <div className={styles.topBar}>
+        <ThemeToggle />
+      </div>
+
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.brand}>
-            Arlo <span className={styles.brandHighlight}>Clipper</span>
-          </h1>
-          <p className={styles.subtitle}>Sign in to your account</p>
+          <div className={styles.logoMark}>▶</div>
+          <h1 className={styles.brand}>Arlo Clipper</h1>
+          <p className={styles.subtitle}>Enter password to access workspace</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -55,7 +57,7 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Enter password"
               className={styles.input}
               required
               disabled={isLoading}
@@ -69,11 +71,7 @@ export default function LoginPage() {
             className={styles.button}
             disabled={isLoading || !password}
           >
-            {isLoading ? (
-              <span className={styles.spinner} aria-label="Loading" />
-            ) : (
-              'Sign in'
-            )}
+            {isLoading ? <span className={styles.spinner} aria-label="Loading" /> : 'Continue →'}
           </button>
         </form>
       </div>

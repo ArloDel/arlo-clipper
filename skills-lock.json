@@ -18,6 +18,18 @@
       "sourceType": "github",
       "skillPath": "skills/interface-kit/SKILL.md",
       "computedHash": "3990d2fa28800ba93aa32ebfbb2b7277e0bd368111b85363bfe943fd19bb3b3a"
+    },
+    "minimalist-ui": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/minimalist-skill/SKILL.md",
+      "computedHash": "7e88897e0371184e97a82b8d9ef080323c13f21eb067b58ef71eb05173a08ac2"
+    },
+    "redesign-existing-projects": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/redesign-skill/SKILL.md",
+      "computedHash": "47eced3e960a2c961d3cbee11fa1216264f589344b586a5cbd03967cd6b9c54b"
     }
   }
 }

@@ -172,15 +172,18 @@ export async function POST(request) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
     
-    const systemPrompt = `You are an expert video editor. Read the following video transcript containing timestamps. Find the top 3 most engaging, viral-worthy segments (15 to 45 seconds long each). Return ONLY a valid JSON array with EXACTLY 3 objects containing this exact structure:
+    const systemPrompt = `You are an expert video editor. Read the following video transcript containing timestamps. Find the top 3 most engaging, viral-worthy segments (30 to 60 seconds long each). Return ONLY a valid JSON array with EXACTLY 3 objects containing this exact structure:
 [
   {
     "title": "A catchy title for the clip",
     "start_time": "00:00:00",
-    "end_time": "00:00:30",
+    "end_time": "00:00:45",
     "reason": "Why this clip is engaging"
   }
-]`;
+]
+IMPORTANT:
+- Every segment MUST have a duration between 30 seconds and 60 seconds (1 minute) (i.e., end_time - start_time >= 30 and <= 60 seconds).
+- Ensure the start_time and end_time represent a complete, cohesive, and compelling moment from the transcript.`;
 
     let highlightData = [];
     let retries = 3;

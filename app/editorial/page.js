@@ -32,12 +32,12 @@ function SubtitleOverlay({ videoRef, segments, style }) {
 
   if (!activeText) return null;
 
-  const sizeMap = { small: '1.1rem', medium: '1.8rem', large: '2.5rem' };
-  const fontSize = sizeMap[style.size?.toLowerCase()] || '1.8rem';
+  const sizeMap = { small: '1.15rem', medium: '1.5rem', large: '2.0rem' };
+  const fontSize = sizeMap[style.size?.toLowerCase()] || '1.5rem';
 
   const textShadow = [
-    style.shadow ? '0px 2px 8px rgba(0,0,0,0.9)' : '',
-    style.outline ? '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' : '',
+    style.shadow ? '0px 2px 5px rgba(0,0,0,0.7)' : '',
+    style.outline ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' : '',
   ]
     .filter(Boolean)
     .join(', ');
@@ -59,12 +59,12 @@ function SubtitleOverlay({ videoRef, segments, style }) {
 
   return (
     <div
-      key={style.animation !== 'None' ? activeText : 'static'}
+      key={`${activeText}-${style.animation}`}
       className={`${editorStyles.subtitleOverlay} ${getAnimationClass(style.animation)}`}
       style={{
-        fontFamily: style.font,
+        fontFamily: style.font || 'Impact',
         fontSize: fontSize,
-        color: style.color,
+        color: style.color || '#FFFF00',
         textShadow: textShadow || 'none',
       }}
     >

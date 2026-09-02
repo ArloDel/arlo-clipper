@@ -282,3 +282,122 @@
 .saveButton:hover .arrow {
   transform: translateX(3px);
 }
+
+/* ── Face Tracking Section ── */
+.faceTrackingBox {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 150ms var(--ease-out);
+}
+
+.faceTrackingBoxActive {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-subtle));
+}
+
+.faceTrackingHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faceTrackingTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.faceTrackingBadge {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.65rem;
+  padding: 1px 5px;
+  background-color: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+}
+
+.faceTrackingDesc {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  line-height: 1.3;
+}
+
+.faceTrackingLoading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 500;
+  padding-top: 2px;
+}
+
+.spinnerSmall {
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--border-hairline);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Switch Toggle UI */
+.switchLabel {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.switchInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchSlider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-hairline);
+  transition: 0.2s;
+  border-radius: 20px;
+}
+
+.switchSlider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.2s;
+  border-radius: 50%;
+}
+
+.switchInput:checked + .switchSlider {
+  background-color: var(--accent);
+}
+
+.switchInput:checked + .switchSlider:before {
+  transform: translateX(16px);
+}
+

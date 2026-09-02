@@ -73,10 +73,12 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips, onSave, ratio }) {
+function EditorStudio({ clips: initialClips, onSave, ratio }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
+  const [clips, setClips] = useState(initialClips);
+  const [trackingLoading, setTrackingLoading] = useState(false);
   const [clipStyles, setClipStyles] = useState(
-    clips.map(() => ({
+    initialClips.map(() => ({
       font: 'Impact',
       size: 'Medium',
       color: '#FFFF00',
@@ -95,6 +97,61 @@ function EditorStudio({ clips, onSave, ratio }) {
     const newStyles = [...clipStyles];
     newStyles[activeClipIdx] = { ...newStyles[activeClipIdx], [key]: val };
     setClipStyles(newStyles);
+  };
+
+  const handleToggleFaceTracking = async (enabled) => {
+    const currentClip = clips[activeClipIdx];
+    if (enabled) {
+      if (currentClip.trackedVideoPath) {
+        const updated = [...clips];
+        updated[activeClipIdx] = {
+          ...currentClip,
+          videoPath: currentClip.trackedVideoPath,
+          faceTracking: true,
+        };
+        setClips(updated);
+      } else {
+        setTrackingLoading(true);
+        try {
+          const res = await fetch('/api/face-track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clipId: currentClip.id,
+              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
+              videoPath: currentClip.videoPath,
+              ratio,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to track face');
+          }
+          const updated = [...clips];
+          updated[activeClipIdx] = {
+            ...currentClip,
+            trackedVideoPath: data.trackedVideoPath,
+            videoPath: data.trackedVideoPath,
+            faceTracking: true,
+          };
+          setClips(updated);
+        } catch (err) {
+          console.error('Face tracking error:', err);
+          alert('Gagal melacak wajah: ' + err.message);
+        } finally {
+          setTrackingLoading(false);
+        }
+      }
+    } else {
+      const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
+      const updated = [...clips];
+      updated[activeClipIdx] = {
+        ...currentClip,
+        videoPath: fallbackVideo,
+        faceTracking: false,
+      };
+      setClips(updated);
+    }
   };
 
   const handleSave = () => {
@@ -139,6 +196,35 @@ function EditorStudio({ clips, onSave, ratio }) {
         <div className={editorStyles.controlsHeader}>
           <h3 className={editorStyles.controlsTitle}>Subtitle Settings</h3>
           <span className={editorStyles.controlsBadge}>Clip {activeClipIdx + 1}</span>
+        </div>
+
+        {/* OpenCV Face Tracking Toggle */}
+        <div className={`${editorStyles.faceTrackingBox} ${activeClip.faceTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
+          <div className={editorStyles.faceTrackingHeader}>
+            <span className={editorStyles.faceTrackingTitle}>
+              <span>Face Tracking</span>
+              <span className={editorStyles.faceTrackingBadge}>OpenCV</span>
+            </span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeClip.faceTracking)}
+                disabled={trackingLoading}
+                onChange={(e) => handleToggleFaceTracking(e.target.checked)}
+                className={editorStyles.switchInput}
+              />
+              <span className={editorStyles.switchSlider}></span>
+            </label>
+          </div>
+          <p className={editorStyles.faceTrackingDesc}>
+            Otomatis memposisikan framing vertikal 9:16 mengikuti pergerakan wajah pembicara.
+          </p>
+          {trackingLoading && (
+            <div className={editorStyles.faceTrackingLoading}>
+              <div className={editorStyles.spinnerSmall}></div>
+              <span>Melacak wajah dengan OpenCV...</span>
+            </div>
+          )}
         </div>
 
         <div className={editorStyles.controlGroup}>

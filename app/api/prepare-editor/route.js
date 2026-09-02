@@ -90,37 +90,44 @@ export async function POST(request) {
       const durationSec = endSec - startSec;
       
       const clipId = uuidv4();
+      const sourceClipPath = path.join(clipsDir, `${clipId}-source.mp4`);
       const rawClipPath = path.join(clipsDir, `${clipId}-raw.mp4`);
       const clipAudioPath = path.join(clipsDir, `${clipId}-clip-audio.mp3`);
 
-      // 1. Slice and apply ratio preserving original resolution sharpness
-      console.log(`[Prepare Editor] Slicing clip ${index} for ${ratio}...`);
-      
+      // 1. Slice full 16:9 segment first (needed for OpenCV face detection across full frame)
+      console.log(`[Prepare Editor] Slicing source clip ${index}...`);
+      await new Promise((resolve, reject) => {
+        ffmpeg(videoPath)
+          .setStartTime(startSec)
+          .setDuration(durationSec)
+          .outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a aac'])
+          .output(sourceClipPath)
+          .on('end', resolve)
+          .on('error', reject)
+          .run();
+      });
+
+      // 2. Apply standard ratio crop (center crop for 9:16)
+      console.log(`[Prepare Editor] Applying ratio ${ratio} for clip ${index}...`);
       const filters = [];
       if (ratio === '9:16' || ratio === 'mobile') {
-        // Crop the center to 9:16 without upscaling it, preserving 100% sharpness
         filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
       }
 
       await new Promise((resolve, reject) => {
-        let command = ffmpeg(videoPath)
-          .setStartTime(startSec)
-          .setDuration(durationSec);
-
+        let command = ffmpeg(sourceClipPath);
         if (filters.length > 0) {
-           command = command.videoFilters(filters).outputOptions(['-c:v libx264', '-crf 18', '-preset fast']);
+          command = command.videoFilters(filters).outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a copy']);
         } else {
-           // Desktop (16:9): No crop needed, just copy the stream (instant & zero quality loss)
-           command = command.outputOptions(['-c copy']);
+          command = command.outputOptions(['-c copy']);
         }
-
         command.output(rawClipPath)
           .on('end', resolve)
           .on('error', reject)
           .run();
       });
 
-      // 2. Extract Audio
+      // 3. Extract Audio
       console.log(`[Prepare Editor] Extracting Audio for clip ${index}...`);
       await new Promise((resolve, reject) => {
         ffmpeg(rawClipPath)
@@ -132,7 +139,7 @@ export async function POST(request) {
           .run();
       });
 
-      // 3. Transcribe with Groq
+      // 4. Transcribe with Groq
       console.log(`[Prepare Editor] Generating transcript for clip ${index}...`);
       const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
       const transcription = await groq.audio.transcriptions.create({
@@ -150,11 +157,15 @@ export async function POST(request) {
       }));
 
       const videoSrc = `/clips/${path.basename(rawClipPath)}`;
+      const sourceSrc = `/clips/${path.basename(sourceClipPath)}`;
       
       processedClips.push({
         id: clipId,
         title: title || `Clip ${index}`,
         videoPath: videoSrc,
+        sourceVideoPath: sourceSrc,
+        centerVideoPath: videoSrc,
+        faceTracking: false,
         duration: durationSec,
         segments
       });

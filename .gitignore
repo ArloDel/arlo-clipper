@@ -44,3 +44,5 @@ public/cache/*
 *-player-script.js
 test-models.js
 data/db.json
+__pycache__/
+*.pyc

@@ -30,6 +30,15 @@
 
 ## 🎥 Demonstrasi Visual (Live Demo)
 
+### 🚀 Live End-to-End Workflow Automation
+> *Demonstrasi lengkap: Login (`admin123`) ➔ Input URL YouTube ➔ Analisis AI ➔ Editorial Studio (Custom Subtitle & OpenCV Face Tracking) ➔ Save & Export ke Library.*
+
+<div align="center">
+  <img src="docs/assets/demo-workflow.gif" width="760" alt="Live Demo Automation Workflow" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);" />
+</div>
+
+---
+
 ### 1. 🎯 OpenCV Smart Face Tracking (Auto-Crop 9:16)
 > *Kamera vertikal 9:16 otomatis mengikuti pergerakan wajah pembicara secara halus tanpa getaran patah-patah.*
 

@@ -401,3 +401,160 @@
   transform: translateX(16px);
 }
 
+/* ── Social Media Copy Card ── */
+.socialCopyCard {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.socialHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.socialTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.socialBadge {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  color: var(--text-sub);
+}
+
+.metaInfoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.metaPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  color: var(--text-sub);
+}
+
+.metaPillHighlight {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.socialHookBox {
+  background: var(--bg-surface);
+  border-left: 3px solid var(--accent);
+  padding: 8px 10px;
+  border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hookLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-sub);
+}
+
+.hookText {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+
+.socialCaptionText {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  line-height: 1.4;
+  background: var(--bg-surface);
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-hairline);
+}
+
+.hashtagsWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tagChip {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  background: var(--bg-surface);
+  color: var(--text-sub);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-hairline);
+}
+
+.platformCopyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.platformBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-main);
+  padding: 8px 6px;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms var(--ease-out);
+}
+
+.platformBtn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-subtle);
+  transform: translateY(-1px);
+}
+
+.platformBtn:active {
+  transform: translateY(0);
+}
+
+.platformIcon {
+  font-size: 1rem;
+}
+
+.copyFeedback {
+  font-size: 0.72rem;
+  color: #10b981;
+  font-weight: 600;
+  text-align: center;
+  padding-top: 2px;
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+

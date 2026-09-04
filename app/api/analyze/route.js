@@ -168,22 +168,53 @@ export async function POST(request) {
       }
     }
 
-    console.log(`[4/4] Analyzing text transcript with Gemini 1.5 Flash...`);
+    console.log('[4/4] Extracting channel info and analyzing text transcript with Gemini 1.5 Flash...');
+    let channelName = 'YouTube';
+    let videoTitle = '';
+    try {
+      const meta = await youtubedl(url, {
+        dumpSingleJson: true,
+        noWarnings: true,
+        noCheckCertificates: true,
+        preferFreeFormats: true,
+        youtubeSkipDashManifest: true,
+      });
+      if (meta) {
+        channelName = meta.uploader || meta.channel || meta.uploader_id || 'YouTube';
+        videoTitle = meta.title || '';
+      }
+    } catch (e) {
+      console.warn('[Analyze] Fast metadata extraction fallback:', e.message);
+    }
+
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     
-    const systemPrompt = `You are an expert video editor. Read the following video transcript containing timestamps. Find the top 3 most engaging, viral-worthy segments (30 to 60 seconds long each). Return ONLY a valid JSON array with EXACTLY 3 objects containing this exact structure:
+    const systemPrompt = `You are an expert video editor and social media copywriter.
+Read the following video transcript containing timestamps.
+Channel Name: "${channelName}"
+Video Title: "${videoTitle}"
+
+Find the top 3 most engaging, viral-worthy segments (30 to 60 seconds long each).
+For each segment, craft high-engagement copywriting (viral hook, caption, and hashtags) for social media (YouTube Shorts, TikTok, Instagram Reels) matching the transcript's language.
+
+Return ONLY a valid JSON array with EXACTLY 3 objects containing this exact structure:
 [
   {
     "title": "A catchy title for the clip",
-    "start_time": "00:00:00",
-    "end_time": "00:00:45",
-    "reason": "Why this clip is engaging"
+    "hook": "An attention-grabbing 1-sentence viral hook for the first 3 seconds",
+    "caption": "An engaging 2-3 sentence description explaining the context and sparking discussion",
+    "channel_name": "${channelName}",
+    "start_time": "00:00:15",
+    "end_time": "00:00:55",
+    "hashtags": ["#Shorts", "#Viral", "#Trending", "#TopicTag1", "#TopicTag2"],
+    "reason": "Why this moment is engaging"
   }
 ]
 IMPORTANT:
 - Every segment MUST have a duration between 30 seconds and 60 seconds (1 minute) (i.e., end_time - start_time >= 30 and <= 60 seconds).
-- Ensure the start_time and end_time represent a complete, cohesive, and compelling moment from the transcript.`;
+- Language: Write the hook, caption, and title in the SAME language as the transcript (e.g., Indonesian if Indonesian, English if English).
+- Hashtags must be an array of string tags starting with #.`;
 
     let highlightData = [];
     let retries = 3;
@@ -222,6 +253,14 @@ IMPORTANT:
       }
     }
 
+    highlightData = highlightData.map((c, idx) => ({
+      ...c,
+      channelName: c.channel_name || c.channelName || channelName,
+      hook: c.hook || c.title || `Clip ${idx + 1}`,
+      caption: c.caption || '',
+      hashtags: Array.isArray(c.hashtags) ? c.hashtags : ['#Shorts', '#Viral', '#Trending'],
+    }));
+
     console.log('Analysis complete! Saving to cache...');
     fs.writeFileSync(cacheFile, JSON.stringify(highlightData, null, 2));
 
@@ -232,7 +271,9 @@ IMPORTANT:
     }
 
     return NextResponse.json({
-      clips: highlightData
+      clips: highlightData,
+      channelName,
+      videoTitle
     });
 
   } catch (error) {

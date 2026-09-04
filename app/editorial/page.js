@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '../components/ThemeToggle';
+import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
 
@@ -77,6 +78,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
+  const [copyStatus, setCopyStatus] = useState('');
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
       font: 'Impact',
@@ -151,6 +153,19 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
         faceTracking: false,
       };
       setClips(updated);
+    }
+  };
+
+  const handleCopyPlatform = (platform) => {
+    let text = '';
+    if (platform === 'youtube') text = getYouTubeCopy(activeClip);
+    else if (platform === 'instagram') text = getInstagramCopy(activeClip);
+    else if (platform === 'tiktok') text = getTikTokCopy(activeClip);
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text);
+      setCopyStatus(`Tersalin untuk ${platform === 'youtube' ? 'YouTube Shorts' : platform === 'instagram' ? 'Instagram Reels' : 'TikTok'}!`);
+      setTimeout(() => setCopyStatus(''), 2500);
     }
   };
 
@@ -303,6 +318,89 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             <option>Blur</option>
             <option>Bounce</option>
           </select>
+        </div>
+
+        {/* Social Media Copy Panel */}
+        <div className={editorStyles.socialCopyCard}>
+          <div className={editorStyles.socialHeader}>
+            <span className={editorStyles.socialTitle}>
+              <span>Social Media Copy</span>
+              <span className={editorStyles.socialBadge}>AI</span>
+            </span>
+            {copyStatus && <span className={editorStyles.copyFeedback}>✓ {copyStatus}</span>}
+          </div>
+
+          <div className={editorStyles.metaInfoRow}>
+            {activeClip.channelName && (
+              <span className={editorStyles.metaPill}>
+                <span>👤</span>
+                <span className={editorStyles.metaPillHighlight}>@{activeClip.channelName}</span>
+              </span>
+            )}
+            {(activeClip.startTime || activeClip.start_time) && (
+              <span className={editorStyles.metaPill}>
+                <span>⏱️</span>
+                <span>{activeClip.startTime || activeClip.start_time} - {activeClip.endTime || activeClip.end_time}</span>
+              </span>
+            )}
+            {activeClip.duration && (
+              <span className={editorStyles.metaPill}>
+                <span>⏳</span>
+                <span>{activeClip.duration}s</span>
+              </span>
+            )}
+          </div>
+
+          {activeClip.hook && (
+            <div className={editorStyles.socialHookBox}>
+              <span className={editorStyles.hookLabel}>Viral Hook</span>
+              <span className={editorStyles.hookText}>&ldquo;{activeClip.hook}&rdquo;</span>
+            </div>
+          )}
+
+          {activeClip.caption && (
+            <div className={editorStyles.socialCaptionText}>
+              {activeClip.caption}
+            </div>
+          )}
+
+          {Array.isArray(activeClip.hashtags) && activeClip.hashtags.length > 0 && (
+            <div className={editorStyles.hashtagsWrap}>
+              {activeClip.hashtags.map((tag, idx) => (
+                <span key={idx} className={editorStyles.tagChip}>{tag}</span>
+              ))}
+            </div>
+          )}
+
+          <div className={editorStyles.platformCopyGrid}>
+            <button
+              type="button"
+              className={editorStyles.platformBtn}
+              onClick={() => handleCopyPlatform('youtube')}
+              title="Copy formatted for YouTube Shorts"
+            >
+              <span className={editorStyles.platformIcon}>🔴</span>
+              <span>YouTube</span>
+            </button>
+            <button
+              type="button"
+              className={editorStyles.platformBtn}
+              onClick={() => handleCopyPlatform('instagram')}
+              title="Copy formatted for Instagram Reels"
+            >
+              <span className={editorStyles.platformIcon}>📸</span>
+              <span>Instagram</span>
+            </button>
+            <button
+              type="button"
+              className={editorStyles.platformBtn}
+              onClick={() => handleCopyPlatform('tiktok')}
+              title="Copy formatted for TikTok"
+            >
+              <span className={editorStyles.platformIcon}>🎵</span>
+              <span>TikTok</span>
+            </button>
+          </div>
         </div>
 
         <button className={editorStyles.saveButton} onClick={handleSave}>

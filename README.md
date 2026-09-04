@@ -20,6 +20,7 @@
 | Fitur | Deskripsi |
 | :--- | :--- |
 | 🤖 **AI Highlight Detector** | Menganalisis video YouTube panjang menggunakan LLM (Google Gemini / Groq) untuk menemukan momen-momen paling menarik dan viral secara otomatis. |
+| 📱 **AI Social Copy & Viral Metadata** | Otomatis membuat Hook viral 3 detik pertama, Caption menarik, atribusi nama channel, timestamp detik klip, serta tagar hashtag khusus YouTube Shorts, IG Reels, & TikTok dengan tombol 1-klik salin. |
 | 👤 **OpenCV Smart Face Tracking** | Deteksi wajah (Haar Cascade) dengan perataan pergerakan kamera *(Exponential Moving Average)* untuk auto-crop vertikal 9:16 yang mulus berpusat pada pembicara. |
 | 🎙️ **Groq Whisper Transcription** | Transkripsi audio otomatis berkecepatan tinggi dengan timestamp per-segmen menggunakan model `whisper-large-v3`. |
 | 🎨 **Animated Subtitle Studio** | Kustomisasi subtitle interaktif di browser (Font, Ukuran, Warna teks, Outline, Drop shadow, serta efek animasi: *Pop, Slide Up, Blur, Bounce*). |

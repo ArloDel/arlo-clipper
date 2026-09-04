@@ -69,6 +69,12 @@ export async function POST(request) {
         title: clip.title || `Clip ${index}`,
         videoPath: videoSrc,
         duration: clip.duration,
+        hook: clip.hook || clip.title || `Clip ${index}`,
+        caption: clip.caption || '',
+        channelName: clip.channelName || 'YouTube',
+        startTime: clip.startTime || clip.start_time || '',
+        endTime: clip.endTime || clip.end_time || '',
+        hashtags: Array.isArray(clip.hashtags) ? clip.hashtags : [],
       });
 
       savedClips.push(savedClip);

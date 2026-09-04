@@ -218,10 +218,44 @@
 
 .actions {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-hairline);
+  width: 100%;
+}
+
+.cardBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.downloadBtn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent);
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  transition: all 150ms var(--ease-out);
+}
+
+.downloadBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.downloadBtn:active {
+  transform: translateY(0);
 }
 
 .deleteBtn {

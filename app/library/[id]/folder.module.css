@@ -127,6 +127,40 @@
   border: 1px solid var(--border-hairline);
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.downloadBtn {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: 1px solid var(--accent);
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-decoration: none;
+  transition: all 150ms var(--ease-out);
+}
+
+.downloadBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.downloadBtn:active {
+  transform: translateY(0);
+}
+
 .emptyState {
   padding: 60px 20px;
   text-align: center;

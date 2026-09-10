@@ -78,6 +78,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
+  const [lipTrackingLoading, setLipTrackingLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
@@ -110,6 +111,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           ...currentClip,
           videoPath: currentClip.trackedVideoPath,
           faceTracking: true,
+          lipTracking: false,
         };
         setClips(updated);
       } else {
@@ -135,6 +137,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             trackedVideoPath: data.trackedVideoPath,
             videoPath: data.trackedVideoPath,
             faceTracking: true,
+            lipTracking: false,
           };
           setClips(updated);
         } catch (err) {
@@ -151,6 +154,63 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
         ...currentClip,
         videoPath: fallbackVideo,
         faceTracking: false,
+      };
+      setClips(updated);
+    }
+  };
+
+  const handleToggleLipTracking = async (enabled) => {
+    const currentClip = clips[activeClipIdx];
+    if (enabled) {
+      if (currentClip.lipTrackedVideoPath) {
+        const updated = [...clips];
+        updated[activeClipIdx] = {
+          ...currentClip,
+          videoPath: currentClip.lipTrackedVideoPath,
+          lipTracking: true,
+          faceTracking: false,
+        };
+        setClips(updated);
+      } else {
+        setLipTrackingLoading(true);
+        try {
+          const res = await fetch('/api/lip-track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clipId: currentClip.id,
+              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
+              videoPath: currentClip.videoPath,
+              ratio,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to track lip movement');
+          }
+          const updated = [...clips];
+          updated[activeClipIdx] = {
+            ...currentClip,
+            lipTrackedVideoPath: data.trackedVideoPath,
+            videoPath: data.trackedVideoPath,
+            lipTracking: true,
+            faceTracking: false,
+          };
+          setClips(updated);
+        } catch (err) {
+          console.error('Lip tracking error:', err);
+          alert('Gagal melacak gerakan bibir: ' + err.message);
+        } finally {
+          setLipTrackingLoading(false);
+        }
+      }
+    } else {
+      const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
+      const updated = [...clips];
+      updated[activeClipIdx] = {
+        ...currentClip,
+        videoPath: fallbackVideo,
+        lipTracking: false,
       };
       setClips(updated);
     }
@@ -224,7 +284,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
               <input
                 type="checkbox"
                 checked={Boolean(activeClip.faceTracking)}
-                disabled={trackingLoading}
+                disabled={trackingLoading || lipTrackingLoading}
                 onChange={(e) => handleToggleFaceTracking(e.target.checked)}
                 className={editorStyles.switchInput}
               />
@@ -238,6 +298,35 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             <div className={editorStyles.faceTrackingLoading}>
               <div className={editorStyles.spinnerSmall}></div>
               <span>Melacak wajah dengan OpenCV...</span>
+            </div>
+          )}
+        </div>
+
+        {/* OpenCV Lip Tracking / Active Speaker Toggle */}
+        <div className={`${editorStyles.faceTrackingBox} ${activeClip.lipTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
+          <div className={editorStyles.faceTrackingHeader}>
+            <span className={editorStyles.faceTrackingTitle}>
+              <span>Lip Tracking</span>
+              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', borderColor: 'rgba(236, 72, 153, 0.3)' }}>Active Speaker</span>
+            </span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeClip.lipTracking)}
+                disabled={lipTrackingLoading || trackingLoading}
+                onChange={(e) => handleToggleLipTracking(e.target.checked)}
+                className={editorStyles.switchInput}
+              />
+              <span className={editorStyles.switchSlider}></span>
+            </label>
+          </div>
+          <p className={editorStyles.faceTrackingDesc}>
+            Mendeteksi gerakan bibir untuk otomatis mengarahkan kamera ke orang yang sedang aktif berbicara (cocok untuk podcast/interview).
+          </p>
+          {lipTrackingLoading && (
+            <div className={editorStyles.faceTrackingLoading}>
+              <div className={editorStyles.spinnerSmall}></div>
+              <span>Melacak gerakan bibir dengan OpenCV...</span>
             </div>
           )}
         </div>

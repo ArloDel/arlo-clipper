@@ -87,6 +87,8 @@ export async function POST(request) {
         if (fs.existsSync(sourcePath)) fs.unlinkSync(sourcePath);
         const trackedPath = path.join(clipsDir, `${clip.id}-tracked.mp4`);
         if (fs.existsSync(trackedPath) && trackedPath !== rawClipPath) fs.unlinkSync(trackedPath);
+        const lipTrackedPath = path.join(clipsDir, `${clip.id}-liptracked.mp4`);
+        if (fs.existsSync(lipTrackedPath) && lipTrackedPath !== rawClipPath) fs.unlinkSync(lipTrackedPath);
       } catch (e) {
         console.warn('Final cleanup warning:', e);
       }

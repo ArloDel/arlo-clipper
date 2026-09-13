@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="succGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2e1065" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0f0728" stop-opacity="0.98"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#succGrad)"/>
+  <line x1="540" y1="950" x2="420" y2="1180" stroke="#f43f5e" stroke-width="12" stroke-linecap="round"/>
+  <line x1="540" y1="950" x2="540" y2="1240" stroke="#fbbf24" stroke-width="18" stroke-linecap="round"/>
+  <line x1="540" y1="950" x2="660" y2="1180" stroke="#f43f5e" stroke-width="12" stroke-linecap="round"/>
+  <polygon points="540,620 620,780 580,780 580,880 500,880 500,780 460,780" fill="#a855f7" stroke="#ffffff" stroke-width="6"/>
+  <circle cx="540" cy="730" r="28" fill="#38bdf8"/>
+  <text x="540" y="1320" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle" letter-spacing="4">UNSTOPPABLE MOMENTUM</text>
+  <text x="540" y="1390" font-family="'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="36" fill="#c084fc" text-anchor="middle">LEVEL UP YOUR RESULTS</text>
+</svg>

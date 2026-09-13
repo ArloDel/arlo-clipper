@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="finGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#022c22" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#finGrad)"/>
+  <circle cx="540" cy="800" r="320" fill="none" stroke="#10b981" stroke-width="4" stroke-opacity="0.25"/>
+  <circle cx="540" cy="800" r="240" fill="none" stroke="#34d399" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="12 12"/>
+  <circle cx="540" cy="800" r="160" fill="url(#goldGrad)"/>
+  <text x="540" y="860" font-family="Arial, sans-serif" font-weight="900" font-size="180" fill="#ffffff" text-anchor="middle">$</text>
+  <path d="M 220 1200 Q 400 1150, 540 1020 T 860 760" fill="none" stroke="#10b981" stroke-width="16" stroke-linecap="round"/>
+  <polygon points="850,730 890,750 870,790" fill="#10b981"/>
+  <text x="540" y="1320" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle" letter-spacing="4">FINANCIAL GROWTH</text>
+  <text x="540" y="1390" font-family="'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="36" fill="#34d399" text-anchor="middle">+380% REVENUE SURGE</text>
+</svg>

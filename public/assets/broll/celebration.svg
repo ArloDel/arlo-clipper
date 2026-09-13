@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="celGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#78350f" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#270c02" stop-opacity="0.98"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#celGrad)"/>
+  <circle cx="340" cy="650" r="18" fill="#f43f5e"/>
+  <circle cx="720" cy="620" r="22" fill="#fbbf24"/>
+  <circle cx="420" cy="850" r="16" fill="#3b82f6"/>
+  <circle cx="680" cy="820" r="20" fill="#10b981"/>
+  <rect x="510" y="600" width="30" height="30" fill="#a855f7" transform="rotate(25 525 615)"/>
+  <rect x="360" y="780" width="26" height="26" fill="#f59e0b" transform="rotate(45 373 793)"/>
+  <polygon points="540,680 575,760 660,765 595,820 615,900 540,855 465,900 485,820 420,765 505,760" fill="#fbbf24" stroke="#ffffff" stroke-width="4"/>
+  <text x="540" y="1280" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="68" fill="#ffffff" text-anchor="middle" letter-spacing="4">CONGRATULATIONS !</text>
+  <text x="540" y="1350" font-family="'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="36" fill="#fcd34d" text-anchor="middle">EPIC ACHIEVEMENT</text>
+</svg>

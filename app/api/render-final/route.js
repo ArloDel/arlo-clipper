@@ -6,6 +6,9 @@ import path from 'path';
 import fs from 'fs';
 import { saveClip } from '../../../lib/db';
 import { getVideoDimensions, generateAssSubtitleFile } from '../../../lib/subtitles';
+import { buildRenderComplexFilter } from '../../../lib/audioDucking';
+import { ensureAudioAssets } from '../../../lib/audioAssets';
+import { ensureBrollAssets } from '../../../lib/broll';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
@@ -17,6 +20,10 @@ export async function POST(request) {
     if (!clips || !Array.isArray(clips) || clips.length === 0) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
+
+    // Ensure assets exist on disk before rendering
+    ensureAudioAssets();
+    ensureBrollAssets();
 
     const clipsDir = path.join(process.cwd(), 'public', 'clips');
     if (!fs.existsSync(clipsDir)) {
@@ -46,22 +53,65 @@ export async function POST(request) {
         videoHeight: height,
       });
 
-      // 3. Burn Subtitles with libass using FFmpeg
+      // 3. Build multi-stream filter graph (B-Roll + Subtitles + Ducked BGM + SFX)
       const relativeAssPath = `public/clips/${clip.id}-subtitle.ass`.replace(/\\/g, '/');
-      console.log(`[Render Final] Burning Animated Subtitles for clip ${index}...`);
+      console.log(`[Render Final] Building Multi-Stream Audio/Visual Filter for clip ${index}...`);
 
-      await new Promise((resolve, reject) => {
-        ffmpeg(rawClipPath)
-          .videoFilters([`subtitles=${relativeAssPath}`])
-          .outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a aac'])
-          .output(finalSubtitledPath)
-          .on('end', resolve)
-          .on('error', (err) => {
-            console.error(`[Render Final] FFmpeg error on clip ${index}:`, err);
-            reject(err);
-          })
-          .run();
+      const renderConfig = buildRenderComplexFilter({
+        rawVideoPath: rawClipPath,
+        relativeAssPath,
+        videoWidth: width,
+        videoHeight: height,
+        duration: clip.duration || 15,
+        audioSettings: clip.audioSettings || {},
+        brollSettings: clip.brollSettings || {},
+        segments: clip.segments || [],
       });
+
+      console.log(`[Render Final] Executing FFmpeg complex filter for clip ${index}...`);
+
+      try {
+        await new Promise((resolve, reject) => {
+          let command = ffmpeg();
+
+          for (const inp of renderConfig.inputs) {
+            command = command.input(inp);
+          }
+
+          command
+            .complexFilter(renderConfig.filterComplex)
+            .outputOptions([
+              ...renderConfig.outputMap,
+              '-c:v libx264',
+              '-crf 18',
+              '-preset fast',
+              '-c:a aac',
+              '-b:a 192k',
+            ])
+            .output(finalSubtitledPath)
+            .on('end', resolve)
+            .on('error', (err) => {
+              console.warn(`[Render Final] Complex filter failed for clip ${index}, trying fallback:`, err.message);
+              reject(err);
+            })
+            .run();
+        });
+      } catch (complexError) {
+        // Fallback: If complex filter encountered stream compatibility issues, render with basic subtitles
+        console.warn(`[Render Final] Falling back to standard subtitle burn for clip ${index}...`);
+        await new Promise((resolve, reject) => {
+          ffmpeg(rawClipPath)
+            .videoFilters([`subtitles=${relativeAssPath}`])
+            .outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a aac'])
+            .output(finalSubtitledPath)
+            .on('end', resolve)
+            .on('error', (err) => {
+              console.error(`[Render Final] Fallback FFmpeg error on clip ${index}:`, err);
+              reject(err);
+            })
+            .run();
+        });
+      }
 
       const videoSrc = `/clips/${path.basename(finalSubtitledPath)}`;
 

@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import Groq from 'groq-sdk';
+import { detectAutoBroll, ensureBrollAssets } from '../../../lib/broll';
+import { ensureAudioAssets } from '../../../lib/audioAssets';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -228,6 +230,11 @@ export async function POST(request) {
       const videoSrc = `/clips/${path.basename(rawClipPath)}`;
       const sourceSrc = `/clips/${path.basename(sourceClipPath)}`;
       
+      // Auto-detect B-Roll overlays from Whisper transcript segments
+      ensureAudioAssets();
+      ensureBrollAssets();
+      const detectedBrollOverlays = detectAutoBroll(segments, clip.hook || title);
+
       processedClips.push({
         id: clipId,
         title: title || `Clip ${index}`,
@@ -245,7 +252,20 @@ export async function POST(request) {
         faceTracking: false,
         duration: durationSec,
         segments,
-        words: clipWords
+        words: clipWords,
+        audioSettings: {
+          bgmTrack: 'upbeat-energetic',
+          bgmVolume: 0.3,
+          duckingEnabled: true,
+          duckingStrength: 'medium',
+          sfxEnabled: true,
+          sfxVolume: 0.7,
+        },
+        brollSettings: {
+          enabled: true,
+          theme: 'auto',
+          overlays: detectedBrollOverlays,
+        },
       });
 
       try {

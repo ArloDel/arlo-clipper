@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="techGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#techGrad)"/>
+  <line x1="200" y1="400" x2="880" y2="400" stroke="#1e293b" stroke-width="2"/>
+  <line x1="200" y1="600" x2="880" y2="600" stroke="#1e293b" stroke-width="2"/>
+  <line x1="200" y1="800" x2="880" y2="800" stroke="#1e293b" stroke-width="2"/>
+  <line x1="200" y1="1000" x2="880" y2="1000" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="540" cy="800" r="150" fill="url(#cyanGrad)" fill-opacity="0.2" stroke="#38bdf8" stroke-width="6"/>
+  <polygon points="540,690 635,745 635,855 540,910 445,855 445,745" fill="none" stroke="#60a5fa" stroke-width="8"/>
+  <circle cx="540" cy="800" r="45" fill="#38bdf8"/>
+  <text x="540" y="1280" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="64" fill="#ffffff" text-anchor="middle" letter-spacing="4">ARTIFICIAL INTELLIGENCE</text>
+  <text x="540" y="1350" font-family="'Segoe UI', Roboto, sans-serif" font-weight="600" font-size="36" fill="#38bdf8" text-anchor="middle">NEXT-GEN NEURAL SYSTEM</text>
+</svg>

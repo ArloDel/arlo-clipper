@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node scripts/test_karaoke_subtitles.mjs"
+    "test": "node scripts/test_karaoke_subtitles.mjs",
+    "test:audio-broll": "node scripts/test_audio_broll.mjs"
   },
   "dependencies": {
     "@cloudflare/kumo": "^2.8.0",

@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '../components/ThemeToggle';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
+import { BGM_TRACKS } from '../../lib/audioCatalog';
+import { BROLL_THEMES, detectAutoBroll } from '../../lib/brollCatalog';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
 
@@ -28,6 +30,76 @@ function getSegmentWords(seg) {
     start: (seg.start || 0) + idx * wordDur,
     end: (seg.start || 0) + (idx + 1) * wordDur,
   }));
+}
+
+function BrollOverlay({ videoRef, brollSettings }) {
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef?.current;
+    if (!video) return;
+
+    let animFrameId = null;
+
+    const updateTime = () => {
+      if (video) {
+        setCurrentTime(video.currentTime);
+        if (!video.paused && !video.ended) {
+          animFrameId = requestAnimationFrame(updateTime);
+        }
+      }
+    };
+
+    const handlePlay = () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(updateTime);
+    };
+
+    const handlePauseOrSeek = () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (video) setCurrentTime(video.currentTime);
+    };
+
+    setCurrentTime(video.currentTime || 0);
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('playing', handlePlay);
+    video.addEventListener('pause', handlePauseOrSeek);
+    video.addEventListener('seeking', handlePauseOrSeek);
+    video.addEventListener('seeked', handlePauseOrSeek);
+    video.addEventListener('timeupdate', handlePauseOrSeek);
+
+    return () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('playing', handlePlay);
+      video.removeEventListener('pause', handlePauseOrSeek);
+      video.removeEventListener('seeking', handlePauseOrSeek);
+      video.removeEventListener('seeked', handlePauseOrSeek);
+      video.removeEventListener('timeupdate', handlePauseOrSeek);
+    };
+  }, [videoRef]);
+
+  if (!brollSettings?.enabled) return null;
+  const overlays = Array.isArray(brollSettings.overlays) ? brollSettings.overlays : [];
+  const activeOverlay = overlays.find((o) => currentTime >= o.start && currentTime <= o.end);
+
+  if (!activeOverlay) return null;
+
+  return (
+    <div key={activeOverlay.id || activeOverlay.start} className={editorStyles.brollOverlay}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={activeOverlay.assetPath}
+        alt={activeOverlay.themeName || 'B-Roll'}
+        className={editorStyles.brollImage}
+      />
+      <div className={editorStyles.brollBadge}>
+        <span>{activeOverlay.icon || '🎬'}</span>
+        <span>{activeOverlay.themeName || 'B-Roll'}</span>
+      </div>
+    </div>
+  );
 }
 
 function SubtitleOverlay({ videoRef, segments, style }) {
@@ -185,6 +257,8 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
   const [lipTrackingLoading, setLipTrackingLoading] = useState(false);
   const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
+  
+  // Style settings per clip
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
       font: 'Impact',
@@ -195,16 +269,238 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
       animation: 'Pop',
     }))
   );
-  const videoRef = useRef(null);
 
-  const activeClip = clips[activeClipIdx];
-  const activeStyle = clipStyles[activeClipIdx];
+  // Audio settings per clip
+  const [clipAudioSettings, setClipAudioSettings] = useState(
+    initialClips.map((c) => ({
+      bgmTrack: c.audioSettings?.bgmTrack || 'upbeat-energetic',
+      bgmVolume: typeof c.audioSettings?.bgmVolume === 'number' ? c.audioSettings.bgmVolume : 0.3,
+      duckingEnabled: c.audioSettings?.duckingEnabled !== false,
+      duckingStrength: c.audioSettings?.duckingStrength || 'medium',
+      sfxEnabled: c.audioSettings?.sfxEnabled !== false,
+      sfxVolume: typeof c.audioSettings?.sfxVolume === 'number' ? c.audioSettings.sfxVolume : 0.7,
+    }))
+  );
+
+  // B-Roll settings per clip
+  const [clipBrollSettings, setClipBrollSettings] = useState(
+    initialClips.map((c) => ({
+      enabled: c.brollSettings?.enabled !== false,
+      theme: c.brollSettings?.theme || 'auto',
+      overlays: Array.isArray(c.brollSettings?.overlays) && c.brollSettings.overlays.length > 0
+        ? c.brollSettings.overlays
+        : detectAutoBroll(c.segments, c.hook || c.title),
+    }))
+  );
+
+  const videoRef = useRef(null);
+  const bgmAudioRef = useRef(null);
+  const previewAudioRef = useRef(null);
+  const sfxAudioRef = useRef(null);
+  const [previewingTrackId, setPreviewingTrackId] = useState(null);
+
+  const activeClip = clips[activeClipIdx] || {};
+  const activeStyle = clipStyles[activeClipIdx] || {};
+  const activeAudio = clipAudioSettings[activeClipIdx] || {};
+  const activeBroll = clipBrollSettings[activeClipIdx] || {};
   const isMobile = ratio === '9:16' || ratio === 'mobile';
 
   const updateStyle = (key, val) => {
     const newStyles = [...clipStyles];
     newStyles[activeClipIdx] = { ...newStyles[activeClipIdx], [key]: val };
     setClipStyles(newStyles);
+  };
+
+  const updateAudioSetting = (key, val) => {
+    const newAudio = [...clipAudioSettings];
+    newAudio[activeClipIdx] = { ...newAudio[activeClipIdx], [key]: val };
+    setClipAudioSettings(newAudio);
+  };
+
+  const updateBrollSetting = (key, val) => {
+    const newBroll = [...clipBrollSettings];
+    newBroll[activeClipIdx] = { ...newBroll[activeClipIdx], [key]: val };
+    setClipBrollSettings(newBroll);
+  };
+
+  const handleBrollThemeChange = (newTheme) => {
+    const currentClip = clips[activeClipIdx];
+    const newOverlays = detectAutoBroll(currentClip.segments, currentClip.hook || currentClip.title, newTheme);
+    const newBroll = [...clipBrollSettings];
+    newBroll[activeClipIdx] = {
+      ...newBroll[activeClipIdx],
+      theme: newTheme,
+      overlays: newOverlays,
+    };
+    setClipBrollSettings(newBroll);
+  };
+
+  const handleRemoveBrollOverlay = (overlayId) => {
+    const newBroll = [...clipBrollSettings];
+    const currentOverlays = newBroll[activeClipIdx]?.overlays || [];
+    newBroll[activeClipIdx] = {
+      ...newBroll[activeClipIdx],
+      overlays: currentOverlays.filter((o) => o.id !== overlayId),
+    };
+    setClipBrollSettings(newBroll);
+  };
+
+  const handleAddBrollAtCurrentTime = () => {
+    const video = videoRef.current;
+    const currTime = video ? Number(video.currentTime.toFixed(2)) : 0;
+    const currentThemeId = activeBroll.theme !== 'auto' ? activeBroll.theme : 'finance';
+    const themeObj = BROLL_THEMES.find((t) => t.id === currentThemeId) || BROLL_THEMES[0];
+    
+    const newOverlay = {
+      id: `custom-broll-${Date.now()}`,
+      theme: themeObj.id,
+      themeName: themeObj.name,
+      icon: themeObj.icon,
+      color: themeObj.color,
+      start: currTime,
+      end: Number((currTime + 2.5).toFixed(2)),
+      duration: 2.5,
+      assetPath: themeObj.assetPath,
+      keyword: 'Manual Highlight',
+      label: `${themeObj.icon} ${themeObj.name} (Custom)`,
+    };
+
+    const newBroll = [...clipBrollSettings];
+    const currentOverlays = [...(newBroll[activeClipIdx]?.overlays || []), newOverlay].sort((a, b) => a.start - b.start);
+    newBroll[activeClipIdx] = {
+      ...newBroll[activeClipIdx],
+      overlays: currentOverlays,
+    };
+    setClipBrollSettings(newBroll);
+  };
+
+  // Synchronized in-browser BGM Ducking & SFX triggers with Video
+  useEffect(() => {
+    const video = videoRef.current;
+    const bgm = bgmAudioRef.current;
+    const sfx = sfxAudioRef.current;
+    if (!video || !bgm) return;
+
+    const selectedTrack = BGM_TRACKS.find((t) => t.id === activeAudio.bgmTrack && t.id !== 'none');
+    if (!selectedTrack || !selectedTrack.path) {
+      bgm.pause();
+    } else {
+      if (bgm.src !== window.location.origin + selectedTrack.path && !bgm.src.endsWith(selectedTrack.path)) {
+        bgm.src = selectedTrack.path;
+      }
+      bgm.loop = true;
+    }
+
+    const duckFactors = { light: 0.65, medium: 0.35, heavy: 0.15 };
+    const duckMultiplier = activeAudio.duckingEnabled ? (duckFactors[activeAudio.duckingStrength] ?? 0.35) : 1.0;
+
+    let targetVolume = activeAudio.bgmVolume;
+    let animFrame = null;
+    let triggeredSfxTimes = new Set();
+
+    const smoothVolumeStep = () => {
+      if (!bgm || bgm.paused) return;
+      const current = bgm.volume;
+      const diff = targetVolume - current;
+      if (Math.abs(diff) > 0.01) {
+        bgm.volume = Math.max(0, Math.min(1, current + diff * 0.25));
+        animFrame = requestAnimationFrame(smoothVolumeStep);
+      } else {
+        bgm.volume = Math.max(0, Math.min(1, targetVolume));
+      }
+    };
+
+    const syncBgmWithVideo = () => {
+      if (!video || !bgm || !selectedTrack) return;
+      const isSpeaking = (activeClip.segments || []).some(
+        (s) => video.currentTime >= s.start && video.currentTime <= s.end
+      );
+      targetVolume = isSpeaking ? (activeAudio.bgmVolume * duckMultiplier) : activeAudio.bgmVolume;
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = requestAnimationFrame(smoothVolumeStep);
+
+      // Trigger live preview SFX on hook or key segment starts
+      if (activeAudio.sfxEnabled && sfx && !video.paused) {
+        const segs = activeClip.segments || [];
+        for (let idx = 0; idx < Math.min(segs.length, 5); idx++) {
+          const segStart = segs[idx]?.start || 0;
+          if (Math.abs(video.currentTime - segStart) < 0.25 && !triggeredSfxTimes.has(idx)) {
+            triggeredSfxTimes.add(idx);
+            const sfxChoice = idx === 0 ? '/assets/audio/sfx/impact.wav' : idx % 2 === 1 ? '/assets/audio/sfx/pop.wav' : '/assets/audio/sfx/ding.wav';
+            sfx.src = sfxChoice;
+            sfx.volume = activeAudio.sfxVolume || 0.7;
+            sfx.play().catch(() => {});
+          }
+        }
+      }
+    };
+
+    const handlePlay = () => {
+      triggeredSfxTimes.clear();
+      if (selectedTrack) {
+        bgm.currentTime = (video.currentTime || 0) % 16;
+        syncBgmWithVideo();
+        bgm.play().catch(() => {});
+      }
+    };
+
+    const handlePause = () => {
+      bgm.pause();
+      if (animFrame) cancelAnimationFrame(animFrame);
+    };
+
+    const handleTimeUpdate = () => {
+      syncBgmWithVideo();
+    };
+
+    const handleSeek = () => {
+      triggeredSfxTimes.clear();
+      if (selectedTrack) {
+        bgm.currentTime = (video.currentTime || 0) % 16;
+        syncBgmWithVideo();
+      }
+    };
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('seeking', handleSeek);
+    video.addEventListener('seeked', handleSeek);
+
+    return () => {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('seeking', handleSeek);
+      video.removeEventListener('seeked', handleSeek);
+      bgm.pause();
+    };
+  }, [
+    activeClipIdx,
+    activeAudio.bgmTrack,
+    activeAudio.bgmVolume,
+    activeAudio.duckingEnabled,
+    activeAudio.duckingStrength,
+    activeAudio.sfxEnabled,
+    activeAudio.sfxVolume,
+    activeClip.segments
+  ]);
+
+  const handleTogglePreviewTrack = (trackId) => {
+    if (previewingTrackId === trackId) {
+      if (previewAudioRef.current) previewAudioRef.current.pause();
+      setPreviewingTrackId(null);
+    } else {
+      const track = BGM_TRACKS.find((t) => t.id === trackId);
+      if (!track || !track.path) return;
+      if (previewAudioRef.current) {
+        previewAudioRef.current.src = track.path;
+        previewAudioRef.current.volume = 0.5;
+        previewAudioRef.current.play().catch(() => {});
+        setPreviewingTrackId(trackId);
+      }
+    }
   };
 
   const handleToggleFaceTracking = async (enabled) => {
@@ -401,12 +697,23 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
     const finalClips = clips.map((c, i) => ({
       ...c,
       style: clipStyles[i],
+      audioSettings: clipAudioSettings[i],
+      brollSettings: clipBrollSettings[i],
     }));
     onSave(finalClips);
   };
 
   return (
     <div className={editorStyles.editorContainer}>
+      {/* Hidden Audio Players for in-browser BGM sync & preview */}
+      <audio ref={bgmAudioRef} style={{ display: 'none' }} />
+      <audio ref={sfxAudioRef} style={{ display: 'none' }} />
+      <audio
+        ref={previewAudioRef}
+        style={{ display: 'none' }}
+        onEnded={() => setPreviewingTrackId(null)}
+      />
+
       <div className={editorStyles.previewSection}>
         <div className={editorStyles.tabs}>
           {clips.map((c, i) => (
@@ -431,8 +738,15 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             className={editorStyles.video}
             key={activeClip.videoPath}
           />
+          {/* Dynamic B-Roll Visual Overlay */}
+          <BrollOverlay
+            key={`broll-${activeClip.id || activeClipIdx}`}
+            videoRef={videoRef}
+            brollSettings={activeBroll}
+          />
+          {/* Subtitle Overlay */}
           <SubtitleOverlay
-            key={`${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
+            key={`sub-${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
             videoRef={videoRef}
             segments={activeClip.segments}
             style={activeStyle}
@@ -442,11 +756,11 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
 
       <div className={editorStyles.controlsSection}>
         <div className={editorStyles.controlsHeader}>
-          <h3 className={editorStyles.controlsTitle}>Subtitle Settings</h3>
+          <h3 className={editorStyles.controlsTitle}>Production Studio</h3>
           <span className={editorStyles.controlsBadge}>Clip {activeClipIdx + 1}</span>
         </div>
 
-        {/* OpenCV Face Tracking Toggle */}
+        {/* ── 1. OpenCV AI Tracking Toggles ── */}
         <div className={`${editorStyles.faceTrackingBox} ${activeClip.faceTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
           <div className={editorStyles.faceTrackingHeader}>
             <span className={editorStyles.faceTrackingTitle}>
@@ -475,7 +789,6 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           )}
         </div>
 
-        {/* OpenCV Lip Tracking / Active Speaker Toggle */}
         <div className={`${editorStyles.faceTrackingBox} ${activeClip.lipTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
           <div className={editorStyles.faceTrackingHeader}>
             <span className={editorStyles.faceTrackingTitle}>
@@ -494,7 +807,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             </label>
           </div>
           <p className={editorStyles.faceTrackingDesc}>
-            Mendeteksi gerakan bibir untuk otomatis mengarahkan kamera ke orang yang sedang aktif berbicara (cocok untuk podcast/interview).
+            Mendeteksi gerakan bibir untuk otomatis mengarahkan kamera ke orang yang sedang aktif berbicara.
           </p>
           {lipTrackingLoading && (
             <div className={editorStyles.faceTrackingLoading}>
@@ -504,7 +817,6 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           )}
         </div>
 
-        {/* Split Screen Podcast Mode Toggle */}
         <div className={`${editorStyles.faceTrackingBox} ${activeClip.splitScreen ? editorStyles.faceTrackingBoxActive : ''}`}>
           <div className={editorStyles.faceTrackingHeader}>
             <span className={editorStyles.faceTrackingTitle}>
@@ -523,7 +835,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             </label>
           </div>
           <p className={editorStyles.faceTrackingDesc}>
-            Layout vertikal 9:16 bertumpuk (atas & bawah) otomatis mendeteksi dan melacak 2 pembicara (host & guest).
+            Layout vertikal 9:16 bertumpuk otomatis melacak 2 pembicara podcast.
           </p>
           {splitScreenLoading && (
             <div className={editorStyles.faceTrackingLoading}>
@@ -533,6 +845,243 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           )}
         </div>
 
+        {/* ── 2. Auto B-Roll Visual Controls ── */}
+        <div className={`${editorStyles.brollBox} ${activeBroll.enabled ? editorStyles.brollBoxActive : ''}`}>
+          <div className={editorStyles.faceTrackingHeader}>
+            <span className={editorStyles.faceTrackingTitle}>
+              <span>Auto B-Roll Overlay</span>
+              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.3)' }}>Visual AI</span>
+            </span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeBroll.enabled)}
+                onChange={(e) => updateBrollSetting('enabled', e.target.checked)}
+                className={editorStyles.switchInput}
+              />
+              <span className={editorStyles.switchSlider}></span>
+            </label>
+          </div>
+          <p className={editorStyles.faceTrackingDesc}>
+            Menampilkan overlay visual kontekstual otomatis berdasarkan kata kunci Whisper transcript.
+          </p>
+
+          {activeBroll.enabled && (
+            <>
+              <div className={editorStyles.controlGroup}>
+                <label className={editorStyles.controlLabel}>B-Roll Theme Preset</label>
+                <select
+                  value={activeBroll.theme || 'auto'}
+                  onChange={(e) => handleBrollThemeChange(e.target.value)}
+                  className={editorStyles.input}
+                >
+                  <option value="auto">⚡ Auto (Smart Transcript Match)</option>
+                  {BROLL_THEMES.map((th) => (
+                    <option key={th.id} value={th.id}>
+                      {th.icon} {th.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={editorStyles.controlGroup}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className={editorStyles.controlLabel}>
+                    Active Overlays ({activeBroll.overlays?.length || 0})
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddBrollAtCurrentTime}
+                    className={editorStyles.addBrollBtn}
+                    title="Tambahkan B-Roll di posisi waktu playhead saat ini"
+                  >
+                    + Add at Current Time
+                  </button>
+                </div>
+
+                <div className={editorStyles.brollTimelineList}>
+                  {(!activeBroll.overlays || activeBroll.overlays.length === 0) && (
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
+                      Belum ada B-Roll untuk klip ini.
+                    </span>
+                  )}
+                  {(activeBroll.overlays || []).map((o) => (
+                    <div key={o.id} className={editorStyles.brollChip}>
+                      <div className={editorStyles.brollChipLeft}>
+                        <span>{o.icon || '🎬'}</span>
+                        <span className={editorStyles.brollChipTime}>
+                          {o.start}s - {o.end}s
+                        </span>
+                        <span className={editorStyles.brollChipLabel}>
+                          {o.keyword ? `"${o.keyword}"` : o.themeName}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveBrollOverlay(o.id)}
+                        className={editorStyles.brollChipRemove}
+                        title="Hapus overlay ini"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── 3. Audio & Auto Ducking Controls ── */}
+        <div className={`${editorStyles.audioSectionBox} ${activeAudio.bgmTrack !== 'none' ? editorStyles.audioSectionBoxActive : ''}`}>
+          <div className={editorStyles.faceTrackingHeader}>
+            <span className={editorStyles.faceTrackingTitle}>
+              <span>Audio & BGM Ducking</span>
+              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>Broadcast</span>
+            </span>
+          </div>
+          <p className={editorStyles.faceTrackingDesc}>
+            Musik latar otomatis turun saat ada suara vokal dan naik saat jeda hening.
+          </p>
+
+          <div className={editorStyles.controlGroup}>
+            <label className={editorStyles.controlLabel}>Background Music Track</label>
+            <div className={editorStyles.bgmPickerRow}>
+              <select
+                value={activeAudio.bgmTrack}
+                onChange={(e) => updateAudioSetting('bgmTrack', e.target.value)}
+                className={editorStyles.input}
+              >
+                {BGM_TRACKS.map((track) => (
+                  <option key={track.id} value={track.id}>
+                    {track.name} {track.genre !== 'Off' ? `(${track.genre})` : ''}
+                  </option>
+                ))}
+              </select>
+              {activeAudio.bgmTrack !== 'none' && (
+                <button
+                  type="button"
+                  onClick={() => handleTogglePreviewTrack(activeAudio.bgmTrack)}
+                  className={`${editorStyles.previewBgmBtn} ${
+                    previewingTrackId === activeAudio.bgmTrack ? editorStyles.previewBgmBtnActive : ''
+                  }`}
+                  title="Dengarkan preview musik"
+                >
+                  {previewingTrackId === activeAudio.bgmTrack ? '⏹ Stop' : '▶ Sample'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {activeAudio.bgmTrack !== 'none' && (
+            <>
+              <div className={editorStyles.controlGroup}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <label className={editorStyles.controlLabel}>BGM Master Volume</label>
+                  <span className={editorStyles.volumeBadge}>{Math.round(activeAudio.bgmVolume * 100)}%</span>
+                </div>
+                <div className={editorStyles.volumeSliderWrap}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={activeAudio.bgmVolume}
+                    onChange={(e) => updateAudioSetting('bgmVolume', parseFloat(e.target.value))}
+                    className={editorStyles.volumeSlider}
+                  />
+                </div>
+              </div>
+
+              <div className={editorStyles.faceTrackingHeader}>
+                <span className={editorStyles.faceTrackingTitle} style={{ fontSize: '0.78rem' }}>
+                  <span>Auto Audio Ducking</span>
+                </span>
+                <label className={editorStyles.switchLabel}>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(activeAudio.duckingEnabled)}
+                    onChange={(e) => updateAudioSetting('duckingEnabled', e.target.checked)}
+                    className={editorStyles.switchInput}
+                  />
+                  <span className={editorStyles.switchSlider}></span>
+                </label>
+              </div>
+
+              {activeAudio.duckingEnabled && (
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Ducking Intensity</label>
+                  <div className={editorStyles.duckingOptionsGrid}>
+                    <button
+                      type="button"
+                      className={`${editorStyles.duckingOptionBtn} ${
+                        activeAudio.duckingStrength === 'light' ? editorStyles.duckingOptionBtnActive : ''
+                      }`}
+                      onClick={() => updateAudioSetting('duckingStrength', 'light')}
+                    >
+                      Light (35%)
+                    </button>
+                    <button
+                      type="button"
+                      className={`${editorStyles.duckingOptionBtn} ${
+                        activeAudio.duckingStrength === 'medium' ? editorStyles.duckingOptionBtnActive : ''
+                      }`}
+                      onClick={() => updateAudioSetting('duckingStrength', 'medium')}
+                    >
+                      Medium (65%)
+                    </button>
+                    <button
+                      type="button"
+                      className={`${editorStyles.duckingOptionBtn} ${
+                        activeAudio.duckingStrength === 'heavy' ? editorStyles.duckingOptionBtnActive : ''
+                      }`}
+                      onClick={() => updateAudioSetting('duckingStrength', 'heavy')}
+                    >
+                      Heavy (85%)
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className={editorStyles.faceTrackingHeader} style={{ paddingTop: '4px' }}>
+            <span className={editorStyles.faceTrackingTitle} style={{ fontSize: '0.78rem' }}>
+              <span>Sound Effects (SFX)</span>
+            </span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeAudio.sfxEnabled)}
+                onChange={(e) => updateAudioSetting('sfxEnabled', e.target.checked)}
+                className={editorStyles.switchInput}
+              />
+              <span className={editorStyles.switchSlider}></span>
+            </label>
+          </div>
+
+          {activeAudio.sfxEnabled && (
+            <div className={editorStyles.controlGroup}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <label className={editorStyles.controlLabel}>SFX Volume</label>
+                <span className={editorStyles.volumeBadge}>{Math.round(activeAudio.sfxVolume * 100)}%</span>
+              </div>
+              <div className={editorStyles.volumeSliderWrap}>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={activeAudio.sfxVolume}
+                  onChange={(e) => updateAudioSetting('sfxVolume', parseFloat(e.target.value))}
+                  className={editorStyles.volumeSlider}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── 4. Subtitle Typography & Styles ── */}
         <div className={editorStyles.controlGroup}>
           <label className={editorStyles.controlLabel}>Font Family</label>
           <select
@@ -612,7 +1161,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           </select>
         </div>
 
-        {/* Social Media Copy Panel */}
+        {/* ── 5. Social Media Copy Panel ── */}
         <div className={editorStyles.socialCopyCard}>
           <div className={editorStyles.socialHeader}>
             <span className={editorStyles.socialTitle}>
@@ -787,7 +1336,7 @@ function EditorialContent() {
   const steps = [
     { id: 'analyzing', label: 'Analyzing Content', description: 'Transcribing speech & finding hooks' },
     { id: 'preparing', label: 'Preparing Editor', description: 'Extracting video & slicing segments' },
-    { id: 'rendering', label: 'Rendering Clips', description: 'Burning styled subtitles to output' },
+    { id: 'rendering', label: 'Rendering Clips', description: 'Burning styled subtitles & audio mixing' },
     { id: 'done', label: 'Ready', description: 'Saved to your personal library' },
   ];
 
@@ -815,7 +1364,7 @@ function EditorialContent() {
             Home
           </Link>
           <div className={styles.headerTitle}>
-            {status === 'editing' ? 'Realtime Subtitle Studio' : 'Processing Content'}
+            {status === 'editing' ? 'Realtime Subtitle & Production Studio' : 'Processing Content'}
           </div>
         </div>
         <div className={styles.headerRight}>

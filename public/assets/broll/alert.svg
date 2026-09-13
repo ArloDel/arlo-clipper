@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="alertGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#450a0a" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#180404" stop-opacity="0.98"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#alertGrad)"/>
+  <polygon points="540,600 750,960 330,960" fill="#ef4444" stroke="#fbbf24" stroke-width="16" stroke-linejoin="round"/>
+  <rect x="526" y="710" width="28" height="130" rx="14" fill="#ffffff"/>
+  <circle cx="540" cy="890" r="16" fill="#ffffff"/>
+  <text x="540" y="1280" font-family="'Segoe UI', Roboto, sans-serif" font-weight="900" font-size="72" fill="#ffffff" text-anchor="middle" letter-spacing="6">ATTENTION !</text>
+  <text x="540" y="1350" font-family="'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="38" fill="#f87171" text-anchor="middle">CRITICAL NOTICE</text>
+</svg>

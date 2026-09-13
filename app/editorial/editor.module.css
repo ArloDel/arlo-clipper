@@ -595,4 +595,250 @@
   animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── B-Roll Visual Overlay in Player ── */
+.brollOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  animation: brollFadeIn 0.35s ease-out forwards;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+@keyframes brollFadeIn {
+  0% { opacity: 0; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.brollImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+
+.brollBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Audio & BGM Ducking Controls ── */
+.audioSectionBox {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 150ms var(--ease-out);
+}
+
+.audioSectionBoxActive {
+  border-color: #10b981;
+  background: color-mix(in srgb, #10b981 4%, var(--bg-subtle));
+}
+
+.bgmPickerRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.previewBgmBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms var(--ease-out);
+}
+
+.previewBgmBtn:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-subtle);
+}
+
+.previewBgmBtnActive {
+  background: #10b981;
+  color: #ffffff;
+  border-color: #10b981;
+}
+
+.volumeSliderWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volumeSlider {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+
+.volumeBadge {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  min-width: 34px;
+  text-align: right;
+}
+
+.duckingOptionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.duckingOptionBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+  padding: 6px 4px;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 150ms var(--ease-out);
+}
+
+.duckingOptionBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-main);
+}
+
+.duckingOptionBtnActive {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── B-Roll Controls & Timeline List ── */
+.brollBox {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 150ms var(--ease-out);
+}
+
+.brollBoxActive {
+  border-color: #3b82f6;
+  background: color-mix(in srgb, #3b82f6 4%, var(--bg-subtle));
+}
+
+.brollTimelineList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.brollChip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  font-size: 0.72rem;
+}
+
+.brollChipLeft {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.brollChipTime {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  background: var(--bg-subtle);
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.brollChipLabel {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.brollChipRemove {
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 150ms;
+}
+
+.brollChipRemove:hover {
+  color: #ef4444;
+}
+
+.addBrollBtn {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-hairline);
+  color: var(--text-sub);
+  padding: 6px;
+  border-radius: var(--radius-xs);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 150ms var(--ease-out);
+}
+
+.addBrollBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+
 

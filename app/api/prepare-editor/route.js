@@ -139,23 +139,92 @@ export async function POST(request) {
           .run();
       });
 
-      // 4. Transcribe with Groq
+      // 4. Transcribe with Groq (requesting word-level timestamps)
       console.log(`[Prepare Editor] Generating transcript for clip ${index}...`);
       const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
       const transcription = await groq.audio.transcriptions.create({
         file: fs.createReadStream(clipAudioPath),
         model: 'whisper-large-v3',
-        response_format: 'verbose_json'
+        response_format: 'verbose_json',
+        timestamp_granularities: ['word', 'segment']
       });
 
-      // Extract transcript data
-      const segments = transcription.segments.map((seg, i) => ({
-        id: i,
-        start: seg.start,
-        end: seg.end,
-        text: seg.text.trim()
-      }));
+      // Extract transcript data with word-level timestamps
+      const rawSegments = Array.isArray(transcription.segments) ? transcription.segments : [];
+      const globalWords = Array.isArray(transcription.words) ? transcription.words : [];
 
+      let segments = rawSegments.map((seg, i) => {
+        let segWords = Array.isArray(seg.words) && seg.words.length > 0 ? seg.words : [];
+        if (segWords.length === 0 && globalWords.length > 0) {
+          segWords = globalWords.filter(
+            (w) => (w.start >= seg.start - 0.15 || (w.start + w.end) / 2 >= seg.start) &&
+                   (w.start < seg.end || (w.start + w.end) / 2 <= seg.end)
+          );
+        }
+
+        let formattedWords = segWords
+          .map((w) => ({
+            word: (w.word || '').trim(),
+            start: Number(w.start),
+            end: Number(w.end)
+          }))
+          .filter((w) => w.word.length > 0);
+
+        // Fallback: If word timestamps are missing for this segment, approximate from segment text
+        if (formattedWords.length === 0 && seg.text) {
+          const rawTokens = seg.text.trim().split(/\s+/).filter(Boolean);
+          const duration = Math.max(0.1, seg.end - seg.start);
+          const wordDur = duration / Math.max(1, rawTokens.length);
+          formattedWords = rawTokens.map((token, idx) => ({
+            word: token,
+            start: Number((seg.start + idx * wordDur).toFixed(2)),
+            end: Number((seg.start + (idx + 1) * wordDur).toFixed(2))
+          }));
+        }
+
+        return {
+          id: i,
+          start: seg.start,
+          end: seg.end,
+          text: seg.text.trim(),
+          words: formattedWords
+        };
+      });
+
+      // Handle edge case where no segments were returned but transcription.text / globalWords exists
+      if (segments.length === 0 && (transcription.text || globalWords.length > 0)) {
+        const textStr = (transcription.text || globalWords.map((w) => w.word).join(' ')).trim();
+        let wordsForSeg = [];
+        if (globalWords.length > 0) {
+          wordsForSeg = globalWords
+            .map((w) => ({
+              word: (w.word || '').trim(),
+              start: Number(w.start),
+              end: Number(w.end)
+            }))
+            .filter((w) => w.word.length > 0);
+        } else {
+          const rawTokens = textStr.split(/\s+/).filter(Boolean);
+          const wordDur = durationSec / Math.max(1, rawTokens.length);
+          wordsForSeg = rawTokens.map((token, idx) => ({
+            word: token,
+            start: Number((idx * wordDur).toFixed(2)),
+            end: Number(((idx + 1) * wordDur).toFixed(2))
+          }));
+        }
+
+        segments = [
+          {
+            id: 0,
+            start: 0,
+            end: durationSec,
+            text: textStr,
+            words: wordsForSeg
+          }
+        ];
+      }
+
+      const clipWords = segments.flatMap((s) => s.words || []);
       const videoSrc = `/clips/${path.basename(rawClipPath)}`;
       const sourceSrc = `/clips/${path.basename(sourceClipPath)}`;
       
@@ -175,7 +244,8 @@ export async function POST(request) {
         centerVideoPath: videoSrc,
         faceTracking: false,
         duration: durationSec,
-        segments
+        segments,
+        words: clipWords
       });
 
       try {

@@ -13,6 +13,8 @@ const eslintConfig = defineConfig([
     "*-player-script.js",
     "test-models.js",
     "proxy.js",
+    "public/**",
+    "data/**",
   ]),
 ]);
 

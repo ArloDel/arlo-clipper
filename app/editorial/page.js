@@ -14,24 +14,76 @@ function getYouTubeId(url) {
   return match ? match[1] : null;
 }
 
+function getSegmentWords(seg) {
+  if (!seg) return [];
+  if (Array.isArray(seg.words) && seg.words.length > 0) {
+    return seg.words;
+  }
+  const tokens = (seg.text || '').trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return [];
+  const segDur = Math.max(0.1, (seg.end || 0) - (seg.start || 0));
+  const wordDur = segDur / tokens.length;
+  return tokens.map((token, idx) => ({
+    word: token,
+    start: (seg.start || 0) + idx * wordDur,
+    end: (seg.start || 0) + (idx + 1) * wordDur,
+  }));
+}
+
 function SubtitleOverlay({ videoRef, segments, style }) {
-  const [activeText, setActiveText] = useState('');
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = videoRef?.current;
     if (!video) return;
 
-    const handleTimeUpdate = () => {
-      const time = video.currentTime;
-      const activeSeg = segments.find((s) => time >= s.start && time <= s.end);
-      setActiveText(activeSeg ? activeSeg.text : '');
+    let animFrameId = null;
+
+    const updateTime = () => {
+      if (video) {
+        setCurrentTime(video.currentTime);
+        if (!video.paused && !video.ended) {
+          animFrameId = requestAnimationFrame(updateTime);
+        }
+      }
     };
 
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    return () => video.removeEventListener('timeupdate', handleTimeUpdate);
-  }, [segments, videoRef]);
+    const handlePlay = () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(updateTime);
+    };
 
-  if (!activeText) return null;
+    const handlePauseOrSeek = () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      if (video) setCurrentTime(video.currentTime);
+    };
+
+    setCurrentTime(video.currentTime || 0);
+
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('playing', handlePlay);
+    video.addEventListener('pause', handlePauseOrSeek);
+    video.addEventListener('seeking', handlePauseOrSeek);
+    video.addEventListener('seeked', handlePauseOrSeek);
+    video.addEventListener('timeupdate', handlePauseOrSeek);
+
+    if (!video.paused && !video.ended) {
+      animFrameId = requestAnimationFrame(updateTime);
+    }
+
+    return () => {
+      if (animFrameId) cancelAnimationFrame(animFrameId);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('playing', handlePlay);
+      video.removeEventListener('pause', handlePauseOrSeek);
+      video.removeEventListener('seeking', handlePauseOrSeek);
+      video.removeEventListener('seeked', handlePauseOrSeek);
+      video.removeEventListener('timeupdate', handlePauseOrSeek);
+    };
+  }, [videoRef, segments]);
+
+  const activeSeg = (segments || []).find((s) => currentTime >= s.start && currentTime <= s.end);
+  if (!activeSeg) return null;
 
   const sizeMap = { small: '1.15rem', medium: '1.5rem', large: '2.0rem' };
   const fontSize = sizeMap[style.size?.toLowerCase()] || '1.5rem';
@@ -42,6 +94,58 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   ]
     .filter(Boolean)
     .join(', ');
+
+  const isKaraoke = style.animation === 'Karaoke';
+
+  if (isKaraoke) {
+    const words = getSegmentWords(activeSeg);
+    let highlightColor = style.color || '#FFFF00';
+    if (highlightColor.toLowerCase() === '#ffffff' || highlightColor.toLowerCase() === '#fff') {
+      highlightColor = '#FFFF00';
+    }
+
+    return (
+      <div
+        className={editorStyles.subtitleOverlay}
+        style={{
+          fontFamily: style.font || 'Impact',
+          fontSize: fontSize,
+        }}
+      >
+        <div className={editorStyles.karaokeContainer}>
+          {words.map((w, idx) => {
+            const isCurrent =
+              currentTime >= w.start &&
+              (words[idx + 1] && words[idx + 1].start > w.start
+                ? currentTime < Math.min(w.end + 0.15, words[idx + 1].start)
+                : currentTime <= w.end + 0.15);
+            const isPast =
+              currentTime > (words[idx + 1] ? words[idx + 1].start : w.end + 0.15);
+
+            const wordColor = isCurrent ? highlightColor : '#FFFFFF';
+            const wordShadow = isCurrent
+              ? `0 0 16px ${highlightColor}, 0 0 6px ${highlightColor}${textShadow ? ', ' + textShadow : ', -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000'}`
+              : (textShadow || 'none');
+
+            return (
+              <span
+                key={idx}
+                className={`${editorStyles.karaokeWord} ${
+                  isCurrent ? editorStyles.karaokeWordActive : ''
+                } ${isPast ? editorStyles.karaokeWordPast : ''}`}
+                style={{
+                  color: wordColor,
+                  textShadow: wordShadow,
+                }}
+              >
+                {w.word}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   const getAnimationClass = (anim) => {
     switch (anim) {
@@ -60,7 +164,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
 
   return (
     <div
-      key={`${activeText}-${style.animation}`}
+      key={`${activeSeg.text}-${style.animation}`}
       className={`${editorStyles.subtitleOverlay} ${getAnimationClass(style.animation)}`}
       style={{
         fontFamily: style.font || 'Impact',
@@ -69,7 +173,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
         textShadow: textShadow || 'none',
       }}
     >
-      {activeText}
+      {activeSeg.text}
     </div>
   );
 }
@@ -263,7 +367,12 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             className={editorStyles.video}
             key={activeClip.videoPath}
           />
-          <SubtitleOverlay videoRef={videoRef} segments={activeClip.segments} style={activeStyle} />
+          <SubtitleOverlay
+            key={`${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
+            videoRef={videoRef}
+            segments={activeClip.segments}
+            style={activeStyle}
+          />
         </div>
       </div>
 
@@ -402,6 +511,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             className={editorStyles.input}
           >
             <option>None</option>
+            <option>Karaoke</option>
             <option>Pop</option>
             <option>Slide Up</option>
             <option>Blur</option>

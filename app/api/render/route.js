@@ -105,14 +105,36 @@ export async function POST(request) {
           file: fs.createReadStream(clipAudioPath),
           model: 'whisper-large-v3',
           response_format: 'verbose_json',
+          timestamp_granularities: ['word', 'segment'],
         });
 
-        const segments = transcription.segments.map((seg, i) => ({
-          id: i,
-          start: seg.start,
-          end: seg.end,
-          text: seg.text.trim(),
-        }));
+        const rawSegments = Array.isArray(transcription.segments) ? transcription.segments : [];
+        const globalWords = Array.isArray(transcription.words) ? transcription.words : [];
+
+        const segments = rawSegments.map((seg, i) => {
+          let segWords = Array.isArray(seg.words) && seg.words.length > 0 ? seg.words : [];
+          if (segWords.length === 0 && globalWords.length > 0) {
+            segWords = globalWords.filter(
+              (w) => (w.start >= seg.start - 0.15 || (w.start + w.end) / 2 >= seg.start) &&
+                     (w.start < seg.end || (w.start + w.end) / 2 <= seg.end)
+            );
+          }
+          const formattedWords = segWords
+            .map((w) => ({
+              word: (w.word || '').trim(),
+              start: Number(w.start),
+              end: Number(w.end),
+            }))
+            .filter((w) => w.word.length > 0);
+
+          return {
+            id: i,
+            start: seg.start,
+            end: seg.end,
+            text: seg.text.trim(),
+            words: formattedWords,
+          };
+        });
 
         generateAssSubtitleFile({
           assPath,

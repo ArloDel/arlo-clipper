@@ -46,3 +46,4 @@ test-models.js
 data/db.json
 __pycache__/
 *.pyc
+scripts/test_out/

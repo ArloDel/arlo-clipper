@@ -183,6 +183,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [lipTrackingLoading, setLipTrackingLoading] = useState(false);
+  const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
@@ -216,6 +217,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           videoPath: currentClip.trackedVideoPath,
           faceTracking: true,
           lipTracking: false,
+          splitScreen: false,
         };
         setClips(updated);
       } else {
@@ -242,6 +244,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             videoPath: data.trackedVideoPath,
             faceTracking: true,
             lipTracking: false,
+            splitScreen: false,
           };
           setClips(updated);
         } catch (err) {
@@ -273,6 +276,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           videoPath: currentClip.lipTrackedVideoPath,
           lipTracking: true,
           faceTracking: false,
+          splitScreen: false,
         };
         setClips(updated);
       } else {
@@ -299,6 +303,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             videoPath: data.trackedVideoPath,
             lipTracking: true,
             faceTracking: false,
+            splitScreen: false,
           };
           setClips(updated);
         } catch (err) {
@@ -315,6 +320,65 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
         ...currentClip,
         videoPath: fallbackVideo,
         lipTracking: false,
+      };
+      setClips(updated);
+    }
+  };
+
+  const handleToggleSplitScreen = async (enabled) => {
+    const currentClip = clips[activeClipIdx];
+    if (enabled) {
+      if (currentClip.splitScreenVideoPath) {
+        const updated = [...clips];
+        updated[activeClipIdx] = {
+          ...currentClip,
+          videoPath: currentClip.splitScreenVideoPath,
+          splitScreen: true,
+          faceTracking: false,
+          lipTracking: false,
+        };
+        setClips(updated);
+      } else {
+        setSplitScreenLoading(true);
+        try {
+          const res = await fetch('/api/split-screen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              clipId: currentClip.id,
+              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
+              videoPath: currentClip.videoPath,
+              ratio,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to process split screen');
+          }
+          const updated = [...clips];
+          updated[activeClipIdx] = {
+            ...currentClip,
+            splitScreenVideoPath: data.splitScreenVideoPath,
+            videoPath: data.splitScreenVideoPath,
+            splitScreen: true,
+            faceTracking: false,
+            lipTracking: false,
+          };
+          setClips(updated);
+        } catch (err) {
+          console.error('Split screen error:', err);
+          alert('Gagal memproses split screen: ' + err.message);
+        } finally {
+          setSplitScreenLoading(false);
+        }
+      }
+    } else {
+      const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
+      const updated = [...clips];
+      updated[activeClipIdx] = {
+        ...currentClip,
+        videoPath: fallbackVideo,
+        splitScreen: false,
       };
       setClips(updated);
     }
@@ -393,7 +457,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
               <input
                 type="checkbox"
                 checked={Boolean(activeClip.faceTracking)}
-                disabled={trackingLoading || lipTrackingLoading}
+                disabled={trackingLoading || lipTrackingLoading || splitScreenLoading}
                 onChange={(e) => handleToggleFaceTracking(e.target.checked)}
                 className={editorStyles.switchInput}
               />
@@ -422,7 +486,7 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
               <input
                 type="checkbox"
                 checked={Boolean(activeClip.lipTracking)}
-                disabled={lipTrackingLoading || trackingLoading}
+                disabled={lipTrackingLoading || trackingLoading || splitScreenLoading}
                 onChange={(e) => handleToggleLipTracking(e.target.checked)}
                 className={editorStyles.switchInput}
               />
@@ -436,6 +500,35 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
             <div className={editorStyles.faceTrackingLoading}>
               <div className={editorStyles.spinnerSmall}></div>
               <span>Melacak gerakan bibir dengan OpenCV...</span>
+            </div>
+          )}
+        </div>
+
+        {/* Split Screen Podcast Mode Toggle */}
+        <div className={`${editorStyles.faceTrackingBox} ${activeClip.splitScreen ? editorStyles.faceTrackingBoxActive : ''}`}>
+          <div className={editorStyles.faceTrackingHeader}>
+            <span className={editorStyles.faceTrackingTitle}>
+              <span>Split Screen</span>
+              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(99, 102, 241, 0.18)', color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.3)' }}>Podcast 2-P</span>
+            </span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeClip.splitScreen)}
+                disabled={splitScreenLoading || trackingLoading || lipTrackingLoading}
+                onChange={(e) => handleToggleSplitScreen(e.target.checked)}
+                className={editorStyles.switchInput}
+              />
+              <span className={editorStyles.switchSlider}></span>
+            </label>
+          </div>
+          <p className={editorStyles.faceTrackingDesc}>
+            Layout vertikal 9:16 bertumpuk (atas & bawah) otomatis mendeteksi dan melacak 2 pembicara (host & guest).
+          </p>
+          {splitScreenLoading && (
+            <div className={editorStyles.faceTrackingLoading}>
+              <div className={editorStyles.spinnerSmall}></div>
+              <span>Memproses split screen podcast...</span>
             </div>
           )}
         </div>

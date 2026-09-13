@@ -83,12 +83,16 @@ export async function POST(request) {
       try {
         if (fs.existsSync(rawClipPath)) fs.unlinkSync(rawClipPath);
         if (fs.existsSync(assPath)) fs.unlinkSync(assPath);
+        const rawPath = path.join(clipsDir, `${clip.id}-raw.mp4`);
+        if (fs.existsSync(rawPath) && rawPath !== rawClipPath) fs.unlinkSync(rawPath);
         const sourcePath = path.join(clipsDir, `${clip.id}-source.mp4`);
         if (fs.existsSync(sourcePath)) fs.unlinkSync(sourcePath);
         const trackedPath = path.join(clipsDir, `${clip.id}-tracked.mp4`);
         if (fs.existsSync(trackedPath) && trackedPath !== rawClipPath) fs.unlinkSync(trackedPath);
         const lipTrackedPath = path.join(clipsDir, `${clip.id}-liptracked.mp4`);
         if (fs.existsSync(lipTrackedPath) && lipTrackedPath !== rawClipPath) fs.unlinkSync(lipTrackedPath);
+        const splitScreenPath = path.join(clipsDir, `${clip.id}-splitscreen.mp4`);
+        if (fs.existsSync(splitScreenPath) && splitScreenPath !== rawClipPath) fs.unlinkSync(splitScreenPath);
       } catch (e) {
         console.warn('Final cleanup warning:', e);
       }

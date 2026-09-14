@@ -419,6 +419,59 @@
         "#MarvelToys"
       ],
       "createdAt": "2026-09-13T19:14:16.734Z"
+    },
+    {
+      "id": "8ec716a8-2d11-4115-858f-0fc5002f87d0",
+      "title": "Bagian Menarik Webhook",
+      "videoPath": "/clips/8ec716a8-2d11-4115-858f-0fc5002f87d0-final.mp4",
+      "duration": 4,
+      "hook": "Trik Otomatisasi Video AI!",
+      "caption": "Otomatisasi video dengan webhook endpoint n8n dan Make.",
+      "channelName": "YouTube",
+      "startTime": "00:00:00",
+      "endTime": "00:00:04",
+      "hashtags": [
+        "#Webhook",
+        "#AI",
+        "#Viral"
+      ],
+      "createdAt": "2026-09-14T04:36:20.910Z"
+    },
+    {
+      "id": "2c1cf19d-68f4-4254-83b0-5eb7afadebc4",
+      "title": "Clean Video Without Subtitles",
+      "videoPath": "/clips/2c1cf19d-68f4-4254-83b0-5eb7afadebc4-final.mp4",
+      "duration": 3,
+      "hook": "Clean Video Hook",
+      "caption": "",
+      "channelName": "YouTube",
+      "startTime": "00:00:00",
+      "endTime": "00:00:03",
+      "hashtags": [
+        "#Shorts",
+        "#Viral",
+        "#Trending"
+      ],
+      "createdAt": "2026-09-14T04:36:24.012Z"
+    },
+    {
+      "id": "5fc3adbe-8497-4a76-8956-ced3ea849b97",
+      "title": "Masuk Rumah Angker Dibayar 1 Miliar?!",
+      "videoPath": "/clips/f0ae653d-76e0-4c40-9cac-b1d57414b4b5-final.mp4",
+      "duration": 52,
+      "hook": "Ditantang masuk rumah angker sendirian, berani gak kalau dibayar 1 Miliar?",
+      "caption": "Kalau ditantang masuk rumah hantu tanpa dibayar pasti nolak, tapi kalau imbalannya 1 Miliar sih beda cerita! Penasaran gimana reaksi kocak mereka pas bahas uji nyali demi uang tunai?",
+      "channelName": "Tara Arts Network",
+      "startTime": "00:02:00",
+      "endTime": "00:02:52",
+      "hashtags": [
+        "#Shorts",
+        "#Viral",
+        "#Trending",
+        "#HororKomedi",
+        "#TaraArts"
+      ],
+      "createdAt": "2026-09-14T05:58:21.265Z"
     }
   ]
 }

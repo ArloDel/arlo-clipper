@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '../components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from '../components/WebhookModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
 import styles from './library.module.css';
 
@@ -21,6 +22,7 @@ export default function LibraryPage() {
   // Social Copy Modal state
   const [activeModalClip, setActiveModalClip] = useState(null);
   const [modalCopyStatus, setModalCopyStatus] = useState('');
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -204,6 +206,7 @@ export default function LibraryPage() {
         </div>
 
         <div className={styles.headerRight}>
+          <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
           <ThemeToggle />
           {clips.length > 0 && (
             <button
@@ -519,6 +522,12 @@ export default function LibraryPage() {
           </div>
         </div>
       )}
+
+      {/* Webhook Automation Settings & Test Modal */}
+      <WebhookModal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+      />
     </div>
   );
 }

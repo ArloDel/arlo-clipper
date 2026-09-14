@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node scripts/test_karaoke_subtitles.mjs",
-    "test:audio-broll": "node scripts/test_audio_broll.mjs"
+    "test:audio-broll": "node scripts/test_audio_broll.mjs",
+    "test:webhook": "node scripts/test_webhook_automation.mjs"
   },
   "dependencies": {
     "@cloudflare/kumo": "^2.8.0",

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '../components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from '../components/WebhookModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
 import { BGM_TRACKS } from '../../lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '../../lib/brollCatalog';
@@ -1263,6 +1264,7 @@ function EditorialContent() {
   const [status, setStatus] = useState('analyzing');
   const [errorMessage, setErrorMessage] = useState('');
   const [preparedClips, setPreparedClips] = useState([]);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   const videoId = getYouTubeId(url);
 
@@ -1368,6 +1370,7 @@ function EditorialContent() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
           <ThemeToggle />
           <Link href="/library" className={styles.libraryLink}>
             Library →
@@ -1455,6 +1458,12 @@ function EditorialContent() {
           </aside>
         </main>
       )}
+
+      {/* Webhook Automation Settings & Test Modal */}
+      <WebhookModal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+      />
     </div>
   );
 }

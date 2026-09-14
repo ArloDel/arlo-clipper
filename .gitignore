@@ -44,6 +44,7 @@ public/cache/*
 *-player-script.js
 test-models.js
 data/db.json
+data/webhooks.json
 __pycache__/
 *.pyc
 scripts/test_out/

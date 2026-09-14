@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from './components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from './components/WebhookModal';
 import styles from './page.module.css';
 
 export default function HomePage() {
@@ -15,6 +16,7 @@ export default function HomePage() {
   const [size, setSize] = useState('Medium');
   const [color, setColor] = useState('#ffffff');
   const [showOptions, setShowOptions] = useState(false);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -40,6 +42,7 @@ export default function HomePage() {
           <span className={styles.logoText}>Arlo Clipper</span>
         </div>
         <div className={styles.headerActions}>
+          <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
           <ThemeToggle />
           <Link href="/library" className={styles.libraryLink}>
             Library <span className={styles.arrow}>→</span>
@@ -189,6 +192,12 @@ export default function HomePage() {
           </button>
         </form>
       </main>
+
+      {/* Webhook Automation Settings & Test Modal */}
+      <WebhookModal
+        isOpen={isWebhookModalOpen}
+        onClose={() => setIsWebhookModalOpen(false)}
+      />
     </div>
   );
 }

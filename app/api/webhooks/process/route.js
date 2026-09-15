@@ -15,12 +15,15 @@ function timingSafeEqualStr(a, b) {
 
 function authenticateRequest(request, rawBody, bodySecret) {
   const configuredSecret = getWebhookSecret();
-  if (!configuredSecret) {
+  if (!configuredSecret || configuredSecret === 'none' || configuredSecret === '') {
     return true; // No secret configured, allow access
   }
 
-  // 1. Check custom header x-arlo-secret
-  const headerSecret = request.headers.get('x-arlo-secret');
+  // 1. Check custom headers (x-arlo-secret, x-api-key, apikey)
+  const headerSecret =
+    request.headers.get('x-arlo-secret') ||
+    request.headers.get('x-api-key') ||
+    request.headers.get('apikey');
   if (headerSecret && timingSafeEqualStr(headerSecret, configuredSecret)) {
     return true;
   }
@@ -40,7 +43,18 @@ function authenticateRequest(request, rawBody, bodySecret) {
     return true;
   }
 
-  // 4. Check secret / apiKey in JSON body
+  // 4. Check query params (?secret=... or ?apiKey=...)
+  try {
+    const urlObj = new URL(request.url);
+    const querySecret = urlObj.searchParams.get('secret') || urlObj.searchParams.get('apiKey');
+    if (querySecret && timingSafeEqualStr(querySecret, configuredSecret)) {
+      return true;
+    }
+  } catch {
+    // Ignore URL parse error
+  }
+
+  // 5. Check secret / apiKey in JSON body
   if (bodySecret && timingSafeEqualStr(String(bodySecret), configuredSecret)) {
     return true;
   }

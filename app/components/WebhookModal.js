@@ -381,7 +381,7 @@ print("Response:", response.status_code, response.json())`;
             className={`${styles.tabBtn} ${activeTab === 'logs' ? styles.tabBtnActive : ''}`}
             onClick={() => {
               setActiveTab('logs');
-              fetchLogs();
+              refreshLogs();
             }}
           >
             📊 Activity Logs ({logs.length})
@@ -644,7 +644,7 @@ print("Response:", response.status_code, response.json())`;
                   {logsLoading ? 'Loading logs...' : `Showing last ${logs.length} webhook events`}
                 </span>
                 <div className={styles.logsActions}>
-                  <button type="button" onClick={fetchLogs} className={styles.refreshBtn}>
+                  <button type="button" onClick={refreshLogs} className={styles.refreshBtn}>
                     🔄 Refresh
                   </button>
                   {logs.length > 0 && (

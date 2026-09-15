@@ -206,6 +206,9 @@ export default function LibraryPage() {
         </div>
 
         <div className={styles.headerRight}>
+          <Link href="/bot" className={styles.backLink} style={{ textDecoration: 'none' }} title="Local Automation Bot">
+            🤖 Auto Bot
+          </Link>
           <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
           <ThemeToggle />
           {clips.length > 0 && (

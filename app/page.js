@@ -42,6 +42,9 @@ export default function HomePage() {
           <span className={styles.logoText}>Arlo Clipper</span>
         </div>
         <div className={styles.headerActions}>
+          <Link href="/bot" className={styles.libraryLink} title="Local Automation Bot">
+            🤖 Auto Bot
+          </Link>
           <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
           <ThemeToggle />
           <Link href="/library" className={styles.libraryLink}>

@@ -45,6 +45,9 @@ public/cache/*
 test-models.js
 data/db.json
 data/webhooks.json
+data/botConfig.json
+data/botHistory.json
+exports/
 __pycache__/
 *.pyc
 scripts/test_out/

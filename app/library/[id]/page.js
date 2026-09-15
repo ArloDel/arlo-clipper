@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import ThemeToggle from '../../components/ThemeToggle';
+import ThemeToggle from '@/app/components/ThemeToggle';
 import styles from './folder.module.css';
 
 export default function FolderPage(props) {

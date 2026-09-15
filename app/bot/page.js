@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import Link from 'next/link';
-import ThemeToggle from '../components/ThemeToggle';
-import WebhookModal, { WebhookTriggerButton } from '../components/WebhookModal';
-import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
+import ThemeToggle from '@/app/components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import styles from './bot.module.css';
 
 const emptySubscribe = () => () => {};

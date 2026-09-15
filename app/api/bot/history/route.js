@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBotHistory, clearBotHistory } from '../../../../lib/localBot.js';
+import { getBotHistory, clearBotHistory } from '@/lib/localBot';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { dispatchWebhookEvent, getWebhookSecret } from '../../../../lib/webhooks';
+import { dispatchWebhookEvent, getWebhookSecret } from '@/lib/webhooks';
 
 export async function POST(request) {
   try {

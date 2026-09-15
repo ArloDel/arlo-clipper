@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPaginatedClips, getDb } from '../../../lib/db';
+import { getPaginatedClips, getDb } from '@/lib/db';
 
 export async function GET(request) {
   try {

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getWebhookLogs, clearWebhookLogs, getWebhookSecret } from '../../../../lib/webhooks';
+import { getWebhookLogs, clearWebhookLogs, getWebhookSecret } from '@/lib/webhooks';
 
 export async function GET(request) {
   try {

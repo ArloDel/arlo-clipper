@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '../../../../../lib/db';
+import { getDb } from '@/lib/db';
 import { ZipArchive } from 'archiver';
 import fs from 'fs';
 import path from 'path';

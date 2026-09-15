@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getBotConfig, saveBotConfig, getSchedulerStatus, startBotScheduler, stopBotScheduler } from '../../../../lib/localBot.js';
+import { getBotConfig, saveBotConfig, getSchedulerStatus, startBotScheduler, stopBotScheduler } from '@/lib/localBot';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { checkAndProcessNewVideos } from '../../../../lib/localBot.js';
+import { checkAndProcessNewVideos } from '@/lib/localBot';
 
 export const dynamic = 'force-dynamic';
 

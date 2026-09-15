@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ThemeToggle from './components/ThemeToggle';
-import WebhookModal, { WebhookTriggerButton } from './components/WebhookModal';
+import ThemeToggle from '@/app/components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import styles from './page.module.css';
 
 export default function HomePage() {

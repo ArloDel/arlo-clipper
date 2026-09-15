@@ -3,11 +3,11 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ThemeToggle from '../components/ThemeToggle';
-import WebhookModal, { WebhookTriggerButton } from '../components/WebhookModal';
-import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '../../lib/socialCopy';
-import { BGM_TRACKS } from '../../lib/audioCatalog';
-import { BROLL_THEMES, detectAutoBroll } from '../../lib/brollCatalog';
+import ThemeToggle from '@/app/components/ThemeToggle';
+import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
+import { BGM_TRACKS } from '@/lib/audioCatalog';
+import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
 

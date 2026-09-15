@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { resolveChannelInfo } from '../../../../lib/localBot.js';
+import { resolveChannelInfo } from '@/lib/localBot';
 
 export const dynamic = 'force-dynamic';
 

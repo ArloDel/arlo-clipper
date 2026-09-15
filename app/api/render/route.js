@@ -7,8 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import Groq from 'groq-sdk';
-import { saveClip } from '../../../lib/db';
-import { generateAssSubtitleFile } from '../../../lib/subtitles';
+import { saveClip } from '@/lib/db';
+import { generateAssSubtitleFile } from '@/lib/subtitles';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);

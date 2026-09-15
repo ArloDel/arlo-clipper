@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteClip } from '../../../../lib/db';
+import { deleteClip } from '@/lib/db';
 import fs from 'fs';
 import path from 'path';
 

@@ -4,11 +4,11 @@ import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import path from 'path';
 import fs from 'fs';
-import { saveClip } from '../../../lib/db';
-import { getVideoDimensions, generateAssSubtitleFile } from '../../../lib/subtitles';
-import { buildRenderComplexFilter } from '../../../lib/audioDucking';
-import { ensureAudioAssets } from '../../../lib/audioAssets';
-import { ensureBrollAssets } from '../../../lib/broll';
+import { saveClip } from '@/lib/db';
+import { getVideoDimensions, generateAssSubtitleFile } from '@/lib/subtitles';
+import { buildRenderComplexFilter } from '@/lib/audioDucking';
+import { ensureAudioAssets } from '@/lib/audioAssets';
+import { ensureBrollAssets } from '@/lib/broll';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);

@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs';
 import Groq from 'groq-sdk';
-import { detectAutoBroll, ensureBrollAssets } from '../../../lib/broll';
-import { ensureAudioAssets } from '../../../lib/audioAssets';
+import { detectAutoBroll, ensureBrollAssets } from '@/lib/broll';
+import { ensureAudioAssets } from '@/lib/audioAssets';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 

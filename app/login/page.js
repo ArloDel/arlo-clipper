@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import ThemeToggle from '../components/ThemeToggle';
+import ThemeToggle from '@/app/components/ThemeToggle';
 import styles from './login.module.css';
 
 export default function LoginPage() {

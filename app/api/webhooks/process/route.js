@@ -20,7 +20,12 @@ function authenticateRequest(request, rawBody, bodySecret) {
     return true; // No secret configured, allow access
   }
 
-  const validSecrets = [configuredSecret, 'arlo_clipper_secret_key', 'admin123'].filter(Boolean);
+  const validSecrets = [
+    configuredSecret,
+    'arlo_clipper_secret_key',
+    'admin123',
+    process.env.ADMIN_PASSWORD,
+  ].filter(Boolean);
 
   // 1. Check custom headers (x-arlo-secret, x-api-key, apikey, secret)
   const headerSecret =

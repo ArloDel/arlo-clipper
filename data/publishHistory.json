@@ -1,0 +1,121 @@
+[
+  {
+    "id": "pub_1789630802887_5ef0ae5f",
+    "timestamp": "2026-09-17T07:40:02.887Z",
+    "clipId": "clip_alias_test",
+    "clipTitle": "Alias Test Clip",
+    "videoPath": "https://cdn.example.com/clips/sample.mp4",
+    "platforms": [
+      "youtube",
+      "instagram"
+    ],
+    "status": "success",
+    "results": {
+      "youtube": {
+        "success": true,
+        "platform": "youtube",
+        "mock": true,
+        "videoId": "yt_f5463ff7a547",
+        "videoUrl": "https://www.youtube.com/shorts/yt_f5463ff7a547",
+        "title": "Alias Test Clip",
+        "status": "unlisted",
+        "publishAt": null,
+        "publishedAt": "2026-09-17T07:40:02.886Z",
+        "details": {
+          "privacyStatus": "unlisted",
+          "isShort": true,
+          "tags": [
+            "Shorts",
+            "Viral"
+          ],
+          "note": "Uploaded via simulated YouTube Data API v3 integration"
+        }
+      },
+      "instagram": {
+        "success": true,
+        "platform": "instagram",
+        "mock": true,
+        "mediaId": "ig_153483b0df16",
+        "postUrl": "https://www.instagram.com/reel/12f3dbf1/",
+        "status": "published",
+        "caption": ".\n.\n🎥 Credit: @Source \n\n#Reels #ReelsInstagram #ViralReels #ExplorePage",
+        "publishedAt": "2026-09-17T07:40:02.886Z",
+        "details": {
+          "note": "Uploaded via simulated Instagram Graph API (Reels Container)",
+          "shareToFeed": true
+        }
+      }
+    },
+    "errors": [],
+    "scheduledFor": null
+  },
+  {
+    "id": "pub_1789630802649_057b8301",
+    "timestamp": "2026-09-17T07:40:02.649Z",
+    "clipId": "clip_test_1789630802576",
+    "clipTitle": "Cara Naik Gaji 50% di 2026",
+    "videoPath": "/clips/test_render.mp4",
+    "platforms": [
+      "youtube",
+      "tiktok",
+      "instagram"
+    ],
+    "status": "success",
+    "results": {
+      "youtube": {
+        "success": true,
+        "platform": "youtube",
+        "mock": true,
+        "videoId": "yt_89651748b1d6",
+        "videoUrl": "https://www.youtube.com/shorts/yt_89651748b1d6",
+        "title": "Cara Naik Gaji 50% di 2026",
+        "status": "public",
+        "publishAt": null,
+        "publishedAt": "2026-09-17T07:40:02.647Z",
+        "details": {
+          "privacyStatus": "public",
+          "isShort": true,
+          "tags": [
+            "Shorts",
+            "Career",
+            "Salary",
+            "TipsKerja"
+          ],
+          "note": "Uploaded via simulated YouTube Data API v3 integration"
+        }
+      },
+      "tiktok": {
+        "success": true,
+        "platform": "tiktok",
+        "mock": true,
+        "publishId": "tt_93b4ecf9557f",
+        "status": "processing",
+        "caption": "Mau naik gaji 50%? Lakukan 3 hal ini saat review tahunan! 😱\n\nCara bernegosiasi gaji dengan data dan achievement portofolio.\n\ncc: CareerLab\n\n#Shorts #Career #Salary #TipsKerja #fyp #foryou #viral #trending",
+        "privacyLevel": "PUBLIC_TO_EVERYONE",
+        "publishedAt": "2026-09-17T07:40:02.648Z",
+        "details": {
+          "note": "Uploaded via simulated TikTok Content Posting API v2",
+          "disableDuet": false,
+          "disableStitch": false,
+          "disableComment": false
+        }
+      },
+      "instagram": {
+        "success": true,
+        "platform": "instagram",
+        "mock": true,
+        "mediaId": "ig_6f405214010a",
+        "postUrl": "https://www.instagram.com/reel/b4c1f2ac/",
+        "status": "published",
+        "caption": "Mau naik gaji 50%? Lakukan 3 hal ini saat review tahunan!\n\nCara bernegosiasi gaji dengan data dan achievement portofolio.\n\n.\n.\n🎥 Credit: @CareerLab | ⏱️ 00:02:10 - 00:02:55\n\n#Shorts #Career #Salary #TipsKerja #Reels #ReelsInstagram #ViralReels #ExplorePage",
+        "publishedAt": "2026-09-17T07:40:02.648Z",
+        "details": {
+          "note": "Uploaded via simulated Instagram Graph API (Reels Container)",
+          "shareToFeed": true
+        }
+      }
+    },
+    "errors": [],
+    "scheduledFor": null
+  }
+]

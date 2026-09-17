@@ -850,6 +850,31 @@
   border-color: var(--border-hover);
 }
 
+.clipPublishBtn {
+  flex: 1;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(244, 63, 94, 0.15));
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: var(--radius-xs);
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #f87171;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 120ms ease;
+}
+
+.clipPublishBtn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(244, 63, 94, 0.25));
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 /* ── Logs Section ── */
 .logsHeader {
   display: flex;

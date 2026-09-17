@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useSyncExternalStore } from 'r
 import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import DirectPublishModal from '@/app/components/DirectPublishModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import styles from './bot.module.css';
 
@@ -12,6 +13,7 @@ const emptySubscribe = () => () => {};
 export default function AutoBotPage() {
   const [activeTab, setActiveTab] = useState('config'); // 'config' | 'videos' | 'logs'
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [publishModalClip, setPublishModalClip] = useState(null);
   const [toastMessage, setToastMessage] = useState('');
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const hasInitializedInput = React.useRef(false);
@@ -46,6 +48,11 @@ export default function AutoBotPage() {
       exportDir: 'exports',
       generateTxtMetadata: true,
       generateJsonMetadata: true,
+    },
+    autoPublish: {
+      enabled: false,
+      platforms: ['youtube'],
+      privacy: 'public',
     },
   });
 
@@ -941,6 +948,153 @@ export default function AutoBotPage() {
               </div>
             </div>
 
+            {/* Card 5: Auto Direct Publish to Social Media */}
+            <div className={styles.bentoCard}>
+              <div className={styles.bentoHeader}>
+                <div>
+                  <h3 className={styles.bentoTitle}>🚀 Auto Direct Publish ke Medsos</h3>
+                  <p className={styles.bentoSubtitle}>Otomatis mengunggah klip yang selesai diproses ke YouTube Shorts, TikTok, atau Instagram</p>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label
+                  className={`${styles.checkboxCard} ${
+                    config.autoPublish?.enabled ? styles.checkboxCardActive : ''
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className={styles.customCheckbox}
+                    checked={Boolean(config.autoPublish?.enabled)}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        autoPublish: {
+                          ...config.autoPublish,
+                          enabled: e.target.checked,
+                        },
+                      })
+                    }
+                  />
+                  <div className={styles.checkboxCardText}>
+                    <span className={styles.checkboxCardTitle}>Aktifkan Auto Direct Upload</span>
+                    <span className={styles.checkboxCardDesc}>
+                      Setelah klip berhasil dirender, langsung publish otomatis tanpa perlu upload manual
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {config.autoPublish?.enabled && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Target Platform Publikasi</label>
+                    <div className={styles.presetGrid3}>
+                      {/* YouTube Shorts */}
+                      <label
+                        className={`${styles.checkboxCard} ${
+                          config.autoPublish?.platforms?.includes('youtube') ? styles.checkboxCardActive : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className={styles.customCheckbox}
+                          checked={Boolean(config.autoPublish?.platforms?.includes('youtube'))}
+                          onChange={(e) => {
+                            const current = config.autoPublish?.platforms || ['youtube'];
+                            const next = e.target.checked
+                              ? [...current, 'youtube']
+                              : current.filter((p) => p !== 'youtube');
+                            setConfig({
+                              ...config,
+                              autoPublish: { ...config.autoPublish, platforms: next },
+                            });
+                          }}
+                        />
+                        <div className={styles.checkboxCardText}>
+                          <span className={styles.checkboxCardTitle}>🔴 YouTube Shorts</span>
+                        </div>
+                      </label>
+
+                      {/* TikTok */}
+                      <label
+                        className={`${styles.checkboxCard} ${
+                          config.autoPublish?.platforms?.includes('tiktok') ? styles.checkboxCardActive : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className={styles.customCheckbox}
+                          checked={Boolean(config.autoPublish?.platforms?.includes('tiktok'))}
+                          onChange={(e) => {
+                            const current = config.autoPublish?.platforms || [];
+                            const next = e.target.checked
+                              ? [...current, 'tiktok']
+                              : current.filter((p) => p !== 'tiktok');
+                            setConfig({
+                              ...config,
+                              autoPublish: { ...config.autoPublish, platforms: next },
+                            });
+                          }}
+                        />
+                        <div className={styles.checkboxCardText}>
+                          <span className={styles.checkboxCardTitle}>🎵 TikTok</span>
+                        </div>
+                      </label>
+
+                      {/* Instagram Reels */}
+                      <label
+                        className={`${styles.checkboxCard} ${
+                          config.autoPublish?.platforms?.includes('instagram') ? styles.checkboxCardActive : ''
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className={styles.customCheckbox}
+                          checked={Boolean(config.autoPublish?.platforms?.includes('instagram'))}
+                          onChange={(e) => {
+                            const current = config.autoPublish?.platforms || [];
+                            const next = e.target.checked
+                              ? [...current, 'instagram']
+                              : current.filter((p) => p !== 'instagram');
+                            setConfig({
+                              ...config,
+                              autoPublish: { ...config.autoPublish, platforms: next },
+                            });
+                          }}
+                        />
+                        <div className={styles.checkboxCardText}>
+                          <span className={styles.checkboxCardTitle}>📸 Instagram Reels</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Status Privasi Default</label>
+                    <select
+                      className={styles.inputField}
+                      value={config.autoPublish?.privacy || 'public'}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          autoPublish: {
+                            ...config.autoPublish,
+                            privacy: e.target.value,
+                          },
+                        })
+                      }
+                    >
+                      <option value="public">🌐 Public (Langsung Tayang)</option>
+                      <option value="unlisted">🔒 Unlisted / Draft</option>
+                      <option value="private">👁️ Private</option>
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Save Button Row */}
             <div className={styles.saveFooter}>
               {toastMessage && <span className={styles.saveToast}>{toastMessage}</span>}
@@ -1073,8 +1227,17 @@ export default function AutoBotPage() {
                                 </button>
                               </div>
 
-                              {/* Download Links */}
+                              {/* Download & Publish Links */}
                               <div className={styles.clipDownloadRow}>
+                                <button
+                                  type="button"
+                                  className={styles.clipPublishBtn}
+                                  onClick={() => setPublishModalClip(clip)}
+                                  title="Direct Auto-Publish ke YouTube Shorts, TikTok, Reels"
+                                >
+                                  <span>🚀 Direct Publish</span>
+                                </button>
+
                                 {(clip.videoUrl || clip.videoPath) && (
                                   <a
                                     href={clip.videoUrl || clip.videoPath}
@@ -1148,6 +1311,16 @@ export default function AutoBotPage() {
       <WebhookModal
         isOpen={isWebhookModalOpen}
         onClose={() => setIsWebhookModalOpen(false)}
+      />
+
+      {/* Direct Auto-Publish Modal */}
+      <DirectPublishModal
+        isOpen={Boolean(publishModalClip)}
+        clip={publishModalClip}
+        onClose={() => setPublishModalClip(null)}
+        onPublished={() => {
+          loadHistory();
+        }}
       />
     </div>
   );

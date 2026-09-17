@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import DirectPublishModal, { DirectPublishTriggerButton } from '@/app/components/DirectPublishModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
@@ -251,7 +252,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips: initialClips, onSave, ratio }) {
+function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -1245,6 +1246,24 @@ function EditorStudio({ clips: initialClips, onSave, ratio }) {
           </div>
         </div>
 
+        {onOpenPublish && (
+          <button
+            type="button"
+            className={editorStyles.publishButton}
+            onClick={() => {
+              const currentClip = clips[activeClipIdx] || {};
+              onOpenPublish({
+                ...currentClip,
+                style: activeStyle,
+                audioSettings: activeAudio,
+                brollSettings: activeBroll,
+              });
+            }}
+          >
+            <span>🚀 Direct Auto-Publish ke Medsos</span>
+          </button>
+        )}
+
         <button className={editorStyles.saveButton} onClick={handleSave}>
           Save to Library <span className={editorStyles.arrow}>→</span>
         </button>
@@ -1265,6 +1284,7 @@ function EditorialContent() {
   const [errorMessage, setErrorMessage] = useState('');
   const [preparedClips, setPreparedClips] = useState([]);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [publishModalClip, setPublishModalClip] = useState(null);
 
   const videoId = getYouTubeId(url);
 
@@ -1380,7 +1400,12 @@ function EditorialContent() {
 
       {status === 'editing' ? (
         <main className={styles.editorMain}>
-          <EditorStudio clips={preparedClips} onSave={handleSaveFinal} ratio={ratio} />
+          <EditorStudio
+            clips={preparedClips}
+            onSave={handleSaveFinal}
+            onOpenPublish={setPublishModalClip}
+            ratio={ratio}
+          />
         </main>
       ) : (
         <main className={styles.mainGrid}>
@@ -1463,6 +1488,13 @@ function EditorialContent() {
       <WebhookModal
         isOpen={isWebhookModalOpen}
         onClose={() => setIsWebhookModalOpen(false)}
+      />
+
+      {/* Direct Auto-Publish Modal */}
+      <DirectPublishModal
+        isOpen={Boolean(publishModalClip)}
+        clip={publishModalClip}
+        onClose={() => setPublishModalClip(null)}
       />
     </div>
   );

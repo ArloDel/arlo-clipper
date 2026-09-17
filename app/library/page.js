@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import DirectPublishModal from '@/app/components/DirectPublishModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import styles from './library.module.css';
 
@@ -23,6 +24,7 @@ export default function LibraryPage() {
   const [activeModalClip, setActiveModalClip] = useState(null);
   const [modalCopyStatus, setModalCopyStatus] = useState('');
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [publishModalClip, setPublishModalClip] = useState(null);
 
   useEffect(() => {
     let ignore = false;
@@ -312,6 +314,18 @@ export default function LibraryPage() {
                             </a>
 
                             <button
+                              className={styles.publishCardBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPublishModalClip(clip);
+                              }}
+                              title="Direct Auto-Publish ke YouTube Shorts, TikTok, Reels"
+                            >
+                              <span>🚀</span>
+                              <span>Publish</span>
+                            </button>
+
+                            <button
                               className={styles.socialBtn}
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -530,6 +544,16 @@ export default function LibraryPage() {
       <WebhookModal
         isOpen={isWebhookModalOpen}
         onClose={() => setIsWebhookModalOpen(false)}
+      />
+
+      {/* Direct Auto-Publish Modal */}
+      <DirectPublishModal
+        isOpen={Boolean(publishModalClip)}
+        clip={publishModalClip}
+        onClose={() => setPublishModalClip(null)}
+        onPublished={() => {
+          setRefreshKey((k) => k + 1);
+        }}
       />
     </div>
   );

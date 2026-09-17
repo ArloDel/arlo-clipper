@@ -1,0 +1,30 @@
+{
+  "youtube": {
+    "enabled": false,
+    "clientId": "test-client-id-123456789.apps.googleusercontent.com",
+    "clientSecret": "test-client-secret-987654321",
+    "refreshToken": "1//test-refresh-token-long-secret",
+    "accessToken": "test_token",
+    "channelTitle": "Arlo Clips Channel",
+    "defaultPrivacy": "public"
+  },
+  "tiktok": {
+    "enabled": false,
+    "clientKey": "aw_test_client_key_123",
+    "clientSecret": "secret_tiktok_987",
+    "accessToken": "act.test_tiktok_access_token_12345",
+    "refreshToken": "",
+    "creatorUsername": "",
+    "defaultPrivacy": "PUBLIC_TO_EVERYONE",
+    "disableDuet": false,
+    "disableStitch": false,
+    "disableComment": false
+  },
+  "instagram": {
+    "enabled": false,
+    "accessToken": "EAAB_test_instagram_token_12345678",
+    "instagramAccountId": "1784140012345678",
+    "accountUsername": "arloclipper",
+    "shareToFeed": true
+  }
+}

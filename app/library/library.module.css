@@ -553,3 +553,131 @@
   color: var(--text-main);
 }
 
+/* ── Filter Switcher / Tabs ── */
+.filterBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.filterTabs {
+  display: inline-flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  gap: 4px;
+}
+
+.filterTab {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-sub);
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 150ms var(--ease-out);
+}
+
+.filterTab:hover {
+  color: var(--text-main);
+  background: var(--bg-subtle);
+}
+
+.filterTabActive {
+  background: var(--bg-subtle);
+  border-color: var(--border-hover);
+  color: var(--text-main);
+  font-weight: 600;
+  box-shadow: var(--shadow-subtle);
+}
+
+.filterCountBadge {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+}
+
+.filterTabActive .filterCountBadge {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}
+
+/* ── Status Badges ── */
+.statusBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.publishedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #10b981;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.unpublishedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+}
+
+.badgeDotGreen {
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.badgeDotGray {
+  font-size: 0.65rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.openExternalLinkBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.7rem;
+  transition: all 120ms ease;
+  margin-left: 2px;
+}
+
+.openExternalLinkBtn:hover {
+  background: #10b981;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+

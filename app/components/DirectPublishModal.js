@@ -37,6 +37,10 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
   const [publishResult, setPublishResult] = useState(null);
   const [publishError, setPublishError] = useState('');
 
+  // Anti-Duplicate State
+  const [duplicateInfo, setDuplicateInfo] = useState(null);
+  const [allowRepublish, setAllowRepublish] = useState(false);
+
   // Settings form state
   const [settingsForm, setSettingsForm] = useState({
     youtube: { clientId: '', clientSecret: '', refreshToken: '', accessToken: '', defaultPrivacy: 'public' },
@@ -75,18 +79,61 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
     loadConfig();
   }, [isOpen]);
 
-  // Sync form when clip changes
+  // Check duplicate publish status when clip or platforms change
+  useEffect(() => {
+    if (!isOpen || !clip) return;
+
+    let ignore = false;
+    async function checkDuplicate() {
+      try {
+        const clipId = clip.id || clip.clipId || '';
+        const videoPath = clip.videoPath || clip.videoUrl || '';
+        const platformsQuery = selectedPlatforms.join(',');
+        const res = await fetch(
+          `/api/publish/status?clipId=${encodeURIComponent(clipId)}&videoPath=${encodeURIComponent(videoPath)}&platforms=${encodeURIComponent(platformsQuery)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore) {
+            if (data.duplicateCheck && data.duplicateCheck.isDuplicate) {
+              setDuplicateInfo(data.duplicateCheck);
+            } else {
+              setDuplicateInfo(null);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to check duplicate publish:', err);
+      }
+    }
+
+    checkDuplicate();
+    return () => {
+      ignore = true;
+    };
+  }, [isOpen, clip, selectedPlatforms]);
+
+  // Sync form when clip or modal open state changes
   const [prevClipId, setPrevClipId] = useState(null);
-  if (clip && clip.id !== prevClipId) {
-    setPrevClipId(clip.id);
-    setTitle(clip.title || clip.hook || 'Untitled Viral Clip');
-    setCaption(getYouTubeCopy(clip));
-    const tags = Array.isArray(clip.hashtags)
-      ? clip.hashtags.join(' ')
-      : (clip.hashtags || '#Shorts #Viral #Trending');
-    setHashtagsStr(tags);
+  const [prevIsOpen, setPrevIsOpen] = useState(false);
+
+  if (isOpen && (!prevIsOpen || (clip && clip.id !== prevClipId))) {
+    setPrevIsOpen(true);
+    setPrevClipId(clip?.id || null);
+    if (clip) {
+      setTitle(clip.title || clip.hook || 'Untitled Viral Clip');
+      setCaption(getYouTubeCopy(clip));
+      const tags = Array.isArray(clip.hashtags)
+        ? clip.hashtags.join(' ')
+        : (clip.hashtags || '#Shorts #Viral #Trending');
+      setHashtagsStr(tags);
+    }
     setPublishResult(null);
     setPublishError('');
+    setDuplicateInfo(null);
+    setAllowRepublish(false);
+  } else if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
   }
 
   if (!isOpen || !clip) return null;
@@ -95,6 +142,7 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
     setSelectedPlatforms((prev) =>
       prev.includes(p) ? prev.filter((item) => item !== p) : [...prev, p]
     );
+    setAllowRepublish(false);
   };
 
   const applyTemplate = (platform) => {
@@ -111,6 +159,11 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
     if (e) e.preventDefault();
     if (selectedPlatforms.length === 0) {
       alert('Pilih setidaknya satu platform medsos tujuan upload.');
+      return;
+    }
+
+    if (duplicateInfo && duplicateInfo.isDuplicate && !allowRepublish) {
+      alert('⚠️ Video ini sudah pernah diunggah ke medsos. Harap centang konfirmasi re-publish jika kamu tetap ingin mengunggah ulang.');
       return;
     }
 
@@ -329,6 +382,49 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
                 </div>
               </div>
             </div>
+
+            {/* Anti-Duplicate Protection Warning Banner */}
+            {duplicateInfo && duplicateInfo.isDuplicate && (
+              <div className={styles.duplicateWarningBanner}>
+                <div className={styles.duplicateWarningHeader}>
+                  <span className={styles.duplicateWarningIcon}>⚠️</span>
+                  <div className={styles.duplicateWarningContent}>
+                    <div className={styles.duplicateWarningTitle}>
+                      Peringatan Duplikasi Upload
+                    </div>
+                    <div className={styles.duplicateWarningText}>
+                      Video ini sudah pernah diunggah ke <strong>{duplicateInfo.platformName}</strong> pada{' '}
+                      <strong>{duplicateInfo.dateText || duplicateInfo.publishedAt}</strong>.{' '}
+                      {duplicateInfo.videoUrl && (
+                        <a
+                          href={duplicateInfo.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.duplicateVideoLink}
+                        >
+                          [Lihat Video di {duplicateInfo.platformName} ↗]
+                        </a>
+                      )}
+                    </div>
+                    <p className={styles.duplicateWarningSub}>
+                      Peringatan ini mencegah terjadinya unggahan ganda (duplicate content) di channel YouTube / akun medsos kamu.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.republishConfirmBox}>
+                  <label className={styles.republishCheckboxLabel}>
+                    <input
+                      type="checkbox"
+                      className={styles.republishCheckbox}
+                      checked={allowRepublish}
+                      onChange={(e) => setAllowRepublish(e.target.checked)}
+                    />
+                    <span>Saya mengerti & tetap ingin mengunggah ulang (Re-publish)</span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* Video Preview & Content Editor */}
             <div className={styles.editorColumns}>
@@ -744,9 +840,17 @@ export default function DirectPublishModal({ isOpen, onClose, clip, onPublished 
               type="button"
               className={styles.publishActionBtn}
               onClick={handlePublish}
-              disabled={publishing || selectedPlatforms.length === 0}
+              disabled={publishing || selectedPlatforms.length === 0 || (Boolean(duplicateInfo?.isDuplicate) && !allowRepublish)}
             >
-              <span>{publishing ? '⏳ Mengunggah...' : '🚀 Publish Now'}</span>
+              <span>
+                {publishing
+                  ? '⏳ Mengunggah...'
+                  : duplicateInfo?.isDuplicate
+                  ? allowRepublish
+                    ? '🚀 Re-Publish Now'
+                    : '⚠️ Re-publish (Perlu Konfirmasi)'
+                  : '🚀 Publish Now'}
+              </span>
             </button>
           </div>
         )}

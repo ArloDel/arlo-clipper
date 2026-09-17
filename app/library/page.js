@@ -14,6 +14,8 @@ export default function LibraryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [filter, setFilter] = useState('all'); // 'all' | 'unpublished' | 'published'
+  const [counts, setCounts] = useState({ all: 0, published: 0, unpublished: 0 });
 
   // Selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -31,12 +33,15 @@ export default function LibraryPage() {
 
     async function loadClips() {
       try {
-        const response = await fetch(`/api/clips?page=${currentPage}&limit=9`);
+        const response = await fetch(`/api/clips?page=${currentPage}&limit=9&filter=${filter}`);
         if (response.ok) {
           const data = await response.json();
           if (!ignore) {
             setClips(data.clips || []);
             setTotalPages(data.totalPages || 1);
+            if (data.counts) {
+              setCounts(data.counts);
+            }
             if (currentPage > data.totalPages && data.totalPages > 0) {
               setCurrentPage(data.totalPages);
             }
@@ -55,7 +60,7 @@ export default function LibraryPage() {
     return () => {
       ignore = true;
     };
-  }, [currentPage, refreshKey]);
+  }, [currentPage, refreshKey, filter]);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this clip?')) {
@@ -225,6 +230,48 @@ export default function LibraryPage() {
       </header>
 
       <main className={styles.main}>
+        {/* Filter Switcher Tabs */}
+        <div className={styles.filterBar}>
+          <div className={styles.filterTabs}>
+            <button
+              type="button"
+              className={`${styles.filterTab} ${filter === 'all' ? styles.filterTabActive : ''}`}
+              onClick={() => {
+                setFilter('all');
+                setCurrentPage(1);
+                setSelectedIds([]);
+              }}
+            >
+              <span>🌟 Semua Video</span>
+              <span className={styles.filterCountBadge}>{counts.all}</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterTab} ${filter === 'unpublished' ? styles.filterTabActive : ''}`}
+              onClick={() => {
+                setFilter('unpublished');
+                setCurrentPage(1);
+                setSelectedIds([]);
+              }}
+            >
+              <span>🆕 Belum Diupload</span>
+              <span className={styles.filterCountBadge}>{counts.unpublished}</span>
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterTab} ${filter === 'published' ? styles.filterTabActive : ''}`}
+              onClick={() => {
+                setFilter('published');
+                setCurrentPage(1);
+                setSelectedIds([]);
+              }}
+            >
+              <span>🚀 Sudah Diupload</span>
+              <span className={styles.filterCountBadge}>{counts.published}</span>
+            </button>
+          </div>
+        </div>
+
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner} />
@@ -233,11 +280,36 @@ export default function LibraryPage() {
         ) : clips.length === 0 ? (
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>🎬</div>
-            <h3 className={styles.emptyTitle}>No clips found</h3>
-            <p className={styles.emptyDesc}>Paste a YouTube URL on the home page to start creating clips.</p>
-            <Link href="/" className={styles.emptyBtn}>
-              Create your first clip →
-            </Link>
+            <h3 className={styles.emptyTitle}>
+              {filter === 'published'
+                ? 'Belum ada video yang diupload'
+                : filter === 'unpublished'
+                ? 'Semua video sudah diupload'
+                : 'No clips found'}
+            </h3>
+            <p className={styles.emptyDesc}>
+              {filter === 'published'
+                ? 'Upload klip ke YouTube Shorts, TikTok, atau Instagram dengan tombol Publish.'
+                : filter === 'unpublished'
+                ? 'Semua video dalam library kamu sudah pernah dipublikasikan.'
+                : 'Paste a YouTube URL on the home page to start creating clips.'}
+            </p>
+            {filter !== 'all' ? (
+              <button
+                type="button"
+                className={styles.emptyBtn}
+                onClick={() => {
+                  setFilter('all');
+                  setCurrentPage(1);
+                }}
+              >
+                Lihat Semua Video →
+              </button>
+            ) : (
+              <Link href="/" className={styles.emptyBtn}>
+                Create your first clip →
+              </Link>
+            )}
           </div>
         ) : (
           <div className={styles.gridContainer}>
@@ -258,6 +330,9 @@ export default function LibraryPage() {
             <div className={styles.grid}>
               {clips.map((clip, index) => {
                 const isSelected = selectedIds.includes(clip.id);
+                const pubStatus = clip.publishStatus;
+                const isPublished = Boolean(pubStatus?.isPublished);
+
                 return (
                   <div
                     key={clip.id}
@@ -290,6 +365,49 @@ export default function LibraryPage() {
 
                     <div className={styles.info}>
                       <h3 className={styles.clipTitle}>{clip.title || 'Untitled Clip'}</h3>
+
+                      {/* Status Badge */}
+                      <div className={styles.statusBadgeRow}>
+                        {isPublished ? (
+                          <div className={styles.publishedBadge}>
+                            <span className={styles.badgeDotGreen}>🟢</span>
+                            <span className={styles.badgeText}>
+                              {pubStatus.formattedLabel || 'Published on YouTube'}
+                            </span>
+                            {pubStatus.primaryUrl && (
+                              <a
+                                href={pubStatus.primaryUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={styles.openExternalLinkBtn}
+                                onClick={(e) => e.stopPropagation()}
+                                title="Buka video langsung di medsos (YouTube Shorts / Reels)"
+                              >
+                                <svg
+                                  width="11"
+                                  height="11"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                  <polyline points="15 3 21 3 21 9" />
+                                  <line x1="10" y1="14" x2="21" y2="3" />
+                                </svg>
+                              </a>
+                            )}
+                          </div>
+                        ) : (
+                          <div className={styles.unpublishedBadge}>
+                            <span className={styles.badgeDotGray}>⚪</span>
+                            <span className={styles.badgeText}>Unpublished</span>
+                          </div>
+                        )}
+                      </div>
+
                       <div className={styles.metaRow}>
                         <span className={styles.metaDuration}>{formatDuration(clip.duration)}</span>
                         <span className={styles.metaDate}>{formatDate(clip.createdAt)}</span>
@@ -367,6 +485,7 @@ export default function LibraryPage() {
                 );
               })}
             </div>
+
 
             {totalPages > 1 && (
               <div className={styles.pagination}>

@@ -70,11 +70,77 @@ export default function AutoBotPage() {
   const [processedVideos, setProcessedVideos] = useState([]);
   const [logs, setLogs] = useState([]);
   const [copyFeedback, setCopyFeedback] = useState({});
+  const [publishHistory, setPublishHistory] = useState([]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
   };
+
+  const getClipStatus = useCallback((clip) => {
+    if (!clip || !publishHistory || publishHistory.length === 0) {
+      return { isPublished: false, formattedLabel: 'Unpublished', primaryUrl: null };
+    }
+    const clipId = clip.id || clip.clipId;
+    const videoPath = clip.videoPath || clip.videoUrl;
+    const title = clip.title;
+
+    const matched = publishHistory.filter((h) => {
+      if (clipId && h.clipId && String(h.clipId) === String(clipId)) return true;
+      if (videoPath && h.videoPath) {
+        const baseH = String(h.videoPath).split(/[/\\\\]/).pop();
+        const baseV = String(videoPath).split(/[/\\\\]/).pop();
+        if (h.videoPath === videoPath || (baseH && baseH === baseV)) return true;
+      }
+      if (title && h.clipTitle && h.clipTitle.trim().toLowerCase() === title.trim().toLowerCase()) return true;
+      return false;
+    });
+
+    if (matched.length === 0) {
+      return { isPublished: false, formattedLabel: 'Unpublished', primaryUrl: null };
+    }
+
+    const successful = [];
+    let primaryUrl = null;
+
+    for (const rec of matched) {
+      if (rec.results) {
+        for (const [p, res] of Object.entries(rec.results)) {
+          if (res && (res.success || res.status === 'public' || res.status === 'published' || res.status === 'processing' || res.status === 'scheduled')) {
+            const canonical = p.toLowerCase();
+            if (!successful.includes(canonical)) {
+              successful.push(canonical);
+              if (!primaryUrl && (res.videoUrl || res.postUrl)) {
+                primaryUrl = res.videoUrl || res.postUrl;
+              }
+            }
+          }
+        }
+      } else if (rec.status === 'success' && Array.isArray(rec.platforms)) {
+        for (const p of rec.platforms) {
+          const canonical = p.toLowerCase();
+          if (!successful.includes(canonical)) successful.push(canonical);
+        }
+      }
+    }
+
+    if (successful.length === 0) {
+      return { isPublished: false, formattedLabel: 'Unpublished', primaryUrl: null };
+    }
+
+    let formattedLabel = 'Published on YouTube';
+    if (successful.includes('youtube')) {
+      formattedLabel = successful.length > 1 ? `Published on YouTube (+${successful.length - 1})` : 'Published on YouTube';
+    } else if (successful.includes('tiktok')) {
+      formattedLabel = successful.length > 1 ? `Published on TikTok (+${successful.length - 1})` : 'Published on TikTok';
+    } else if (successful.includes('instagram')) {
+      formattedLabel = successful.length > 1 ? `Published on Instagram (+${successful.length - 1})` : 'Published on Instagram';
+    } else {
+      formattedLabel = `Published on ${successful[0]}`;
+    }
+
+    return { isPublished: true, formattedLabel, primaryUrl, platforms: successful };
+  }, [publishHistory]);
 
   // Load Status & Config
   const loadStatus = useCallback(async () => {
@@ -112,6 +178,14 @@ export default function AutoBotPage() {
         const data = await res.json();
         setProcessedVideos(data.processedVideos || []);
         setLogs(data.logs || []);
+      }
+
+      const pubRes = await fetch('/api/publish/status');
+      if (pubRes.ok) {
+        const pubData = await pubRes.json();
+        if (pubData.history) {
+          setPublishHistory(pubData.history);
+        }
       }
     } catch (e) {
       console.warn('Failed to load bot history:', e);
@@ -155,6 +229,15 @@ export default function AutoBotPage() {
           }
         })
         .catch((e) => console.warn('Failed to load bot history:', e));
+
+      fetch('/api/publish/status')
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!ignore && data && data.history) {
+            setPublishHistory(data.history);
+          }
+        })
+        .catch((e) => console.warn('Failed to load publish status:', e));
     };
 
     fetchAllData();
@@ -1170,6 +1253,7 @@ export default function AutoBotPage() {
                       <div className={styles.clipsListContainer}>
                         {video.clips.map((clip, idx) => {
                           const clipKey = clip.id || clip.clipId || `${video.videoId}_${idx}`;
+                          const pubStatus = getClipStatus(clip);
                           return (
                             <div key={clipKey} className={styles.clipItemCard}>
                               <div className={styles.clipItemHeader}>
@@ -1177,6 +1261,46 @@ export default function AutoBotPage() {
                                 <span className={styles.clipDurationBadge}>
                                   {formatDurationSec(clip.duration)}
                                 </span>
+                              </div>
+
+                              {/* Publish Status Badge */}
+                              <div className={styles.clipStatusRow}>
+                                {pubStatus.isPublished ? (
+                                  <div className={styles.publishedBadge}>
+                                    <span className={styles.badgeDotGreen}>🟢</span>
+                                    <span className={styles.badgeText}>{pubStatus.formattedLabel}</span>
+                                    {pubStatus.primaryUrl && (
+                                      <a
+                                        href={pubStatus.primaryUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={styles.openExternalLinkBtn}
+                                        onClick={(e) => e.stopPropagation()}
+                                        title="Buka Video di YouTube Shorts / Medsos"
+                                      >
+                                        <svg
+                                          width="10"
+                                          height="10"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2.5"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                          <polyline points="15 3 21 3 21 9" />
+                                          <line x1="10" y1="14" x2="21" y2="3" />
+                                        </svg>
+                                      </a>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className={styles.unpublishedBadge}>
+                                    <span className={styles.badgeDotGray}>⚪</span>
+                                    <span className={styles.badgeText}>Unpublished</span>
+                                  </div>
+                                )}
                               </div>
 
                               {clip.hook && (

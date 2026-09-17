@@ -47,6 +47,8 @@ data/db.json
 data/webhooks.json
 data/botConfig.json
 data/botHistory.json
+data/socialTokens.json
+data/publishHistory.json
 exports/
 __pycache__/
 *.pyc

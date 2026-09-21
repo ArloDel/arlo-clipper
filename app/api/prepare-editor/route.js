@@ -9,70 +9,114 @@ import Groq from 'groq-sdk';
 import { detectAutoBroll, ensureBrollAssets } from '@/lib/broll';
 import { ensureAudioAssets } from '@/lib/audioAssets';
 import { calculateViralityScore } from '@/lib/viralityScore';
+import { resolveSource } from '@/lib/sourceResolver';
+import { downloadDirectStream } from '@/lib/sourceStreamer';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 export async function POST(request) {
   try {
-    const { url, ratio = '9:16', clips } = await request.json();
+    const body = await request.json();
+    const { url, localFilePath, ratio = '9:16', clips } = body;
 
-    if (!url || !clips || !Array.isArray(clips) || clips.length === 0) {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    const targetInput = localFilePath || url;
+
+    if (!targetInput || !clips || !Array.isArray(clips) || clips.length === 0) {
+      return NextResponse.json({ error: 'Invalid input parameters or empty clips' }, { status: 400 });
     }
 
     if (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key_here') {
       return NextResponse.json({ error: 'GROQ_API_KEY is missing in .env.local' }, { status: 500 });
     }
 
+    const sourceInfo = resolveSource(targetInput);
+
     const sessionId = uuidv4();
     const clipsDir = path.join(process.cwd(), 'public', 'clips');
-    
     if (!fs.existsSync(clipsDir)) {
       fs.mkdirSync(clipsDir, { recursive: true });
     }
 
-    const videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+    let videoPath = '';
+    let shouldCleanupSourceVideo = false;
 
-    console.log(`[Prepare Editor] Downloading Full Video...`);
-    let downloadSuccess = false;
-    let retries = 3;
-    let currentClient = 'web';
+    if (sourceInfo.isLocal) {
+      let fullDiskPath = sourceInfo.localFilePath;
+      if (!fs.existsSync(fullDiskPath)) {
+        fullDiskPath = path.join(process.cwd(), 'public', sourceInfo.localFilePath.replace(/^\//, ''));
+      }
+      if (!fs.existsSync(fullDiskPath)) {
+        return NextResponse.json(
+          { error: `Local video file not found on disk: ${sourceInfo.localFilePath}` },
+          { status: 404 }
+        );
+      }
+      videoPath = fullDiskPath;
+      shouldCleanupSourceVideo = false; // Keep original upload intact
+      console.log(`[Prepare Editor] Using local video file: ${videoPath}`);
+    } else if (sourceInfo.sourceType === 'google-drive' || sourceInfo.sourceType === 'dropbox' || sourceInfo.sourceType === 'direct-video') {
+      videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+      shouldCleanupSourceVideo = true;
+      const downloadTargetUrl = sourceInfo.resolvedUrl || sourceInfo.originalInput;
 
-    while (retries > 0 && !downloadSuccess) {
+      console.log(`[Prepare Editor] Downloading full stream from ${sourceInfo.platformName}: ${downloadTargetUrl}`);
       try {
-        const ytdlOptions = {
+        await downloadDirectStream(downloadTargetUrl, videoPath);
+      } catch (streamErr) {
+        console.warn(`[Prepare Editor] Direct stream download failed (${streamErr.message}), falling back to yt-dlp...`);
+        await youtubedl(downloadTargetUrl, {
           output: videoPath,
           format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
           ffmpegLocation: ffmpegInstaller.path,
           noCheckCertificates: true,
           noWarnings: true,
           noContinue: true,
-          jsRuntimes: 'node',
-        };
+        });
+      }
+    } else {
+      videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+      shouldCleanupSourceVideo = true;
 
-        if (currentClient === 'android') {
-          ytdlOptions.extractorArgs = 'youtube:player_client=android';
+      console.log(`[Prepare Editor] Downloading Full Video via yt-dlp...`);
+      let downloadSuccess = false;
+      let retries = 3;
+      let currentClient = 'web';
+
+      while (retries > 0 && !downloadSuccess) {
+        try {
+          const ytdlOptions = {
+            output: videoPath,
+            format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            ffmpegLocation: ffmpegInstaller.path,
+            noCheckCertificates: true,
+            noWarnings: true,
+            noContinue: true,
+            jsRuntimes: 'node',
+          };
+
+          if (sourceInfo.sourceType === 'youtube' && currentClient === 'android') {
+            ytdlOptions.extractorArgs = 'youtube:player_client=android';
+          }
+
+          await youtubedl(sourceInfo.resolvedUrl || targetInput, ytdlOptions);
+          downloadSuccess = true;
+        } catch (err) {
+          retries--;
+          console.warn(`[Prepare Editor] Download failed with ${currentClient}, retrying... (${retries} left)`);
+
+          if (retries === 1 && sourceInfo.sourceType === 'youtube') {
+            console.warn(`[Prepare Editor] Falling back to stable android client for final attempt...`);
+            currentClient = 'android';
+          }
+
+          if (retries === 0) throw err;
+          await new Promise(r => setTimeout(r, 2000));
         }
-
-        await youtubedl(url, ytdlOptions);
-        downloadSuccess = true;
-      } catch (err) {
-        retries--;
-        console.warn(`[Prepare Editor] Download failed with ${currentClient}, retrying... (${retries} left)`);
-        
-        // If default web client fails multiple times, gracefully degrade to android (360p but 100% stable)
-        if (retries === 1) {
-          console.warn(`[Prepare Editor] Falling back to stable android client for final attempt...`);
-          currentClient = 'android';
-        }
-
-        if (retries === 0) throw err;
-        await new Promise(r => setTimeout(r, 2000));
       }
     }
 
     const processedClips = [];
-    
+
     const timeToSeconds = (timeStr) => {
       if (!timeStr) return 0;
       const parts = String(timeStr).split(':').map(Number);
@@ -84,14 +128,17 @@ export async function POST(request) {
     let index = 1;
     for (const clip of clips) {
       console.log(`[Prepare Editor] Processing clip ${index}/${clips.length}...`);
-      
+
       const title = clip.title || clip.text;
       const start_time = clip.start_time || clip.start;
       const end_time = clip.end_time || clip.end;
       const startSec = timeToSeconds(start_time);
-      const endSec = timeToSeconds(end_time);
-      const durationSec = endSec - startSec;
-      
+      let endSec = timeToSeconds(end_time);
+      if (endSec <= startSec) {
+        endSec = startSec + 30;
+      }
+      const durationSec = Math.max(1, endSec - startSec);
+
       const clipId = uuidv4();
       const sourceClipPath = path.join(clipsDir, `${clipId}-source.mp4`);
       const rawClipPath = path.join(clipsDir, `${clipId}-raw.mp4`);
@@ -230,7 +277,7 @@ export async function POST(request) {
       const clipWords = segments.flatMap((s) => s.words || []);
       const videoSrc = `/clips/${path.basename(rawClipPath)}`;
       const sourceSrc = `/clips/${path.basename(sourceClipPath)}`;
-      
+
       // Auto-detect B-Roll overlays from Whisper transcript segments
       ensureAudioAssets();
       ensureBrollAssets();
@@ -252,7 +299,7 @@ export async function POST(request) {
         title: title || `Clip ${index}`,
         hook: hookText,
         caption: clip.caption || '',
-        channelName: clip.channelName || clip.channel_name || 'YouTube',
+        channelName: clip.channelName || clip.channel_name || sourceInfo.platformName,
         startTime: start_time,
         endTime: end_time,
         startSec,
@@ -290,10 +337,12 @@ export async function POST(request) {
       index++;
     }
 
-    try {
-      if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
-    } catch (e) {
-      console.warn("Full video cleanup warning:", e);
+    if (shouldCleanupSourceVideo) {
+      try {
+        if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+      } catch (e) {
+        console.warn("Full video cleanup warning:", e);
+      }
     }
 
     return NextResponse.json({

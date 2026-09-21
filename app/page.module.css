@@ -118,6 +118,47 @@
   max-width: 540px;
 }
 
+/* ── Source Tabs ── */
+.sourceTabs {
+  display: flex;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.sourceTabBtn {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 150ms var(--ease-out);
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+.sourceTabBtn:hover {
+  color: var(--text-main);
+  background-color: var(--bg-subtle);
+}
+
+.sourceTabBtnActive {
+  background-color: var(--bg-subtle);
+  color: var(--text-main);
+  font-weight: 600;
+  box-shadow: var(--shadow-subtle);
+}
+
 /* ── Form ── */
 .form {
   width: 100%;
@@ -153,6 +194,268 @@
 
 .urlInput:focus {
   border-color: var(--border-focus);
+}
+
+/* ── Detected Source Badge ── */
+.detectedBadge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  color: var(--accent);
+}
+
+/* ── Drag & Drop Area ── */
+.dropZone {
+  width: 100%;
+  border: 2px dashed var(--border-hairline);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  padding: 36px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 180ms var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.dropZone:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-subtle);
+}
+
+.dropZoneActive {
+  border-color: var(--accent);
+  background-color: rgba(99, 102, 241, 0.05);
+  transform: scale(1.005);
+}
+
+.dropZoneIcon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  color: var(--text-sub);
+  transition: transform 180ms var(--ease-out);
+}
+
+.dropZone:hover .dropZoneIcon {
+  transform: translateY(-3px);
+}
+
+.dropZoneTitle {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.dropZoneHighlight {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dropZoneSub {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  margin-bottom: 12px;
+}
+
+.supportedBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.formatTag {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.68rem;
+  color: var(--text-sub);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+}
+
+/* ── Selected File Card ── */
+.fileCard {
+  width: 100%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-subtle);
+}
+
+.fileCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fileCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.fileIcon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.fileDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.fileNameText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.fileSize {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.fileTag {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.fileCardActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.changeFileBtn {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.changeFileBtn:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+.removeFileBtn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.removeFileBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* ── Inline Video Preview ── */
+.previewVideoWrapper {
+  width: 100%;
+  max-height: 220px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewVideo {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+
+/* ── Progress Bar ── */
+.progressContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.progressLabelRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 6px;
+  background-color: var(--bg-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background-color: var(--accent);
+  transition: width 150ms ease;
+  border-radius: 3px;
+}
+
+.errorMessage {
+  font-size: 0.8rem;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 8px 12px;
+  border-radius: var(--radius-xs);
 }
 
 /* ── Platform badges ── */

@@ -1,15 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import { resolveSource, SUPPORTED_VIDEO_EXTENSIONS } from '@/lib/sourceResolver';
 import styles from './page.module.css';
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
 
 export default function HomePage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('url'); // 'url' | 'upload'
+
+  // URL state
   const [url, setUrl] = useState('');
+
+  // Upload state
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef(null);
+
+  // Common Options
   const [ratio, setRatio] = useState('9:16');
   const [subtitles, setSubtitles] = useState(true);
   const [font, setFont] = useState('Inter');
@@ -18,20 +41,171 @@ export default function HomePage() {
   const [showOptions, setShowOptions] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
-  const handleSubmit = (e) => {
+  // Detect platform in URL mode
+  const detectedSource = useMemo(() => {
+    if (!url.trim()) return null;
+    return resolveSource(url.trim());
+  }, [url]);
+
+  // Clean up object URL on unmount or file change
+  useEffect(() => {
+    return () => {
+      if (filePreview) {
+        URL.revokeObjectURL(filePreview);
+      }
+    };
+  }, [filePreview]);
+
+  const handleFileSelect = (selectedFile) => {
+    setUploadError('');
+    if (!selectedFile) return;
+
+    const ext = `.${selectedFile.name.split('.').pop().toLowerCase()}`;
+    if (!SUPPORTED_VIDEO_EXTENSIONS.includes(ext) && !selectedFile.type.startsWith('video/')) {
+      setUploadError(`Format file "${ext}" tidak didukung. Harap upload format: ${SUPPORTED_VIDEO_EXTENSIONS.join(', ')}`);
+      return;
+    }
+
+    if (selectedFile.size > 1024 * 1024 * 1024) {
+      setUploadError('Ukuran file melebihi 1 GB. Harap pilih video yang lebih kecil.');
+      return;
+    }
+
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
+
+    setFile(selectedFile);
+    try {
+      const previewUrl = URL.createObjectURL(selectedFile);
+      setFilePreview(previewUrl);
+    } catch {
+      setFilePreview(null);
+    }
+  };
+
+  const handleDragOver = (e) => {
     e.preventDefault();
-    if (!url) return;
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
 
-    const params = new URLSearchParams({
-      url,
-      ratio,
-      subtitles: subtitles.toString(),
-      font,
-      size,
-      color,
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    if (filePreview) {
+      URL.revokeObjectURL(filePreview);
+    }
+    setFile(null);
+    setFilePreview(null);
+    setUploadProgress(0);
+    setUploadError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadFileToServer = (fileToUpload) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.success && data.localFilePath) {
+              resolve(data);
+            } else {
+              reject(new Error(data.error || 'Upload failed'));
+            }
+          } catch {
+            reject(new Error('Invalid response from upload server'));
+          }
+        } else {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            reject(new Error(data.error || `Upload HTTP ${xhr.status}`));
+          } catch {
+            reject(new Error(`Upload failed with status ${xhr.status}`));
+          }
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during file upload'));
+      xhr.open('POST', '/api/upload');
+      xhr.send(formData);
     });
+  };
 
-    router.push(`/editorial?${params.toString()}`);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setUploadError('');
+
+    if (activeTab === 'url') {
+      if (!url.trim()) return;
+
+      const params = new URLSearchParams({
+        url: url.trim(),
+        ratio,
+        subtitles: subtitles.toString(),
+        font,
+        size,
+        color,
+      });
+
+      router.push(`/editorial?${params.toString()}`);
+    } else {
+      if (!file) {
+        setUploadError('Pilih atau tarik file video terlebih dahulu.');
+        return;
+      }
+
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      try {
+        const uploadResult = await uploadFileToServer(file);
+
+        const params = new URLSearchParams({
+          localFilePath: uploadResult.localFilePath,
+          fileName: file.name,
+          ratio,
+          subtitles: subtitles.toString(),
+          font,
+          size,
+          color,
+        });
+
+        router.push(`/editorial?${params.toString()}`);
+      } catch (err) {
+        console.error('Upload error:', err);
+        setUploadError(err.message || 'Gagal mengunggah file. Silakan coba lagi.');
+        setIsUploading(false);
+      }
+    }
   };
 
   return (
@@ -55,39 +229,180 @@ export default function HomePage() {
 
       <main className={styles.main}>
         <div className={styles.hero}>
-          <div className={styles.tagline}>YOUTUBE → SHORT CLIPS</div>
+          <div className={styles.tagline}>MULTI-SOURCE VIDEO → SHORT CLIPS</div>
           <h1 className={styles.headline}>Clip the good parts.</h1>
           <p className={styles.subtitle}>
-            Drop a video link. Pick a frame ratio. Get mobile-ready clips with styled subtitles in seconds.
+            Drop a video file or paste a link from YouTube, Google Drive, Dropbox, or TikTok. Get mobile-ready clips with styled subtitles in seconds.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.inputWrapper}>
-            <input
-              type="url"
-              className={styles.urlInput}
-              placeholder="Paste a YouTube, Vimeo, or Twitch video link"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              required
-            />
-          </div>
+        {/* ── Source Mode Tab Switcher ── */}
+        <div className={styles.sourceTabs}>
+          <button
+            type="button"
+            className={`${styles.sourceTabBtn} ${activeTab === 'url' ? styles.sourceTabBtnActive : ''}`}
+            onClick={() => {
+              setActiveTab('url');
+              setUploadError('');
+            }}
+          >
+            <span>🔗 URL Link</span>
+          </button>
+          <button
+            type="button"
+            className={`${styles.sourceTabBtn} ${activeTab === 'upload' ? styles.sourceTabBtnActive : ''}`}
+            onClick={() => {
+              setActiveTab('upload');
+              setUploadError('');
+            }}
+          >
+            <span>📁 Drag & Drop Video</span>
+          </button>
+        </div>
 
-          <div className={styles.platforms}>
-            <span className={styles.platformBadge}>
-              <span className={styles.platformDot} /> YouTube
-            </span>
-            <span className={styles.platformBadge}>
-              <span className={styles.platformDot} /> Vimeo
-            </span>
-            <span className={styles.platformBadge}>
-              <span className={styles.platformDot} /> Twitch
-            </span>
-            <span className={styles.platformBadge}>
-              <span className={styles.platformDot} /> Facebook
-            </span>
-          </div>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {activeTab === 'url' ? (
+            <>
+              <div className={styles.inputWrapper}>
+                <input
+                  type="url"
+                  className={styles.urlInput}
+                  placeholder="Paste YouTube, Google Drive, Dropbox, TikTok, or Direct video link"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                />
+                {detectedSource && detectedSource.isValid && (
+                  <span className={styles.detectedBadge}>
+                    <span>✓</span> {detectedSource.platformName}
+                  </span>
+                )}
+              </div>
+
+              <div className={styles.platforms}>
+                <span className={styles.platformBadge}>
+                  <span className={styles.platformDot} /> YouTube
+                </span>
+                <span className={styles.platformBadge}>
+                  <span className={styles.platformDot} /> TikTok
+                </span>
+                <span className={styles.platformBadge}>
+                  <span className={styles.platformDot} /> Google Drive
+                </span>
+                <span className={styles.platformBadge}>
+                  <span className={styles.platformDot} /> Dropbox
+                </span>
+                <span className={styles.platformBadge}>
+                  <span className={styles.platformDot} /> Direct MP4/MOV
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/*,.mp4,.mov,.webm,.mkv,.m4v,.avi"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {!file ? (
+                <div
+                  className={`${styles.dropZone} ${isDragOver ? styles.dropZoneActive : ''}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <div className={styles.dropZoneIcon}>📁</div>
+                  <div className={styles.dropZoneTitle}>
+                    Tarik file video ke sini atau <span className={styles.dropZoneHighlight}>Pilih File</span>
+                  </div>
+                  <div className={styles.dropZoneSub}>
+                    Mendukung rekaman Zoom, Podcast, Vlog, dan video lokal (Maks 1 GB)
+                  </div>
+                  <div className={styles.supportedBadges}>
+                    <span className={styles.formatTag}>MP4</span>
+                    <span className={styles.formatTag}>MOV</span>
+                    <span className={styles.formatTag}>WEBM</span>
+                    <span className={styles.formatTag}>MKV</span>
+                    <span className={styles.formatTag}>M4V</span>
+                    <span className={styles.formatTag}>AVI</span>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.fileCard}>
+                  <div className={styles.fileCardHeader}>
+                    <div className={styles.fileCardLeft}>
+                      <span className={styles.fileIcon}>🎬</span>
+                      <div className={styles.fileDetails}>
+                        <span className={styles.fileNameText} title={file.name}>{file.name}</span>
+                        <div className={styles.fileMetaRow}>
+                          <span className={styles.fileSize}>{formatFileSize(file.size)}</span>
+                          <span className={styles.fileTag}>{file.name.split('.').pop()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={styles.fileCardActions}>
+                      <button
+                        type="button"
+                        className={styles.changeFileBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        Ganti
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.removeFileBtn}
+                        onClick={handleRemoveFile}
+                        disabled={isUploading}
+                      >
+                        Hapus
+                      </button>
+                    </div>
+                  </div>
+
+                  {filePreview && (
+                    <div className={styles.previewVideoWrapper}>
+                      <video
+                        src={filePreview}
+                        className={styles.previewVideo}
+                        controls
+                        muted
+                      />
+                    </div>
+                  )}
+
+                  {isUploading && (
+                    <div className={styles.progressContainer}>
+                      <div className={styles.progressLabelRow}>
+                        <span>Mengunggah video ke server...</span>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                      <div className={styles.progressBarTrack}>
+                        <div
+                          className={styles.progressBarFill}
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {uploadError && (
+                <div className={styles.errorMessage}>
+                  ⚠️ {uploadError}
+                </div>
+              )}
+            </>
+          )}
 
           <div className={styles.optionsWrapper}>
             <button
@@ -190,8 +505,24 @@ export default function HomePage() {
             )}
           </div>
 
-          <button type="submit" className={styles.submitBtn}>
-            Start clipping <span className={styles.arrow}>→</span>
+          <button
+            type="submit"
+            className={styles.submitBtn}
+            disabled={isUploading}
+          >
+            {isUploading
+              ? `Mengunggah (${uploadProgress}%) ...`
+              : activeTab === 'upload'
+              ? (
+                <>
+                  Upload & Start clipping <span className={styles.arrow}>→</span>
+                </>
+              )
+              : (
+                <>
+                  Start clipping <span className={styles.arrow}>→</span>
+                </>
+              )}
           </button>
         </form>
       </main>

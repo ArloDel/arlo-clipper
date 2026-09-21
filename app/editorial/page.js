@@ -1524,6 +1524,8 @@ function EditorialContent() {
   const router = useRouter();
 
   const url = searchParams.get('url');
+  const localFilePath = searchParams.get('localFilePath');
+  const fileName = searchParams.get('fileName');
   const ratio = searchParams.get('ratio') || '9:16';
 
   // States: analyzing -> preparing -> editing -> rendering -> done
@@ -1540,16 +1542,21 @@ function EditorialContent() {
 
     async function processVideo() {
       try {
-        if (!url) throw new Error('No video URL provided.');
+        if (!url && !localFilePath) {
+          throw new Error('No video URL or uploaded file provided.');
+        }
 
         // 1. Analyze
         const analyzeRes = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url }),
+          body: JSON.stringify({ url, localFilePath, fileName }),
         });
 
-        if (!analyzeRes.ok) throw new Error('Failed to analyze video');
+        if (!analyzeRes.ok) {
+          const errData = await analyzeRes.json().catch(() => ({}));
+          throw new Error(errData.error || errData.details || 'Failed to analyze video');
+        }
         const analyzeData = await analyzeRes.json();
         const clips = analyzeData.clips;
         if (!clips || clips.length === 0) throw new Error('No engaging clips found by the algorithm.');
@@ -1560,10 +1567,13 @@ function EditorialContent() {
         const prepRes = await fetch('/api/prepare-editor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, clips, ratio }),
+          body: JSON.stringify({ url, localFilePath, clips, ratio }),
         });
 
-        if (!prepRes.ok) throw new Error('Failed to prepare clips for editing');
+        if (!prepRes.ok) {
+          const prepErr = await prepRes.json().catch(() => ({}));
+          throw new Error(prepErr.error || prepErr.details || 'Failed to prepare clips for editing');
+        }
         const prepData = await prepRes.json();
 
         if (isMounted) {
@@ -1582,7 +1592,7 @@ function EditorialContent() {
     return () => {
       isMounted = false;
     };
-  }, [url, ratio]);
+  }, [url, localFilePath, fileName, ratio]);
 
   const handleSaveFinal = async (finalClips) => {
     setStatus('rendering');
@@ -1658,7 +1668,17 @@ function EditorialContent() {
         <main className={styles.mainGrid}>
           <div className={styles.videoSection}>
             <div className={styles.videoWrapper}>
-              {videoId ? (
+              {localFilePath ? (
+                <video
+                  className={styles.localVideoPlayer}
+                  src={localFilePath}
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : videoId ? (
                 <iframe
                   className={styles.iframe}
                   src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1`}
@@ -1669,7 +1689,9 @@ function EditorialContent() {
                 />
               ) : (
                 <div className={styles.noVideo}>
-                  <p>Processing media stream...</p>
+                  <div className={styles.noVideoIcon}>🎬</div>
+                  <p className={styles.noVideoTitle}>{fileName || url || 'Video Stream'}</p>
+                  <p className={styles.noVideoSub}>Processing media stream & generating AI hooks...</p>
                 </div>
               )}
             </div>

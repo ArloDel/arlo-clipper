@@ -13,7 +13,8 @@
     "test:webhook": "node scripts/test_webhook_automation.mjs",
     "test:bot": "node scripts/test_local_bot.mjs",
     "test:publishers": "node scripts/test_social_publishers.mjs",
-    "test:filters": "node scripts/test_publish_filters.mjs"
+    "test:filters": "node scripts/test_publish_filters.mjs",
+    "test:multi-source": "node scripts/test_multi_source_input.mjs"
   },
   "dependencies": {
     "@cloudflare/kumo": "^2.8.0",

@@ -121,7 +121,7 @@ export async function POST(request) {
         duration: clip.duration,
         hook: clip.hook || clip.title || `Clip ${index}`,
         caption: clip.caption || '',
-        channelName: clip.channelName || 'YouTube',
+        channelName: clip.channelName || 'Video',
         startTime: clip.startTime || clip.start_time || '',
         endTime: clip.endTime || clip.end_time || '',
         hashtags: Array.isArray(clip.hashtags) ? clip.hashtags : [],

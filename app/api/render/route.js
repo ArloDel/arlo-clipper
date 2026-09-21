@@ -9,22 +9,29 @@ import fs from 'fs';
 import Groq from 'groq-sdk';
 import { saveClip } from '@/lib/db';
 import { generateAssSubtitleFile } from '@/lib/subtitles';
+import { resolveSource } from '@/lib/sourceResolver';
+import { downloadDirectStream } from '@/lib/sourceStreamer';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 export async function POST(request) {
   try {
-    let { url, ratio, subtitles = true, font = 'Impact', size = 'Medium', color = '#FFFF00', clips } = await request.json();
+    const body = await request.json();
+    let { url, localFilePath, ratio, subtitles = true, font = 'Impact', size = 'Medium', color = '#FFFF00', clips } = body;
     subtitles = subtitles === true || subtitles === 'true';
 
-    if (!url || !clips || !Array.isArray(clips) || clips.length === 0) {
+    const targetInput = localFilePath || url;
+
+    if (!targetInput || !clips || !Array.isArray(clips) || clips.length === 0) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
     if (subtitles && (!process.env.GROQ_API_KEY || process.env.GROQ_API_KEY === 'your_groq_api_key_here')) {
       return NextResponse.json({ error: 'GROQ_API_KEY is missing in .env.local' }, { status: 500 });
     }
+
+    const sourceInfo = resolveSource(targetInput);
 
     const sessionId = uuidv4();
     const clipsDir = path.join(process.cwd(), 'public', 'clips');
@@ -33,16 +40,46 @@ export async function POST(request) {
       fs.mkdirSync(clipsDir, { recursive: true });
     }
 
-    const videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+    let videoPath = '';
+    let shouldCleanupSource = false;
 
-    console.log(`[Render] Downloading Full Video...`);
-    await youtubedl(url, {
-      output: videoPath,
-      format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-      ffmpegLocation: ffmpegInstaller.path,
-      noCheckCertificates: true,
-      noWarnings: true,
-    });
+    if (sourceInfo.isLocal) {
+      let fullDiskPath = sourceInfo.localFilePath;
+      if (!fs.existsSync(fullDiskPath)) {
+        fullDiskPath = path.join(process.cwd(), 'public', sourceInfo.localFilePath.replace(/^\//, ''));
+      }
+      if (!fs.existsSync(fullDiskPath)) {
+        return NextResponse.json({ error: `Local video file not found: ${sourceInfo.localFilePath}` }, { status: 404 });
+      }
+      videoPath = fullDiskPath;
+      shouldCleanupSource = false;
+    } else if (sourceInfo.sourceType === 'google-drive' || sourceInfo.sourceType === 'dropbox' || sourceInfo.sourceType === 'direct-video') {
+      videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+      shouldCleanupSource = true;
+      const downloadTargetUrl = sourceInfo.resolvedUrl || sourceInfo.originalInput;
+      try {
+        await downloadDirectStream(downloadTargetUrl, videoPath);
+      } catch {
+        await youtubedl(downloadTargetUrl, {
+          output: videoPath,
+          format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+          ffmpegLocation: ffmpegInstaller.path,
+          noCheckCertificates: true,
+          noWarnings: true,
+        });
+      }
+    } else {
+      videoPath = path.join(clipsDir, `${sessionId}-full.mp4`);
+      shouldCleanupSource = true;
+      console.log(`[Render] Downloading Full Video...`);
+      await youtubedl(sourceInfo.resolvedUrl || targetInput, {
+        output: videoPath,
+        format: 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        ffmpegLocation: ffmpegInstaller.path,
+        noCheckCertificates: true,
+        noWarnings: true,
+      });
+    }
 
     const savedClips = [];
 
@@ -62,8 +99,11 @@ export async function POST(request) {
       const start_time = clip.start_time || clip.start;
       const end_time = clip.end_time || clip.end;
       const startSec = timeToSeconds(start_time);
-      const endSec = timeToSeconds(end_time);
-      const durationSec = endSec - startSec;
+      let endSec = timeToSeconds(end_time);
+      if (endSec <= startSec) {
+        endSec = startSec + 30;
+      }
+      const durationSec = Math.max(1, endSec - startSec);
 
       const clipId = uuidv4();
       const finalClipPath = path.join(clipsDir, `${clipId}-highlight.mp4`);
@@ -213,10 +253,12 @@ export async function POST(request) {
       index++;
     }
 
-    try {
-      if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
-    } catch (e) {
-      console.warn('Full video cleanup warning:', e);
+    if (shouldCleanupSource) {
+      try {
+        if (fs.existsSync(videoPath)) fs.unlinkSync(videoPath);
+      } catch (e) {
+        console.warn('Full video cleanup warning:', e);
+      }
     }
 
     return NextResponse.json({

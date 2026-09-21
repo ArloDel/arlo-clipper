@@ -105,9 +105,45 @@
   border: none;
 }
 
+.localVideoPlayer {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background-color: #000000;
+}
+
 .noVideo {
   color: var(--text-faint);
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.noVideoIcon {
+  font-size: 2rem;
+  margin-bottom: 4px;
+}
+
+.noVideoTitle {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.noVideoSub {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin: 0;
 }
 
 /* ── Sidebar ── */

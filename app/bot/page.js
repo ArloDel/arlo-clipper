@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal from '@/app/components/DirectPublishModal';
+import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './bot.module.css';
@@ -415,10 +416,7 @@ export default function AutoBotPage() {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <Link href="/" className={styles.logo}>
-            <span className={styles.logoMark}>▶</span>
-            <span>Arlo Clipper</span>
-          </Link>
+          <AppLogo size={30} href="/" />
 
           <nav className={styles.navLinks}>
             <Link href="/" className={styles.navLink}>

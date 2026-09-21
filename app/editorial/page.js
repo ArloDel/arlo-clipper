@@ -6,6 +6,7 @@ import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal, { DirectPublishTriggerButton } from '@/app/components/DirectPublishModal';
+import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
@@ -1626,6 +1627,7 @@ function EditorialContent() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
+          <AppLogo size={28} showText={false} href="/" />
           <Link href="/" className={styles.backLink}>
             <svg
               width="14"

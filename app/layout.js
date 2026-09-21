@@ -5,6 +5,11 @@ import "./globals.css";
 export const metadata = {
   title: "Arlo Clipper — AI Video Clipping Tool",
   description: "Turn long videos into high-quality viral clips with AI-powered analysis. Extract the best moments automatically.",
+  icons: {
+    icon: "/app_logo.png",
+    shortcut: "/app_logo.png",
+    apple: "/app_logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {

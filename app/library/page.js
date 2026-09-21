@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal from '@/app/components/DirectPublishModal';
+import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './library.module.css';
@@ -195,6 +196,7 @@ export default function LibraryPage() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
+          <AppLogo size={28} showText={false} href="/" />
           <Link href="/" className={styles.backLink}>
             <svg
               width="14"

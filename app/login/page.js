@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/app/components/ThemeToggle';
+import AppLogo from '@/app/components/AppLogo';
 import styles from './login.module.css';
 
 export default function LoginPage() {
@@ -46,7 +47,9 @@ export default function LoginPage() {
 
       <div className={styles.card}>
         <div className={styles.header}>
-          <div className={styles.logoMark}>▶</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+            <AppLogo size={52} showText={false} href={null} />
+          </div>
           <h1 className={styles.brand}>Arlo Clipper</h1>
           <p className={styles.subtitle}>Enter password to access workspace</p>
         </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
+import AppLogo from '@/app/components/AppLogo';
 import { resolveSource, SUPPORTED_VIDEO_EXTENSIONS } from '@/lib/sourceResolver';
 import styles from './page.module.css';
 
@@ -211,10 +212,7 @@ export default function HomePage() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <div className={styles.logo}>
-          <span className={styles.logoMark}>▶</span>
-          <span className={styles.logoText}>Arlo Clipper</span>
-        </div>
+        <AppLogo size={34} textClassName={styles.logoText} />
         <div className={styles.headerActions}>
           <Link href="/bot" className={styles.libraryLink} title="Local Automation Bot">
             🤖 Auto Bot

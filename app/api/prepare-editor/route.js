@@ -8,6 +8,7 @@ import fs from 'fs';
 import Groq from 'groq-sdk';
 import { detectAutoBroll, ensureBrollAssets } from '@/lib/broll';
 import { ensureAudioAssets } from '@/lib/audioAssets';
+import { calculateViralityScore } from '@/lib/viralityScore';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -233,12 +234,23 @@ export async function POST(request) {
       // Auto-detect B-Roll overlays from Whisper transcript segments
       ensureAudioAssets();
       ensureBrollAssets();
-      const detectedBrollOverlays = detectAutoBroll(segments, clip.hook || title);
+      const hookText = clip.hook || title || `Clip ${index}`;
+      const detectedBrollOverlays = detectAutoBroll(segments, hookText);
+
+      // Compute comprehensive AI virality score with exact word timestamps & segments
+      const viralityScore = calculateViralityScore({
+        hook: hookText,
+        title: title || `Clip ${index}`,
+        caption: clip.caption || '',
+        segments,
+        words: clipWords,
+        duration: durationSec,
+      });
 
       processedClips.push({
         id: clipId,
         title: title || `Clip ${index}`,
-        hook: clip.hook || title || `Clip ${index}`,
+        hook: hookText,
         caption: clip.caption || '',
         channelName: clip.channelName || clip.channel_name || 'YouTube',
         startTime: start_time,
@@ -253,6 +265,7 @@ export async function POST(request) {
         duration: durationSec,
         segments,
         words: clipWords,
+        viralityScore,
         audioSettings: {
           bgmTrack: 'upbeat-energetic',
           bgmVolume: 0.3,

@@ -125,6 +125,7 @@ export async function POST(request) {
         startTime: clip.startTime || clip.start_time || '',
         endTime: clip.endTime || clip.end_time || '',
         hashtags: Array.isArray(clip.hashtags) ? clip.hashtags : [],
+        viralityScore: clip.viralityScore,
       });
 
       savedClips.push(savedClip);

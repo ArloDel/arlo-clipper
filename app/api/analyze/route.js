@@ -8,6 +8,7 @@ import Groq from 'groq-sdk';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffprobeInstaller from '@ffprobe-installer/ffprobe';
+import { calculateViralityScore } from '@/lib/viralityScore';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
@@ -253,13 +254,28 @@ IMPORTANT:
       }
     }
 
-    highlightData = highlightData.map((c, idx) => ({
-      ...c,
-      channelName: c.channel_name || c.channelName || channelName,
-      hook: c.hook || c.title || `Clip ${idx + 1}`,
-      caption: c.caption || '',
-      hashtags: Array.isArray(c.hashtags) ? c.hashtags : ['#Shorts', '#Viral', '#Trending'],
-    }));
+    highlightData = highlightData.map((c, idx) => {
+      const hook = c.hook || c.title || `Clip ${idx + 1}`;
+      const title = c.title || `Clip ${idx + 1}`;
+      const caption = c.caption || '';
+      const hashtags = Array.isArray(c.hashtags) ? c.hashtags : ['#Shorts', '#Viral', '#Trending'];
+      const channel = c.channel_name || c.channelName || channelName;
+      const viralityScore = calculateViralityScore({
+        hook,
+        title,
+        caption,
+        duration: 35,
+      });
+
+      return {
+        ...c,
+        channelName: channel,
+        hook,
+        caption,
+        hashtags,
+        viralityScore,
+      };
+    });
 
     console.log('Analysis complete! Saving to cache...');
     fs.writeFileSync(cacheFile, JSON.stringify(highlightData, null, 2));

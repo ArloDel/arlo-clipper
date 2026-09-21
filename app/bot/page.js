@@ -6,6 +6,7 @@ import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal from '@/app/components/DirectPublishModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
+import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './bot.module.css';
 
 const emptySubscribe = () => () => {};
@@ -1254,6 +1255,8 @@ export default function AutoBotPage() {
                         {video.clips.map((clip, idx) => {
                           const clipKey = clip.id || clip.clipId || `${video.videoId}_${idx}`;
                           const pubStatus = getClipStatus(clip);
+                          const virality = clip.viralityScore || calculateViralityScore(clip);
+
                           return (
                             <div key={clipKey} className={styles.clipItemCard}>
                               <div className={styles.clipItemHeader}>
@@ -1263,8 +1266,22 @@ export default function AutoBotPage() {
                                 </span>
                               </div>
 
-                              {/* Publish Status Badge */}
+                              {/* Publish Status & Virality Score Badges */}
                               <div className={styles.clipStatusRow}>
+                                <div
+                                  className={styles.viralityBadgeSmall}
+                                  style={{
+                                    backgroundColor: virality.color ? `${virality.color}15` : 'rgba(16, 185, 129, 0.12)',
+                                    color: virality.color || '#10b981',
+                                    borderColor: virality.borderColor || 'rgba(16, 185, 129, 0.3)',
+                                  }}
+                                  title={`Virality Score: ${virality.score}/100 (${virality.gradeLabel} - ${virality.badge})`}
+                                >
+                                  <span>{virality.badgeEmoji}</span>
+                                  <span style={{ fontWeight: '800', fontFamily: 'var(--font-geist-mono)' }}>{virality.score}</span>
+                                  <span style={{ fontSize: '0.62rem', opacity: 0.85 }}>{virality.grade}</span>
+                                </div>
+
                                 {pubStatus.isPublished ? (
                                   <div className={styles.publishedBadge}>
                                     <span className={styles.badgeDotGreen}>🟢</span>

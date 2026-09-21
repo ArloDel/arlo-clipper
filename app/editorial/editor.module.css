@@ -897,5 +897,372 @@
   transform: translateY(0);
 }
 
+/* ── AI Virality Score & Hook Analyzer ── */
+.viralityCard {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 150ms var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
 
+.viralityCardActive {
+  border-color: rgba(16, 185, 129, 0.4);
+}
 
+.viralityHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.viralityTitle {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viralityScoreHero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+}
+
+.viralityGaugeWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  position: relative;
+  background: var(--bg-subtle);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.08);
+}
+
+.viralityGaugeInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  line-height: 1;
+}
+
+.viralityScoreValue {
+  font-size: 1.25rem;
+  font-weight: 900;
+  font-family: var(--font-geist-mono), monospace;
+  letter-spacing: -0.5px;
+}
+
+.viralityScoreMax {
+  font-size: 0.55rem;
+  color: var(--text-sub);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.viralityHeroInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.viralityBadgePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  width: fit-content;
+  border: 1px solid transparent;
+}
+
+.viralitySummary {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  line-height: 1.35;
+}
+
+/* Hook Editor Input */
+.hookEditorBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hookEditorLabelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hookEditorLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.hookWordCount {
+  font-size: 0.68rem;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--text-sub);
+}
+
+.hookTextarea {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-main);
+  padding: 8px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.8rem;
+  font-family: inherit;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 52px;
+  transition: border-color 150ms ease;
+}
+
+.hookTextarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Sub-Score Breakdown */
+.breakdownSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdownItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+}
+
+.breakdownItemTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdownItemTitle {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.breakdownItemWeight {
+  font-size: 0.65rem;
+  color: var(--text-sub);
+  font-family: var(--font-geist-mono), monospace;
+  font-weight: 500;
+}
+
+.breakdownScoreVal {
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.breakdownProgressTrack {
+  width: 100%;
+  height: 5px;
+  background: var(--bg-subtle);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.breakdownProgressBar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 300ms ease;
+}
+
+.breakdownMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.breakdownChip {
+  font-size: 0.66rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+}
+
+.breakdownChipActive {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Optimization Tips */
+.tipsCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tipsHeader {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tipsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tipItem {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  line-height: 1.35;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.tipBullet {
+  color: #f59e0b;
+  font-weight: bold;
+}
+
+/* AI Alternative Hooks */
+.suggestionsBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestionsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.suggestionsTitle {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.suggestionItem {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 150ms ease;
+}
+
+.suggestionItem:hover {
+  border-color: var(--border-hover);
+}
+
+.suggestionTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.suggestionStyleName {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.suggestionBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.suggestionText {
+  font-size: 0.76rem;
+  color: var(--text-main);
+  line-height: 1.35;
+  font-weight: 500;
+}
+
+.applyHookBtn {
+  align-self: flex-end;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-main);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 150ms ease;
+}
+
+.applyHookBtn:hover {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+}

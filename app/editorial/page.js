@@ -9,6 +9,7 @@ import DirectPublishModal, { DirectPublishTriggerButton } from '@/app/components
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
+import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
 
@@ -306,6 +307,30 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
   const activeAudio = clipAudioSettings[activeClipIdx] || {};
   const activeBroll = clipBrollSettings[activeClipIdx] || {};
   const isMobile = ratio === '9:16' || ratio === 'mobile';
+
+  const viralityScore = activeClip.viralityScore || calculateViralityScore({
+    hook: activeClip.hook,
+    title: activeClip.title,
+    caption: activeClip.caption,
+    duration: activeClip.duration,
+    segments: activeClip.segments,
+    words: activeClip.words,
+  });
+
+  const handleUpdateHook = (newHook) => {
+    const updatedClips = [...clips];
+    const curr = updatedClips[activeClipIdx] || {};
+    const newScore = calculateViralityScore({
+      ...curr,
+      hook: newHook,
+    });
+    updatedClips[activeClipIdx] = {
+      ...curr,
+      hook: newHook,
+      viralityScore: newScore,
+    };
+    setClips(updatedClips);
+  };
 
   const updateStyle = (key, val) => {
     const newStyles = [...clipStyles];
@@ -701,6 +726,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
       style: clipStyles[i],
       audioSettings: clipAudioSettings[i],
       brollSettings: clipBrollSettings[i],
+      viralityScore: c.viralityScore || calculateViralityScore(c),
     }));
     onSave(finalClips);
   };
@@ -760,6 +786,227 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
         <div className={editorStyles.controlsHeader}>
           <h3 className={editorStyles.controlsTitle}>Production Studio</h3>
           <span className={editorStyles.controlsBadge}>Clip {activeClipIdx + 1}</span>
+        </div>
+
+        {/* ── 0. AI Virality Score & Hook Analyzer Card ── */}
+        <div className={`${editorStyles.viralityCard} ${viralityScore.score >= 80 ? editorStyles.viralityCardActive : ''}`}>
+          <div className={editorStyles.viralityHeader}>
+            <div className={editorStyles.viralityTitle}>
+              <span>📊 AI Virality & Hook Analyzer</span>
+            </div>
+            <span
+              className={editorStyles.viralityBadgePill}
+              style={{
+                backgroundColor: viralityScore.color ? `${viralityScore.color}22` : 'rgba(16, 185, 129, 0.15)',
+                color: viralityScore.color || '#10b981',
+                borderColor: viralityScore.borderColor || 'rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              <span>{viralityScore.badgeEmoji}</span>
+              <span>{viralityScore.gradeLabel}</span>
+            </span>
+          </div>
+
+          {/* Prominent Radial/Circular Score Hero Meter */}
+          <div className={editorStyles.viralityScoreHero}>
+            <div
+              className={editorStyles.viralityGaugeWrap}
+              style={{
+                background: `conic-gradient(${viralityScore.color || '#10b981'} ${viralityScore.score * 3.6}deg, var(--bg-subtle) 0deg)`,
+              }}
+            >
+              <div className={editorStyles.viralityGaugeInner}>
+                <span className={editorStyles.viralityScoreValue} style={{ color: viralityScore.color || '#10b981' }}>
+                  {viralityScore.score}
+                </span>
+                <span className={editorStyles.viralityScoreMax}>/ 100</span>
+              </div>
+            </div>
+
+            <div className={editorStyles.viralityHeroInfo}>
+              <span
+                className={editorStyles.viralityBadgePill}
+                style={{
+                  backgroundColor: viralityScore.color ? `${viralityScore.color}15` : 'rgba(16, 185, 129, 0.12)',
+                  color: viralityScore.color || '#10b981',
+                  borderColor: viralityScore.borderColor || 'rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                <span>{viralityScore.badgeEmoji}</span>
+                <span>{viralityScore.badge}</span>
+              </span>
+              <p className={editorStyles.viralitySummary}>{viralityScore.summary}</p>
+            </div>
+          </div>
+
+          {/* Editable Hook Input with Realtime Recalculation */}
+          <div className={editorStyles.hookEditorBox}>
+            <div className={editorStyles.hookEditorLabelRow}>
+              <label className={editorStyles.hookEditorLabel}>Opening Hook (First 3s)</label>
+              <span className={editorStyles.hookWordCount}>
+                {viralityScore.breakdown?.hookStrength?.wordCount || 0} kata ({viralityScore.breakdown?.hookStrength?.brevityLabel || 'Optimal'})
+              </span>
+            </div>
+            <textarea
+              className={editorStyles.hookTextarea}
+              value={activeClip.hook || ''}
+              onChange={(e) => handleUpdateHook(e.target.value)}
+              placeholder="Tulis hook kalimat pembuka 3 detik pertama..."
+              rows={2}
+            />
+          </div>
+
+          {/* Sub-Score Breakdown Bars */}
+          <div className={editorStyles.breakdownSection}>
+            {/* 1. Hook Strength */}
+            <div className={editorStyles.breakdownItem}>
+              <div className={editorStyles.breakdownItemTop}>
+                <span className={editorStyles.breakdownItemTitle}>
+                  <span>🎯 Hook Strength</span>
+                  <span className={editorStyles.breakdownItemWeight}>40%</span>
+                </span>
+                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.hookStrength?.score >= 80 ? '#10b981' : viralityScore.breakdown?.hookStrength?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
+                  {viralityScore.breakdown?.hookStrength?.score || 0}/100
+                </span>
+              </div>
+              <div className={editorStyles.breakdownProgressTrack}>
+                <div
+                  className={editorStyles.breakdownProgressBar}
+                  style={{
+                    width: `${viralityScore.breakdown?.hookStrength?.score || 0}%`,
+                    backgroundColor: viralityScore.breakdown?.hookStrength?.score >= 80 ? '#10b981' : viralityScore.breakdown?.hookStrength?.score >= 65 ? '#f59e0b' : '#ef4444',
+                  }}
+                />
+              </div>
+              <div className={editorStyles.breakdownMeta}>
+                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasQuestion ? editorStyles.breakdownChipActive : ''}`}>
+                  {viralityScore.breakdown?.hookStrength?.hasQuestion ? '✓ Question Hook' : '○ Question'}
+                </span>
+                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasDirectAddress ? editorStyles.breakdownChipActive : ''}`}>
+                  {viralityScore.breakdown?.hookStrength?.hasDirectAddress ? '✓ Direct Address (Kamu)' : '○ Direct Address'}
+                </span>
+                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasPowerWords ? editorStyles.breakdownChipActive : ''}`}>
+                  {viralityScore.breakdown?.hookStrength?.hasPowerWords ? `✓ Power Words (${viralityScore.breakdown?.hookStrength?.powerWordsFound?.length || 1})` : '○ Power Words'}
+                </span>
+                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasNumbers ? editorStyles.breakdownChipActive : ''}`}>
+                  {viralityScore.breakdown?.hookStrength?.hasNumbers ? '✓ Numbers/Data' : '○ Numbers'}
+                </span>
+              </div>
+            </div>
+
+            {/* 2. Speech Pacing / WPM */}
+            <div className={editorStyles.breakdownItem}>
+              <div className={editorStyles.breakdownItemTop}>
+                <span className={editorStyles.breakdownItemTitle}>
+                  <span>⚡ Speech Pacing</span>
+                  <span className={editorStyles.breakdownItemWeight}>30%</span>
+                </span>
+                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.speechPacing?.score >= 80 ? '#3b82f6' : viralityScore.breakdown?.speechPacing?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
+                  {viralityScore.breakdown?.speechPacing?.wpm || 0} WPM ({viralityScore.breakdown?.speechPacing?.score || 0}/100)
+                </span>
+              </div>
+              <div className={editorStyles.breakdownProgressTrack}>
+                <div
+                  className={editorStyles.breakdownProgressBar}
+                  style={{
+                    width: `${viralityScore.breakdown?.speechPacing?.score || 0}%`,
+                    backgroundColor: viralityScore.breakdown?.speechPacing?.score >= 80 ? '#3b82f6' : viralityScore.breakdown?.speechPacing?.score >= 65 ? '#f59e0b' : '#ef4444',
+                  }}
+                />
+              </div>
+              <div className={editorStyles.breakdownMeta}>
+                <span className={`${editorStyles.breakdownChip} ${editorStyles.breakdownChipActive}`}>
+                  {viralityScore.breakdown?.speechPacing?.tempoStatus || 'Optimal Tempo'}
+                </span>
+                <span className={editorStyles.breakdownChip}>
+                  Target: 135–170 WPM
+                </span>
+                {viralityScore.breakdown?.speechPacing?.pauseCount > 0 && (
+                  <span className={editorStyles.breakdownChip} style={{ color: '#f59e0b' }}>
+                    ⚠️ {viralityScore.breakdown?.speechPacing?.pauseCount} pause gap
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* 3. Emotional Trigger */}
+            <div className={editorStyles.breakdownItem}>
+              <div className={editorStyles.breakdownItemTop}>
+                <span className={editorStyles.breakdownItemTitle}>
+                  <span>🔥 Emotional Trigger</span>
+                  <span className={editorStyles.breakdownItemWeight}>30%</span>
+                </span>
+                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.emotionalTrigger?.score >= 80 ? '#ec4899' : viralityScore.breakdown?.emotionalTrigger?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
+                  {viralityScore.breakdown?.emotionalTrigger?.score || 0}/100
+                </span>
+              </div>
+              <div className={editorStyles.breakdownProgressTrack}>
+                <div
+                  className={editorStyles.breakdownProgressBar}
+                  style={{
+                    width: `${viralityScore.breakdown?.emotionalTrigger?.score || 0}%`,
+                    backgroundColor: viralityScore.breakdown?.emotionalTrigger?.score >= 80 ? '#ec4899' : viralityScore.breakdown?.emotionalTrigger?.score >= 65 ? '#f59e0b' : '#ef4444',
+                  }}
+                />
+              </div>
+              <div className={editorStyles.breakdownMeta}>
+                <span className={`${editorStyles.breakdownChip} ${editorStyles.breakdownChipActive}`}>
+                  {viralityScore.breakdown?.emotionalTrigger?.dominantEmotionEmoji || '🔍'} {viralityScore.breakdown?.emotionalTrigger?.dominantEmotion || 'Curiosity & Mystery'}
+                </span>
+                {Array.isArray(viralityScore.breakdown?.emotionalTrigger?.emotionalKeywords) &&
+                  viralityScore.breakdown?.emotionalTrigger?.emotionalKeywords.map((kw, i) => (
+                    <span key={i} className={editorStyles.breakdownChip}>
+                      #{kw}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Actionable Optimization Tips */}
+          {Array.isArray(viralityScore.tips) && viralityScore.tips.length > 0 && (
+            <div className={editorStyles.tipsCard}>
+              <div className={editorStyles.tipsHeader}>
+                <span>💡 Actionable Optimization Tips</span>
+              </div>
+              <ul className={editorStyles.tipsList}>
+                {viralityScore.tips.map((tip, idx) => (
+                  <li key={idx} className={editorStyles.tipItem}>
+                    <span className={editorStyles.tipBullet}>•</span>
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* AI Alternative Viral Hooks with 1-Click Apply */}
+          {Array.isArray(viralityScore.alternativeHooks) && viralityScore.alternativeHooks.length > 0 && (
+            <div className={editorStyles.suggestionsBox}>
+              <div className={editorStyles.suggestionsHeader}>
+                <span className={editorStyles.suggestionsTitle}>
+                  <span>✨ AI Hook Suggestions</span>
+                </span>
+              </div>
+              {viralityScore.alternativeHooks.map((alt) => (
+                <div key={alt.id || alt.hook} className={editorStyles.suggestionItem}>
+                  <div className={editorStyles.suggestionTop}>
+                    <span className={editorStyles.suggestionStyleName}>{alt.style}</span>
+                    <span className={editorStyles.suggestionBadge}>{alt.badge}</span>
+                  </div>
+                  <div className={editorStyles.suggestionText}>&ldquo;{alt.hook}&rdquo;</div>
+                  <button
+                    type="button"
+                    className={editorStyles.applyHookBtn}
+                    onClick={() => handleUpdateHook(alt.hook)}
+                    title="Terapkan hook ini ke klip aktif"
+                  >
+                    <span>⚡ Apply Hook</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ── 1. OpenCV AI Tracking Toggles ── */}

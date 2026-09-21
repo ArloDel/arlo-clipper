@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node scripts/test_karaoke_subtitles.mjs",
+    "test:virality": "node scripts/test_virality_score.mjs",
     "test:audio-broll": "node scripts/test_audio_broll.mjs",
     "test:webhook": "node scripts/test_webhook_automation.mjs",
     "test:bot": "node scripts/test_local_bot.mjs",

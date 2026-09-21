@@ -6,6 +6,7 @@ import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal from '@/app/components/DirectPublishModal';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
+import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './library.module.css';
 
 export default function LibraryPage() {
@@ -22,8 +23,9 @@ export default function LibraryPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isProcessingBulk, setIsProcessingBulk] = useState(false);
 
-  // Social Copy Modal state
+  // Social Copy & Virality Modal state
   const [activeModalClip, setActiveModalClip] = useState(null);
+  const [viralityModalClip, setViralityModalClip] = useState(null);
   const [modalCopyStatus, setModalCopyStatus] = useState('');
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [publishModalClip, setPublishModalClip] = useState(null);
@@ -366,8 +368,32 @@ export default function LibraryPage() {
                     <div className={styles.info}>
                       <h3 className={styles.clipTitle}>{clip.title || 'Untitled Clip'}</h3>
 
-                      {/* Status Badge */}
-                      <div className={styles.statusBadgeRow}>
+                      {/* Status & Virality Badges */}
+                      <div className={styles.badgeGroupRow}>
+                        {(() => {
+                          const virality = clip.viralityScore || calculateViralityScore(clip);
+                          return (
+                            <button
+                              type="button"
+                              className={styles.viralityBadgeBtn}
+                              style={{
+                                backgroundColor: virality.color ? `${virality.color}18` : 'rgba(16, 185, 129, 0.12)',
+                                color: virality.color || '#10b981',
+                                borderColor: virality.borderColor || 'rgba(16, 185, 129, 0.3)',
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViralityModalClip({ ...clip, viralityScore: virality });
+                              }}
+                              title="Lihat Analisis Virality Score & Rekomendasi Hook"
+                            >
+                              <span>{virality.badgeEmoji}</span>
+                              <span className={styles.viralityBadgeScore}>{virality.score}</span>
+                              <span className={styles.viralityBadgeGrade}>{virality.grade}</span>
+                            </button>
+                          );
+                        })()}
+
                         {isPublished ? (
                           <div className={styles.publishedBadge}>
                             <span className={styles.badgeDotGreen}>🟢</span>
@@ -655,6 +681,170 @@ export default function LibraryPage() {
                 <span>Download Video (MP4)</span>
               </a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Virality Breakdown Modal */}
+      {viralityModalClip && (
+        <div className={styles.modalOverlay} onClick={() => setViralityModalClip(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.2rem' }}>📊</span>
+                <h3 className={styles.modalTitle}>
+                  <span>AI Virality Score & Hook Analyzer</span>
+                </h3>
+              </div>
+              <button
+                className={styles.modalCloseBtn}
+                onClick={() => setViralityModalClip(null)}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {(() => {
+              const v = viralityModalClip.viralityScore || calculateViralityScore(viralityModalClip);
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Hero Gauge */}
+                  <div className={styles.modalViralityHero}>
+                    <div
+                      className={styles.modalGaugeWrap}
+                      style={{
+                        background: `conic-gradient(${v.color || '#10b981'} ${v.score * 3.6}deg, var(--bg-surface) 0deg)`,
+                      }}
+                    >
+                      <div className={styles.modalGaugeInner}>
+                        <span className={styles.modalScoreVal} style={{ color: v.color || '#10b981' }}>{v.score}</span>
+                        <span className={styles.modalScoreMax}>/ 100</span>
+                      </div>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span
+                          className={styles.viralityGradePill}
+                          style={{
+                            backgroundColor: v.color ? `${v.color}20` : 'rgba(16, 185, 129, 0.15)',
+                            color: v.color || '#10b981',
+                            borderColor: v.borderColor || 'rgba(16, 185, 129, 0.3)',
+                          }}
+                        >
+                          <span>{v.badgeEmoji}</span>
+                          <span>{v.gradeLabel}</span>
+                        </span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                          {v.badge}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.74rem', color: 'var(--text-sub)', margin: 0, lineHeight: 1.4 }}>
+                        {v.summary}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Hook Display */}
+                  {viralityModalClip.hook && (
+                    <div style={{ background: 'var(--bg-subtle)', borderLeft: '3px solid var(--accent)', padding: '8px 10px', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '0.68rem', fontWeight: '600', color: 'var(--text-sub)', textTransform: 'uppercase' }}>Opening Hook (First 3s)</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-main)', marginTop: '2px' }}>&ldquo;{viralityModalClip.hook}&rdquo;</div>
+                    </div>
+                  )}
+
+                  {/* Sub-Score Breakdown Bars */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {/* Hook Strength */}
+                    <div className={styles.modalBreakdownItem}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', fontWeight: '600' }}>
+                        <span>🎯 Hook Strength (40%)</span>
+                        <span style={{ color: (v.breakdown?.hookStrength?.score || 0) >= 80 ? '#10b981' : (v.breakdown?.hookStrength?.score || 0) >= 65 ? '#f59e0b' : '#ef4444' }}>
+                          {v.breakdown?.hookStrength?.score || 0}/100
+                        </span>
+                      </div>
+                      <div className={styles.modalProgressTrack}>
+                        <div
+                          style={{
+                            width: `${v.breakdown?.hookStrength?.score || 0}%`,
+                            height: '100%',
+                            background: (v.breakdown?.hookStrength?.score || 0) >= 80 ? '#10b981' : (v.breakdown?.hookStrength?.score || 0) >= 65 ? '#f59e0b' : '#ef4444',
+                            borderRadius: '3px',
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
+                        <span className={styles.modalChip}>{v.breakdown?.hookStrength?.hasQuestion ? '✓ Question' : '○ Question'}</span>
+                        <span className={styles.modalChip}>{v.breakdown?.hookStrength?.hasDirectAddress ? '✓ Direct Address' : '○ Direct Address'}</span>
+                        <span className={styles.modalChip}>{v.breakdown?.hookStrength?.hasPowerWords ? `✓ Power Words (${v.breakdown?.hookStrength?.powerWordsFound?.length || 1})` : '○ Power Words'}</span>
+                        <span className={styles.modalChip}>{v.breakdown?.hookStrength?.hasNumbers ? '✓ Numbers' : '○ Numbers'}</span>
+                      </div>
+                    </div>
+
+                    {/* Speech Pacing */}
+                    <div className={styles.modalBreakdownItem}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', fontWeight: '600' }}>
+                        <span>⚡ Speech Pacing (30%)</span>
+                        <span style={{ color: (v.breakdown?.speechPacing?.score || 0) >= 80 ? '#3b82f6' : (v.breakdown?.speechPacing?.score || 0) >= 65 ? '#f59e0b' : '#ef4444' }}>
+                          {v.breakdown?.speechPacing?.wpm || 0} WPM ({v.breakdown?.speechPacing?.score || 0}/100)
+                        </span>
+                      </div>
+                      <div className={styles.modalProgressTrack}>
+                        <div
+                          style={{
+                            width: `${v.breakdown?.speechPacing?.score || 0}%`,
+                            height: '100%',
+                            background: (v.breakdown?.speechPacing?.score || 0) >= 80 ? '#3b82f6' : (v.breakdown?.speechPacing?.score || 0) >= 65 ? '#f59e0b' : '#ef4444',
+                            borderRadius: '3px',
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
+                        <span className={styles.modalChip}>{v.breakdown?.speechPacing?.tempoStatus || 'Optimal Tempo'}</span>
+                        <span className={styles.modalChip}>Target: 135–170 WPM</span>
+                      </div>
+                    </div>
+
+                    {/* Emotional Trigger */}
+                    <div className={styles.modalBreakdownItem}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', fontWeight: '600' }}>
+                        <span>🔥 Emotional Trigger (30%)</span>
+                        <span style={{ color: (v.breakdown?.emotionalTrigger?.score || 0) >= 80 ? '#ec4899' : (v.breakdown?.emotionalTrigger?.score || 0) >= 65 ? '#f59e0b' : '#ef4444' }}>
+                          {v.breakdown?.emotionalTrigger?.dominantEmotion} ({v.breakdown?.emotionalTrigger?.score || 0}/100)
+                        </span>
+                      </div>
+                      <div className={styles.modalProgressTrack}>
+                        <div
+                          style={{
+                            width: `${v.breakdown?.emotionalTrigger?.score || 0}%`,
+                            height: '100%',
+                            background: (v.breakdown?.emotionalTrigger?.score || 0) >= 80 ? '#ec4899' : (v.breakdown?.emotionalTrigger?.score || 0) >= 65 ? '#f59e0b' : '#ef4444',
+                            borderRadius: '3px',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Optimization Tips */}
+                  {Array.isArray(v.tips) && v.tips.length > 0 && (
+                    <div style={{ background: 'var(--bg-subtle)', borderRadius: '6px', padding: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--text-main)', textTransform: 'uppercase' }}>
+                        💡 Actionable Optimization Tips
+                      </div>
+                      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {v.tips.map((tip, idx) => (
+                          <li key={idx} style={{ fontSize: '0.74rem', color: 'var(--text-sub)', lineHeight: 1.35, display: 'flex', gap: '6px' }}>
+                            <span style={{ color: '#f59e0b', fontWeight: 'bold' }}>•</span>
+                            <span>{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

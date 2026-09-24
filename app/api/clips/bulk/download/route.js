@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { ZipArchive } from 'archiver';
 import fs from 'fs';
 import path from 'path';
+import { PassThrough } from 'stream';
 
 export async function POST(request) {
   try {
@@ -19,14 +20,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'No clips found' }, { status: 404 });
     }
 
-    // Create a TransformStream to stream the zip to the response
-    const { readable, writable } = new TransformStream();
-    
-    // We need to pipe the archiver output to the writable side of the stream.
-    // However, archiver works with Node.js Streams, and TransformStream is a Web Stream.
-    // In Next.js App Router, we can return a Node.js Readable stream directly by converting it.
-    
-    const { PassThrough } = require('stream');
     const passThrough = new PassThrough();
 
     const archive = new ZipArchive({
@@ -43,7 +36,7 @@ export async function POST(request) {
     // Append files
     clipsToDownload.forEach((clip, index) => {
       if (clip.videoPath) {
-        const filepath = path.join(process.cwd(), 'public', clip.videoPath);
+        const filepath = path.join(process.cwd(), 'public', clip.videoPath.replace(/^\//, ''));
         if (fs.existsSync(filepath)) {
           // Normalize filename, fallback to index if missing title
           const safeTitle = (clip.title || `clip-${index+1}`).replace(/[^a-z0-9]/gi, '_').toLowerCase();

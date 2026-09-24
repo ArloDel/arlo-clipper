@@ -18,7 +18,7 @@ export async function DELETE(request) {
       deletedClips.forEach(clip => {
         try {
           if (clip.videoPath) {
-            const filepath = path.join(process.cwd(), 'public', clip.videoPath);
+            const filepath = path.join(process.cwd(), 'public', clip.videoPath.replace(/^\//, ''));
             if (fs.existsSync(filepath)) {
               fs.unlinkSync(filepath);
             }

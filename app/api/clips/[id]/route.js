@@ -20,7 +20,7 @@ export async function DELETE(request, { params }) {
     if (deletedClip.videoPath) {
       const publicPath = path.join(process.cwd(), 'public');
       // videoPath is usually absolute from root like '/clips/...'
-      const filePath = path.join(publicPath, deletedClip.videoPath);
+      const filePath = path.join(publicPath, deletedClip.videoPath.replace(/^\//, ''));
       
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);

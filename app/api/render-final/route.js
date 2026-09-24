@@ -87,6 +87,9 @@ export async function POST(request) {
               '-preset fast',
               '-c:a aac',
               '-b:a 192k',
+              '-shortest',
+              '-t',
+              String(clip.duration || 15),
             ])
             .output(finalSubtitledPath)
             .on('end', resolve)
@@ -102,7 +105,15 @@ export async function POST(request) {
         await new Promise((resolve, reject) => {
           ffmpeg(rawClipPath)
             .videoFilters([`subtitles=${relativeAssPath}`])
-            .outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a aac'])
+            .outputOptions([
+              '-c:v libx264',
+              '-crf 18',
+              '-preset fast',
+              '-c:a aac',
+              '-shortest',
+              '-t',
+              String(clip.duration || 15),
+            ])
             .output(finalSubtitledPath)
             .on('end', resolve)
             .on('error', (err) => {

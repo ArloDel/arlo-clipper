@@ -2,38 +2,43 @@
 
 # 🎬 Arlo Clipper
 
-**AI-Powered YouTube Video Clipper & Vertical Shorts Generator**  
-*Otomatisasi pemotongan klip viral, transkripsi subtitle animasi, dan smart auto-crop wajah berbasis OpenCV.*
+**Autonomous AI Video Clipper, Multi-Source Vertical Shorts Generator & Automated Social Publisher**  
+*Pemotongan klip viral otomatis, transkripsi subtitle animasi Karaoke, auto-crop wajah OpenCV, audio ducking dinamis, dan publikasi otomatis ke YouTube Shorts, Instagram Reels, & TikTok.*
 
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.12-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.4-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-5.0.0-green?style=for-the-badge&logo=opencv)](https://opencv.org/)
 [![FFmpeg](https://img.shields.io/badge/FFmpeg-Embedded-red?style=for-the-badge&logo=ffmpeg)](https://ffmpeg.org/)
 [![Groq](https://img.shields.io/badge/Groq-Whisper--v3-orange?style=for-the-badge)](https://groq.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+[📘 **Baca Dokumentasi Arsitektur Lengkap (`docs/ARCHITECTURE.md`)**](docs/ARCHITECTURE.md)
 
 </div>
 
 ---
 
-## 🌟 Fitur Utama (Features)
+## 🌟 Fitur Utama (Core Features)
 
 | Fitur | Deskripsi |
 | :--- | :--- |
-| 🤖 **AI Highlight Detector** | Menganalisis video YouTube panjang menggunakan LLM (Google Gemini / Groq) untuk menemukan momen-momen paling menarik dan viral secara otomatis. |
-| 📱 **AI Social Copy & Viral Metadata** | Otomatis membuat Hook viral 3 detik pertama, Caption menarik, atribusi nama channel, timestamp detik klip, serta tagar hashtag khusus YouTube Shorts, IG Reels, & TikTok dengan tombol 1-klik salin. |
-| 👤 **OpenCV Smart Face Tracking** | Deteksi wajah (Haar Cascade) dengan perataan pergerakan kamera *(Exponential Moving Average)* untuk auto-crop vertikal 9:16 yang mulus berpusat pada pembicara. |
-| 👄 **OpenCV Lip Tracking (Active Speaker)** | Deteksi pergerakan bibir dan energi bicara untuk secara otomatis mengarahkan framing kamera 9:16 ke pembicara yang sedang aktif berbicara (cocok untuk podcast/interview multi-orang). |
-| 🎙️ **Groq Whisper Transcription** | Transkripsi audio otomatis berkecepatan tinggi dengan timestamp per-segmen menggunakan model `whisper-large-v3`. |
-| 🎨 **Animated Subtitle Studio** | Kustomisasi subtitle interaktif di browser (Font, Ukuran, Warna teks, Outline, Drop shadow, serta efek animasi: *Pop, Slide Up, Blur, Bounce*). |
-| ⚡ **Hard-Burn Subtitle Rendering** | Pembakaran subtitle permanen ke file MP4 menggunakan FFmpeg `libass` dengan penskalaan proporsional resolusi asli. |
-| 📦 **Library & Bulk Downloader** | Manajemen pustaka klip tersimpan dengan opsi download satu per satu atau unduh massal dalam format `.zip`. |
+| 🌐 **Multi-Source Video Input** | Mendukung input fleksibel dari **YouTube URL**, **Google Drive** (auto-bypass virus warning), **Dropbox** (`dl=1`), **TikTok**, **Direct Video Stream** (`.mp4`, `.mov`, `.mkv`), dan **Local File Upload**. |
+| 🤖 **AI Highlight & Virality Scoring** | Menganalisis transkrip audio menggunakan **Google Gemini Flash** & **Groq LLM** dengan Virality Score (0–100) berbasis 3 pilar: *40% Hook Strength*, *30% Speech Pacing (135–170 WPM)*, dan *30% Emotional Retention*. |
+| 👤 **OpenCV Smart Face & Lip Tracking** | Deteksi wajah & bibir pembicara aktif menggunakan Haar Cascade dengan perataan kamera *(Exponential Moving Average, $\alpha=0.08$)* untuk auto-crop vertikal 9:16 mulus tanpa getaran. |
+| 🎙️ **Dual Podcast Split-Screen** | Mode otomatis podcast 2 pembicara: membagi frame horizontal menjadi layout vertikal 9:16 atas-bawah dengan garis pemisah (*divider*). |
+| 🔤 **Dynamic Subtitle & Karaoke Engine** | Subtitle animasi modern (*Pop, Slide Up, Blur, Bounce*) serta word-level **Karaoke timing** (`\k` tags) yang dibakar permanen dengan FFmpeg `libass`. |
+| 🎵 **Dynamic Audio Ducking & SFX** | Otomatis mengecilkan volume musik latar (BGM) saat vokal bicara terdengar menggunakan FFmpeg `sidechaincompress`, dilengkapi sound effect (*Impact, Pop, Ding, Whoosh*). |
+| 🖼️ **Thematic B-Roll Overlays** | Deteksi kata kunci transkrip otomatis untuk memunculkan visual overlay kartu tematik (*Finance, Technology, Success, Alert, Nature, Celebration*). |
+| 🚀 **Direct Social Media Publishing** | Upload 1-klik atau terjadwal langsung ke **YouTube Shorts** (Data API v3), **TikTok** (Content Posting API v2), dan **Instagram Reels** (Graph API) dengan proteksi anti-duplikasi. |
+| ⚡ **Webhook Automation Pipeline** | Pipeline headless otomatis via HTTP POST dengan verifikasi tanda tangan **HMAC SHA-256**, retry backoff, dan pengiriman callback hasil klip. |
+| ⏰ **Local Channel Watcher Bot** | Bot polling background yang memantau channel YouTube via RSS XML / yt-dlp, memotong video baru secara otomatis, mengekspor file MP4 + copy `.txt`, dan langsung menerbitkan ke medsos. |
 
 ---
 
 ## 🎥 Demonstrasi Visual (Live Demo)
 
 ### 🚀 Live End-to-End Workflow Automation
-> *Demonstrasi lengkap: Login ➔ Input URL YouTube ➔ Analisis AI ➔ Editorial Studio (Custom Subtitle & OpenCV Face Tracking) ➔ Save & Export ke Library.*
+> *Demonstrasi lengkap: Login ➔ Input URL YouTube / Multi-source ➔ Analisis AI & Virality Score ➔ Editorial Studio (Custom Subtitle, B-Roll, Ducking, OpenCV Tracking) ➔ Save & Publish ke Medsos.*
 
 <div align="center">
   <img src="docs/assets/demo-workflow.gif" width="760" alt="Live Demo Automation Workflow" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);" />
@@ -50,8 +55,8 @@
 
 ---
 
-### 2. 🔤 Dynamic Animated Subtitles
-> *Subtitle bergaya modern dengan animasi Pop, outline tebal, dan warna yang dapat diubah sesuai selera.*
+### 2. 🔤 Dynamic Animated Subtitles & Karaoke
+> *Subtitle bergaya modern dengan animasi Pop, Karaoke highlight, outline tebal, dan warna yang dapat diubah sesuai selera.*
 
 <div align="center">
   <img src="docs/assets/demo-subtitles.gif" width="360" alt="Demo Animated Subtitles" style="border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);" />
@@ -63,22 +68,24 @@
 
 ```mermaid
 graph TD
-    A[🔗 Input YouTube URL & Rasio 9:16 / 16:9] --> B[🧠 AI Video Analysis - Gemini / Groq]
-    B --> C[📥 Download & Slicing - youtube-dl-exec + FFmpeg]
-    C --> D[🎙️ Audio Extraction & Whisper Transcription - Groq API]
-    D --> E[🎛️ Editorial Studio]
+    A[🔗 Input Source: YouTube / GDrive / Dropbox / Local MP4] --> B[🔍 Multi-Source Resolver - sourceResolver.js]
+    B --> C[🎙️ Audio Extraction & Groq Whisper v3]
+    C --> D[🧠 AI Highlight & Virality Scoring Engine - Gemini Flash]
+    D --> E[🎛️ Editorial Studio & Presets]
     
-    subgraph Editor ["🎛️ Editorial Studio Controls"]
-        E --> E1[👤 OpenCV Face Tracking Toggle]
-        E --> E2[🎨 Subtitle Font & Colors]
-        E --> E3[✨ Animation Effects - Pop/Slide/Blur/Bounce]
+    subgraph StudioControls ["🎛️ Studio Processing Controls"]
+        E --> E1[👤 OpenCV Face / Lip / Split-Screen Tracking]
+        E --> E2[🎨 ASS Subtitle & Karaoke Generator]
+        E --> E3[🖼️ Thematic B-Roll Visual Overlay]
+        E --> E4[🎵 Dynamic Audio Ducking & SFX Engine]
     end
 
-    E1 --> F[⚙️ Face Tracker Module - Python cv2 EMA Smoothing]
-    F --> G[🎬 Render Final - FFmpeg libass Subtitle Burn]
-    E2 --> G
-    E3 --> G
-    G --> H[💾 Saved Clips Library & Batch ZIP Export]
+    E1 --> F[🎬 Master FFmpeg Multi-Stream Render]
+    E2 --> F
+    E3 --> F
+    E4 --> F
+    F --> G[💾 Saved Library & Batch ZIP Downloader]
+    G --> H[🚀 Direct Social Publishing: YouTube / TikTok / Instagram]
 ```
 
 ---
@@ -108,33 +115,64 @@ pip install -r requirements.txt
 ### 4. Konfigurasi Environment Variables
 Buat file `.env.local` di root proyek:
 ```env
-# Groq API Key (Wajib untuk Transkripsi Whisper & Analisis Cepat)
+# Groq API Key (Wajib untuk Transkripsi Whisper & LLM Cepat)
 GROQ_API_KEY=gsk_your_groq_api_key_here
 
-# Google Gemini API Key (Untuk Analisis Viral Clip)
+# Google Gemini API Key (Wajib untuk Analisis Viral Moment)
 GEMINI_API_KEY=your_gemini_api_key_here
 
 # Password Login Admin Aplikasi
 ADMIN_PASSWORD=your_secure_password
+
+# Secret Key untuk Webhook HMAC SHA-256 Signing
+WEBHOOK_SECRET=arlo_clipper_secret_key_here
+
+# Optional: Social Media OAuth Tokens (bisa diisi langsung di menu Publish UI)
+YOUTUBE_CLIENT_ID=
+YOUTUBE_CLIENT_SECRET=
+YOUTUBE_REFRESH_TOKEN=
+TIKTOK_ACCESS_TOKEN=
+INSTAGRAM_ACCESS_TOKEN=
+INSTAGRAM_ACCOUNT_ID=
 ```
 
 ### 5. Jalankan Development Server
 ```bash
 npm run dev
 ```
-Buka [http://localhost:3000](http://localhost:3000) di browser.
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
 ---
 
-## 📖 Panduan Penggunaan (Step-by-Step Guide)
+## 🧪 Pengujian Otomatis (Automated Tests)
 
-1. **Input Video**: Tempelkan URL video YouTube pada halaman utama dan pilih rasio target (Vertikal `9:16` untuk TikTok/Reels/Shorts atau Horizontal `16:9`).
-2. **Analisis AI**: Klik tombol **Generate Clips**. Sistem akan mengekstrak transkrip, menganalisis bagian paling menarik, dan menyajikan daftar klip kandidat.
-3. **Editor Studio**:
-   - Aktifkan toggle **Face Tracking (OpenCV)** jika ingin kamera vertikal otomatis mengikuti wajah pembicara.
-   - Atur jenis font (*Impact, Montserrat, Roboto, Bangers*), ukuran, warna, outline, serta animasi teks.
-4. **Save & Export**: Klik **Save to Library**. Sistem akan membakar subtitle ASS secara permanen ke video dengan FFmpeg.
-5. **Download**: Buka menu **Library** untuk memutar hasil klip, mendownload satuan, atau mengunduh seluruh klip dalam satu file `.zip`.
+Repository ini dilengkapi dengan rangkaian test suite lengkap untuk memverifikasi setiap modul:
+
+```bash
+# Jalankan test subtitle Karaoke ASS
+npm test
+
+# Jalankan test virality scoring engine
+npm run test:virality
+
+# Jalankan test multi-source resolver (YouTube, GDrive, Dropbox, Direct MP4)
+npm run test:multi-source
+
+# Jalankan test audio ducking, SFX, dan B-Roll
+npm run test:audio-broll
+
+# Jalankan test webhook automation & HMAC signature
+npm run test:webhook
+
+# Jalankan test local channel watcher bot
+npm run test:bot
+
+# Jalankan test direct social media publishers
+npm run test:publishers
+
+# Jalankan test filter status dan library pagination
+npm run test:filters
+```
 
 ---
 
@@ -142,28 +180,57 @@ Buka [http://localhost:3000](http://localhost:3000) di browser.
 
 ```text
 arlo-clipper/
-├── app/
-│   ├── api/
-│   │   ├── analyze/          # AI clip detection (Gemini / Groq)
-│   │   ├── prepare-editor/   # Video download, slice & Whisper transcript
-│   │   ├── face-track/       # OpenCV face tracking processor
-│   │   ├── render-final/     # FFmpeg libass subtitle burner
-│   │   └── clips/            # Clip CRUD & batch zip downloader
-│   ├── editorial/            # Halaman Editor Studio & Subtitle overlay
-│   ├── library/              # Halaman manajemen pustaka klip tersimpan
-│   ├── login/                # Halaman autentikasi
-│   └── page.js               # Halaman input URL & Generator
-├── docs/
-│   └── assets/               # GIF demonstrasi & dokumentasi
-├── lib/
-│   ├── db.js                 # Local JSON database helper
-│   └── subtitles.js          # Generator file subtitle ASS + animasi
-├── scripts/
-│   ├── track_face.py         # Skrip Python pelacak wajah OpenCV (EMA smoothing)
-│   ├── haarcascade_*.xml     # Model deteksi wajah Haar Cascade offline
-│   └── test_*.py             # Script pengujian otomatis
-├── requirements.txt          # Daftar dependensi Python
-└── package.json
+├── app/                          # Next.js 16 App Router (UI & API Routes)
+│   ├── api/                      # 25+ Endpoint API Modular
+│   │   ├── analyze/              # AI Viral Moment detector
+│   │   ├── bot/                  # Watcher Bot scheduler endpoints
+│   │   ├── clips/                # CRUD, bulk delete, streaming zip
+│   │   ├── face-track/           # OpenCV single face tracker
+│   │   ├── lip-track/            # OpenCV active speaker lip tracker
+│   │   ├── podcast-split/        # OpenCV dual podcast split screen
+│   │   ├── prepare-editor/       # Slicing video & Whisper transcription
+│   │   ├── publish/              # Multi-platform direct social publisher
+│   │   ├── render-final/         # FFmpeg libass subtitle & audio ducking burner
+│   │   ├── upload/               # Local file upload handler
+│   │   └── webhook/              # Inbound/outbound webhook automation
+│   ├── bot/                      # Halaman Dashboard Channel Watcher Bot
+│   ├── editorial/                # Studio Editor (Subtitles, B-Roll, Audio Ducking)
+│   ├── library/                  # Manajemen Pustaka Klip & Direct Publisher
+│   └── login/                    # Autentikasi Admin
+├── data/                         # Persistent Database JSON (Zero External DB)
+│   ├── botConfig.json            # Konfigurasi bot & interval scheduler
+│   ├── botHistory.json           # Log video yang telah diproses bot
+│   ├── db.json                   # Database klip tersimpan
+│   ├── publishHistory.json       # Log riwayat publikasi medsos
+│   ├── socialTokens.json         # Kredensial & token OAuth tersimpan
+│   └── webhooks.json             # Log aktivitas webhook inbound & outbound
+├── docs/                         # Dokumentasi Arsitektur
+│   ├── ARCHITECTURE.md           # Authoritative System Architecture & API Guide
+│   └── assets/                   # Visual demo GIF
+├── lib/                          # Modul Domain Core Engine (JSDoc Documented)
+│   ├── audioAssets.js            # Generator WAV sintetis royalty-free (BGM & SFX)
+│   ├── audioCatalog.js           # Katalog BGM, SFX & Ducking Presets
+│   ├── audioDucking.js           # FFmpeg multi-stream complex filter builder
+│   ├── broll.js                  # Generator kartu visual PNG/SVG mandiri
+│   ├── brollCatalog.js           # Katalog tema B-Roll & keyword matcher
+│   ├── db.js                     # CRUD database JSON & pagination
+│   ├── localBot.js               # Channel watcher bot & background timer
+│   ├── socialCopy.js             # Generator copy viral, hook, & hashtag
+│   ├── socialPublishers.js       # Publisher langsung YouTube/TikTok/Instagram
+│   ├── sourceResolver.js         # Multi-source input parser & normalizer
+│   ├── sourceStreamer.js         # Stream downloader HTTP dengan redirect handling
+│   ├── subtitles.js              # ASS subtitle generator dengan Karaoke timing
+│   ├── viralityScore.js          # Engine Virality Score 0-100 (Hook, Pace, Emotion)
+│   ├── webhookPipeline.js        # Pipeline video headless otomatis end-to-end
+│   └── webhooks.js               # HMAC SHA-256 signer & webhook dispatcher
+├── scripts/                      # Skrip Computer Vision Python & Test Suite
+│   ├── haarcascade_*.xml         # Model Haar Cascade offline
+│   ├── track_face.py             # OpenCV face tracking dengan perataan EMA
+│   ├── track_lip.py              # OpenCV lip motion tracker
+│   ├── track_split_screen.py     # OpenCV dual-speaker podcast split-screen
+│   └── test_*.mjs / test_*.py    # Automated test scripts
+├── package.json                  # Node.js manifest ("type": "module")
+└── requirements.txt              # Dependensi Python (opencv-python, numpy)
 ```
 
 ---

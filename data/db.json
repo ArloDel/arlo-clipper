@@ -529,6 +529,635 @@
         "#KasusForensik"
       ],
       "createdAt": "2026-09-17T21:09:33.746Z"
+    },
+    {
+      "id": "212cd750-d8cf-4187-8427-8746446fd398",
+      "title": "Matt Damon’s 2-Word Pitch From Christopher Nolan",
+      "videoPath": "/clips/9deac78d-8c8c-45b5-b7e1-fea3e2f62a70-final.mp4",
+      "duration": 45,
+      "hook": "Stop doing Christopher Nolan offered Matt Damon the old way! Here is what actually works:",
+      "caption": "Matt Damon reveals the hilarious and iconic story of how Christopher Nolan cast him as Odysseus. Before even hearing what the movie was, Matt blurted out 'yes' on the spot before Nolan delivered the two-word pitch: 'The Odyssey'.",
+      "channelName": "BBC Radio 1",
+      "startTime": "00:03:40",
+      "endTime": "00:04:25",
+      "hashtags": [
+        "#ChristopherNolan",
+        "#MattDamon",
+        "#TheOdyssey",
+        "#MovieNews",
+        "#BBCRadio1"
+      ],
+      "viralityScore": {
+        "score": 84,
+        "grade": "A",
+        "gradeLabel": "Grade A",
+        "badge": "Good Viral Potential",
+        "badgeEmoji": "⚡",
+        "color": "#3b82f6",
+        "bgGradient": "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)",
+        "borderColor": "rgba(59, 130, 246, 0.4)",
+        "summary": "Struktur klip solid dengan daya tarik penonton yang kuat.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 72,
+            "weight": 0.4,
+            "weightedScore": 28.8,
+            "hasQuestion": false,
+            "hasDirectAddress": false,
+            "hasPowerWords": true,
+            "powerWordsFound": [
+              "stop"
+            ],
+            "hasNumbers": false,
+            "wordCount": 15,
+            "brevityLabel": "Good Length (13–16 words)"
+          },
+          "speechPacing": {
+            "score": 88,
+            "weight": 0.3,
+            "weightedScore": 26.4,
+            "wpm": 195,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Fast & Energetic",
+            "tempoFeedback": "Tempo vokal berenergi tinggi (171–195 WPM), cocok untuk konten aksi/edukasi cepat.",
+            "pauseCount": 0,
+            "pausePenalty": 0
+          },
+          "emotionalTrigger": {
+            "score": 96,
+            "weight": 0.3,
+            "weightedScore": 28.8,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 78,
+              "humor": 60,
+              "inspiration": 42,
+              "controversy": 42
+            },
+            "emotionalKeywords": [
+              "how",
+              "actually",
+              "stop",
+              "hilarious"
+            ]
+          }
+        },
+        "tips": [
+          "Gunakan kata sapaan langsung seperti \"kamu\", \"kalian\", atau \"you\" di awal video untuk membangun koneksi instan.",
+          "Awali 3 detik pertama dengan pertanyaan penasaran (Curiosity Gap) untuk memangkas angka swipe-away.",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas.",
+          "Tempo vokal sangat cepat (195 WPM). Berikan mikro-jeda pada kata kunci utama agar penonton sempat memproses ide."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap",
+            "hook": "Don't scroll! The real truth about doing Christopher Nolan offered Matt will shock you...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian Challenge",
+            "hook": "Stop doing doing Christopher Nolan offered Matt the old way! Here is what actually works:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Secret / Numbered Hack",
+            "hook": "Why 90% of people fail at doing Christopher Nolan offered Matt (and the 1 fix you need)...",
+            "badge": "💡 Viral Listicle",
+            "type": "listicle"
+          }
+        ],
+        "calculatedAt": "2026-09-21T11:07:51.073Z"
+      },
+      "createdAt": "2026-09-21T11:14:08.655Z"
+    },
+    {
+      "id": "8809cf70-4a08-4a72-b250-f53355ca6949",
+      "title": "Christopher Nolan Breaks Silence For Spaceballs",
+      "videoPath": "/clips/47ee9d33-b40b-4c79-b3d2-6a4eecfc0ac7-final.mp4",
+      "duration": 55,
+      "hook": "Anne Hathaway thought she ruined Christopher Nolan’s quiet movie set until he chimed in with this hilarious answer!",
+      "caption": "Anne Hathaway shares a hilarious awkward moment from the set of The Dark Knight Rises. After breaking an intense silence to ask who played Dark Helmet in Spaceballs, Christopher Nolan gave the ultimate deadpan response.",
+      "channelName": "BBC Radio 1",
+      "startTime": "00:16:50",
+      "endTime": "00:17:45",
+      "hashtags": [
+        "#AnneHathaway",
+        "#ChristopherNolan",
+        "#DarkKnightRises",
+        "#Spaceballs",
+        "#BehindTheScenes"
+      ],
+      "viralityScore": {
+        "score": 55,
+        "grade": "C",
+        "gradeLabel": "Grade C",
+        "badge": "Needs Optimization",
+        "badgeEmoji": "⚠️",
+        "color": "#ef4444",
+        "bgGradient": "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)",
+        "borderColor": "rgba(239, 68, 68, 0.4)",
+        "summary": "Perlu optimasi pada kalimat pembuka dan tempo agar retensi penonton tidak anjlok.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 47,
+            "weight": 0.4,
+            "weightedScore": 18.8,
+            "hasQuestion": false,
+            "hasDirectAddress": false,
+            "hasPowerWords": false,
+            "powerWordsFound": [],
+            "hasNumbers": false,
+            "wordCount": 19,
+            "brevityLabel": "Too long for first 3s (>16 words)"
+          },
+          "speechPacing": {
+            "score": 27,
+            "weight": 0.3,
+            "weightedScore": 8.1,
+            "wpm": 240,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Too Fast",
+            "tempoFeedback": "Tempo terlalu cepat (>225 WPM). Kurangi kecepatan agar artikulasi tetap jelas.",
+            "pauseCount": 2,
+            "pausePenalty": 10
+          },
+          "emotionalTrigger": {
+            "score": 92,
+            "weight": 0.3,
+            "weightedScore": 27.6,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 60,
+              "humor": 60,
+              "inspiration": 42,
+              "controversy": 42
+            },
+            "emotionalKeywords": [
+              "how",
+              "hilarious"
+            ]
+          }
+        },
+        "tips": [
+          "Gunakan kata sapaan langsung seperti \"kamu\", \"kalian\", atau \"you\" di awal video untuk membangun koneksi instan.",
+          "Sisipkan kata pemicu emosi (Power Words) seperti \"Rahasia\", \"Trik Tersembunyi\", atau \"Jangan Lakukan Ini\".",
+          "Persingkat kalimat hook (maksimal 6–12 kata) agar pesan langsung tersampaikan sebelum penonton bosan.",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap",
+            "hook": "Don't scroll! The real truth about Anne Hathaway thought she ruined will shock you...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian Challenge",
+            "hook": "Stop doing Anne Hathaway thought she ruined the old way! Here is what actually works:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Secret / Numbered Hack",
+            "hook": "Why 90% of people fail at Anne Hathaway thought she ruined (and the 1 fix you need)...",
+            "badge": "💡 Viral Listicle",
+            "type": "listicle"
+          }
+        ],
+        "calculatedAt": "2026-09-21T11:05:00.850Z"
+      },
+      "createdAt": "2026-09-21T11:14:15.126Z"
+    },
+    {
+      "id": "3a7b9f59-9e7e-46db-ae63-21c9c3f3e7ba",
+      "title": "Does Christopher Nolan Ever Go To The Bathroom?",
+      "videoPath": "/clips/c3a17a6e-84dd-4c6d-8ae0-7d24ddb4c7b7-final.mp4",
+      "duration": 45,
+      "hook": "The mystery behind Christopher Nolan's insane set discipline is wilder than you think!",
+      "caption": "Anne Hathaway exposes what working on a Christopher Nolan film set is actually like. From drinking boiling hot black tea all day to seemingly never taking a single bathroom break, Nolan's focus is truly mythical.",
+      "channelName": "BBC Radio 1",
+      "startTime": "00:17:55",
+      "endTime": "00:18:40",
+      "hashtags": [
+        "#ChristopherNolan",
+        "#AnneHathaway",
+        "#FilmTok",
+        "#MovieSecrets",
+        "#BBCRadio1"
+      ],
+      "viralityScore": {
+        "score": 83,
+        "grade": "A",
+        "gradeLabel": "Grade A",
+        "badge": "Good Viral Potential",
+        "badgeEmoji": "⚡",
+        "color": "#3b82f6",
+        "bgGradient": "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)",
+        "borderColor": "rgba(59, 130, 246, 0.4)",
+        "summary": "Struktur klip solid dengan daya tarik penonton yang kuat.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 80,
+            "weight": 0.4,
+            "weightedScore": 32,
+            "hasQuestion": false,
+            "hasDirectAddress": true,
+            "hasPowerWords": true,
+            "powerWordsFound": [
+              "insane"
+            ],
+            "hasNumbers": false,
+            "wordCount": 14,
+            "brevityLabel": "Good Length (13–16 words)"
+          },
+          "speechPacing": {
+            "score": 72,
+            "weight": 0.3,
+            "weightedScore": 21.6,
+            "wpm": 203,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Very Fast",
+            "tempoFeedback": "Tempo vokal sangat cepat (>195 WPM), sebagian audiens mungkin kesulitan menangkap kata.",
+            "pauseCount": 0,
+            "pausePenalty": 0
+          },
+          "emotionalTrigger": {
+            "score": 99,
+            "weight": 0.3,
+            "weightedScore": 29.7,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 96,
+              "humor": 42,
+              "inspiration": 42,
+              "controversy": 42
+            },
+            "emotionalKeywords": [
+              "mystery",
+              "actually",
+              "insane",
+              "crazy"
+            ]
+          }
+        },
+        "tips": [
+          "Awali 3 detik pertama dengan pertanyaan penasaran (Curiosity Gap) untuk memangkas angka swipe-away.",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas.",
+          "Tempo vokal sangat cepat (203 WPM). Berikan mikro-jeda pada kata kunci utama agar penonton sempat memproses ide."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap",
+            "hook": "Don't scroll! The real truth about The mystery behind Christopher Nolan's will shock you...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian Challenge",
+            "hook": "Stop doing The mystery behind Christopher Nolan's the old way! Here is what actually works:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Secret / Numbered Hack",
+            "hook": "Why 90% of people fail at The mystery behind Christopher Nolan's (and the 1 fix you need)...",
+            "badge": "💡 Viral Listicle",
+            "type": "listicle"
+          }
+        ],
+        "calculatedAt": "2026-09-21T11:05:18.347Z"
+      },
+      "createdAt": "2026-09-21T11:14:19.819Z"
+    },
+    {
+      "id": "1b6bd605-870f-4eb9-b3b0-aa7e9c458036",
+      "title": "The Reality of Sending MrBeast a DM",
+      "videoPath": "/clips/50327a16-493a-45e4-b40d-9b8012d9a36f-final.mp4",
+      "duration": 46,
+      "hook": "Your chance of MrBeast replying to your DM is lower than a shark falling from space!",
+      "caption": "MrBeast reveals how many thousands of DMs he gets daily and why he wants to share more candid, raw moments off-camera. Would you like to see more low-key videos from Jimmy?",
+      "channelName": "WIRED",
+      "startTime": "00:02:59",
+      "endTime": "00:03:45",
+      "hashtags": [
+        "#MrBeast",
+        "#WIRED",
+        "#Viral",
+        "#YouTube",
+        "#Shorts"
+      ],
+      "viralityScore": {
+        "score": 80,
+        "grade": "A",
+        "gradeLabel": "Grade A",
+        "badge": "Good Viral Potential",
+        "badgeEmoji": "⚡",
+        "color": "#3b82f6",
+        "bgGradient": "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)",
+        "borderColor": "rgba(59, 130, 246, 0.4)",
+        "summary": "Struktur klip solid dengan daya tarik penonton yang kuat.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 77,
+            "weight": 0.4,
+            "weightedScore": 30.8,
+            "hasQuestion": false,
+            "hasDirectAddress": true,
+            "hasPowerWords": false,
+            "powerWordsFound": [],
+            "hasNumbers": false,
+            "wordCount": 16,
+            "brevityLabel": "Good Length (13–16 words)"
+          },
+          "speechPacing": {
+            "score": 72,
+            "weight": 0.3,
+            "weightedScore": 21.6,
+            "wpm": 214,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Very Fast",
+            "tempoFeedback": "Tempo vokal sangat cepat (>195 WPM), sebagian audiens mungkin kesulitan menangkap kata.",
+            "pauseCount": 0,
+            "pausePenalty": 0
+          },
+          "emotionalTrigger": {
+            "score": 92,
+            "weight": 0.3,
+            "weightedScore": 27.6,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 60,
+              "humor": 42,
+              "inspiration": 42,
+              "controversy": 42
+            },
+            "emotionalKeywords": [
+              "why",
+              "how",
+              "actually"
+            ]
+          }
+        },
+        "tips": [
+          "Sisipkan kata pemicu emosi (Power Words) seperti \"Rahasia\", \"Trik Tersembunyi\", atau \"Jangan Lakukan Ini\".",
+          "Persingkat kalimat hook (maksimal 6–12 kata) agar pesan langsung tersampaikan sebelum penonton bosan.",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas.",
+          "Tempo vokal sangat cepat (214 WPM). Berikan mikro-jeda pada kata kunci utama agar penonton sempat memproses ide."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap",
+            "hook": "Don't scroll! The real truth about Your chance of MrBeast replying will shock you...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian Challenge",
+            "hook": "Stop doing Your chance of MrBeast replying the old way! Here is what actually works:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Secret / Numbered Hack",
+            "hook": "Why 90% of people fail at Your chance of MrBeast replying (and the 1 fix you need)...",
+            "badge": "💡 Viral Listicle",
+            "type": "listicle"
+          }
+        ],
+        "calculatedAt": "2026-09-23T00:50:03.168Z"
+      },
+      "createdAt": "2026-09-23T00:58:17.801Z"
+    },
+    {
+      "id": "3d1683d8-cb25-4fa0-a13a-22894ed2a869",
+      "title": "MrBeast Speaks Out On American Healthcare",
+      "videoPath": "/clips/09ae9889-d9e9-4bfc-82c0-be93519bbd52-final.mp4",
+      "duration": 55,
+      "hook": "Why is a YouTuber the only hope for thousands of people to see and hear again?",
+      "caption": "Jimmy Donaldson opens up about his philanthropic projects, ethical chocolate sourcing, and the surreal reality of funding medical procedures in America. What do you think about creator-led social impact?",
+      "channelName": "WIRED",
+      "startTime": "00:07:35",
+      "endTime": "00:08:30",
+      "hashtags": [
+        "#MrBeast",
+        "#Philanthropy",
+        "#Healthcare",
+        "#Feastables",
+        "#Shorts"
+      ],
+      "viralityScore": {
+        "score": 81,
+        "grade": "A",
+        "gradeLabel": "Grade A",
+        "badge": "Good Viral Potential",
+        "badgeEmoji": "⚡",
+        "color": "#3b82f6",
+        "bgGradient": "linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)",
+        "borderColor": "rgba(59, 130, 246, 0.4)",
+        "summary": "Struktur klip solid dengan daya tarik penonton yang kuat.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 83,
+            "weight": 0.4,
+            "weightedScore": 33.2,
+            "hasQuestion": true,
+            "hasDirectAddress": false,
+            "hasPowerWords": false,
+            "powerWordsFound": [],
+            "hasNumbers": false,
+            "wordCount": 16,
+            "brevityLabel": "Good Length (13–16 words)"
+          },
+          "speechPacing": {
+            "score": 72,
+            "weight": 0.3,
+            "weightedScore": 21.6,
+            "wpm": 224,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Very Fast",
+            "tempoFeedback": "Tempo vokal sangat cepat (>195 WPM), sebagian audiens mungkin kesulitan menangkap kata.",
+            "pauseCount": 0,
+            "pausePenalty": 0
+          },
+          "emotionalTrigger": {
+            "score": 88,
+            "weight": 0.3,
+            "weightedScore": 26.4,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 42,
+              "humor": 42,
+              "inspiration": 42,
+              "controversy": 42
+            },
+            "emotionalKeywords": [
+              "why",
+              "actually"
+            ]
+          }
+        },
+        "tips": [
+          "Gunakan kata sapaan langsung seperti \"kamu\", \"kalian\", atau \"you\" di awal video untuk membangun koneksi instan.",
+          "Persingkat kalimat hook (maksimal 6–12 kata) agar pesan langsung tersampaikan sebelum penonton bosan.",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas.",
+          "Tempo vokal sangat cepat (224 WPM). Berikan mikro-jeda pada kata kunci utama agar penonton sempat memproses ide."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap",
+            "hook": "Don't scroll! The real truth about is a YouTuber the only will shock you...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian Challenge",
+            "hook": "Stop doing is a YouTuber the only the old way! Here is what actually works:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Secret / Numbered Hack",
+            "hook": "Why 90% of people fail at is a YouTuber the only (and the 1 fix you need)...",
+            "badge": "💡 Viral Listicle",
+            "type": "listicle"
+          }
+        ],
+        "calculatedAt": "2026-09-23T00:50:39.743Z"
+      },
+      "createdAt": "2026-09-23T00:58:25.537Z"
+    },
+    {
+      "id": "306dcea7-5d42-4c1c-9212-99c74af5fb73",
+      "title": "Are MrBeast Videos Scripted?",
+      "videoPath": "/clips/5405163f-047d-499f-928b-8e161b35ab9e-final.mp4",
+      "duration": 50,
+      "hook": "MrBeast broke a Guinness World Record just to prove his videos aren't fake!",
+      "caption": "Instead of giving contestants script lines, MrBeast spent millions running 1,000 cameras 24/7 to capture authentic footage. Is this extreme level of effort the secret to his viral empire?",
+      "channelName": "WIRED",
+      "startTime": "00:10:00",
+      "endTime": "00:10:50",
+      "hashtags": [
+        "#MrBeast",
+        "#BeastGames",
+        "#GuinnessWorldRecord",
+        "#BehindTheScenes",
+        "#Shorts"
+      ],
+      "viralityScore": {
+        "score": 60,
+        "grade": "C",
+        "gradeLabel": "Grade C",
+        "badge": "Needs Optimization",
+        "badgeEmoji": "⚠️",
+        "color": "#ef4444",
+        "bgGradient": "linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)",
+        "borderColor": "rgba(239, 68, 68, 0.4)",
+        "summary": "Perlu optimasi pada kalimat pembuka dan tempo agar retensi penonton tidak anjlok.",
+        "breakdown": {
+          "hookStrength": {
+            "score": 49,
+            "weight": 0.4,
+            "weightedScore": 19.6,
+            "hasQuestion": false,
+            "hasDirectAddress": false,
+            "hasPowerWords": false,
+            "powerWordsFound": [],
+            "hasNumbers": false,
+            "wordCount": 14,
+            "brevityLabel": "Good Length (13–16 words)"
+          },
+          "speechPacing": {
+            "score": 42,
+            "weight": 0.3,
+            "weightedScore": 12.6,
+            "wpm": 235,
+            "optimalRange": "135–170 WPM",
+            "tempoStatus": "Too Fast",
+            "tempoFeedback": "Tempo terlalu cepat (>225 WPM). Kurangi kecepatan agar artikulasi tetap jelas.",
+            "pauseCount": 0,
+            "pausePenalty": 0
+          },
+          "emotionalTrigger": {
+            "score": 92,
+            "weight": 0.3,
+            "weightedScore": 27.6,
+            "dominantEmotion": "Curiosity & Mystery",
+            "dominantEmotionEmoji": "🔍",
+            "emotionScores": {
+              "curiosity": 100,
+              "urgency": 60,
+              "humor": 42,
+              "inspiration": 42,
+              "controversy": 60
+            },
+            "emotionalKeywords": [
+              "why",
+              "how",
+              "secret",
+              "actually",
+              "fake"
+            ]
+          }
+        },
+        "tips": [
+          "Gunakan kata sapaan langsung seperti \"kamu\", \"kalian\", atau \"you\" di awal video untuk membangun koneksi instan.",
+          "Sisipkan kata pemicu emosi (Power Words) seperti \"Rahasia\", \"Trik Tersembunyi\", atau \"Jangan Lakukan Ini\".",
+          "Sertakan angka spesifik (misal: \"3 Kesalahan\", \"10x Lipat\", \"100%\") untuk mendongkrak kredibilitas.",
+          "Tempo vokal sangat cepat (235 WPM). Berikan mikro-jeda pada kata kunci utama agar penonton sempat memproses ide."
+        ],
+        "alternativeHooks": [
+          {
+            "id": "alt-1",
+            "style": "Curiosity Gap (Misteri)",
+            "hook": "Jangan di-skip! Ternyata ini rahasia di balik MrBeast broke a Guinness World yang jarang dibahas...",
+            "badge": "🔥 96% Retention",
+            "type": "curiosity"
+          },
+          {
+            "id": "alt-2",
+            "style": "Contrarian (Stop Kebiasaan)",
+            "hook": "Stop lakukan ini kalau kamu mau MrBeast broke a Guinness World! Trik 10 detiknya ada di sini:",
+            "badge": "⚡ High Engagement",
+            "type": "contrarian"
+          },
+          {
+            "id": "alt-3",
+            "style": "Provocative Question (Angka)",
+            "hook": "Kenapa 90% orang salah paham soal MrBeast broke a Guinness World? Simak 1 faktanya!",
+            "badge": "💡 Viral Hook",
+            "type": "question"
+          }
+        ],
+        "calculatedAt": "2026-09-23T00:50:59.704Z"
+      },
+      "createdAt": "2026-09-23T00:58:32.592Z"
     }
   ]
 }

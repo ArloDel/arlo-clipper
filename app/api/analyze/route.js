@@ -337,15 +337,36 @@ IMPORTANT:
     let highlightData = [];
     let retries = 3;
 
+    const isHighDemand = (err) =>
+      err?.status === 503 || /503|Service Unavailable|high demand/i.test(err?.message || '');
+
+    const callGroqLLM = async () => {
+      console.log('[Analyze] Gemini high demand, switching to Groq LLM (gpt-oss-120b)...');
+      const completion = await groq.chat.completions.create({
+        model: 'openai/gpt-oss-120b',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: fullTranscript || 'Video without transcript' },
+        ],
+      });
+      return completion.choices[0]?.message?.content || '';
+    };
+
     while (retries > 0) {
       try {
-        const result = await model.generateContent([
-          { text: systemPrompt },
-          { text: fullTranscript || 'Video without transcript' }
-        ]);
+        let responseText;
+        try {
+          const result = await model.generateContent([
+            { text: systemPrompt },
+            { text: fullTranscript || 'Video without transcript' }
+          ]);
+          responseText = result.response.text();
+        } catch (geminiErr) {
+          if (!isHighDemand(geminiErr)) throw geminiErr;
+          responseText = await callGroqLLM();
+        }
 
-        const responseText = result.response.text().trim().replace(/```json/g, '').replace(/```/g, '');
-        const parsed = JSON.parse(responseText);
+        const parsed = JSON.parse(responseText.trim().replace(/```json/g, '').replace(/```/g, ''));
 
         if (Array.isArray(parsed) && parsed.length > 0) {
           highlightData = parsed;

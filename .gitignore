@@ -53,3 +53,5 @@ exports/
 __pycache__/
 *.pyc
 scripts/test_out/
+strix_runs/
+.superpowers/

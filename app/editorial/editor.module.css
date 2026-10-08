@@ -172,6 +172,18 @@
   flex-direction: column;
   gap: 16px;
   box-shadow: var(--shadow-subtle);
+  position: sticky;
+  top: 16px;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+@media (max-width: 860px) {
+  .controlsSection {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 .controlsHeader {

@@ -11,6 +11,8 @@ import { ensureAudioAssets } from '@/lib/audioAssets';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import { resolveSource } from '@/lib/sourceResolver';
 import { downloadDirectStream } from '@/lib/sourceStreamer';
+import { getVideoDimensions } from '@/lib/subtitles';
+import { configureFormatOutput, resolveFormat } from '@/lib/videoFormat';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -157,24 +159,32 @@ export async function POST(request) {
           .run();
       });
 
-      // 2. Apply standard ratio crop (center crop for 9:16)
-      console.log(`[Prepare Editor] Applying ratio ${ratio} for clip ${index}...`);
-      const filters = [];
-      if (ratio === '9:16' || ratio === 'mobile') {
-        filters.push('crop=ih*9/16:ih:iw/2-ow/2:0');
-      }
+      // 2. Bake target format onto the slice (9:16 crop / 1:1 square / 9:16 blurred background)
+      console.log(`[Prepare Editor] Applying format ${ratio} for clip ${index}...`);
+      const entryFormat = ratio === 'mobile' ? '9:16' : ratio;
+      const supportedFormat = resolveFormat(entryFormat);
 
       await new Promise((resolve, reject) => {
         let command = ffmpeg(sourceClipPath);
-        if (filters.length > 0) {
-          command = command.videoFilters(filters).outputOptions(['-c:v libx264', '-crf 18', '-preset fast', '-c:a copy']);
+        if (supportedFormat) {
+          // Dimensions probed once so all filters stay numeric & even (libx264 safe)
+          getVideoDimensions(sourceClipPath)
+            .then(({ width, height }) => {
+              configureFormatOutput(command, supportedFormat, width, height)
+                .output(rawClipPath)
+                .on('end', resolve)
+                .on('error', reject)
+                .run();
+            })
+            .catch(reject);
         } else {
+          // Unknown/legacy format (e.g. bot's 16:9): passthrough untouched
           command = command.outputOptions(['-c copy']);
+          command.output(rawClipPath)
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
         }
-        command.output(rawClipPath)
-          .on('end', resolve)
-          .on('error', reject)
-          .run();
       });
 
       // 3. Extract Audio

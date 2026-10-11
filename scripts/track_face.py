@@ -59,9 +59,13 @@ def process_face_tracking(input_path, output_path, ffmpeg_path=None, ratio='9:16
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1
 
     # Calculate crop dimensions for target ratio
+    # ponytail: '9:16-blur' falls back to 9:16 crop; full blur support needs cv2 pipeline work
     if ratio in ('9:16', 'mobile'):
         crop_h = height
         crop_w = int(height * 9 / 16)
+    elif ratio == '1:1':
+        crop_h = min(width, height)
+        crop_w = crop_h
     else:
         crop_h = height
         crop_w = width

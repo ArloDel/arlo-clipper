@@ -53,6 +53,55 @@
   font-weight: 600;
 }
 
+.formatRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.formatLabel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.formatBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 500;
+  transition: all 150ms var(--ease-out);
+}
+
+.formatBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-main);
+}
+
+.formatBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.formatBtnActive {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.formatHint {
+  font-size: 0.72rem;
+  color: var(--text-sub);
+  font-style: italic;
+}
+
 .videoWrapper {
   position: relative;
   width: 100%;

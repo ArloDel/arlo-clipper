@@ -428,10 +428,17 @@ export default function HomePage() {
                     </button>
                     <button
                       type="button"
-                      className={`${styles.ratioBtn} ${ratio === '16:9' ? styles.activeRatio : ''}`}
-                      onClick={() => setRatio('16:9')}
+                      className={`${styles.ratioBtn} ${ratio === '1:1' ? styles.activeRatio : ''}`}
+                      onClick={() => setRatio('1:1')}
                     >
-                      <span className={styles.ratioIcon}>16:9</span> Desktop Landscape
+                      <span className={styles.ratioIcon}>1:1</span> Square
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.ratioBtn} ${ratio === '9:16-blur' ? styles.activeRatio : ''}`}
+                      onClick={() => setRatio('9:16-blur')}
+                    >
+                      <span className={styles.ratioIcon}>9:16</span> Blur Background
                     </button>
                   </div>
                 </div>

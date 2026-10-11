@@ -307,7 +307,54 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
   const activeStyle = clipStyles[activeClipIdx] || {};
   const activeAudio = clipAudioSettings[activeClipIdx] || {};
   const activeBroll = clipBrollSettings[activeClipIdx] || {};
-  const isMobile = ratio === '9:16' || ratio === 'mobile';
+
+  // Per-clip output format ('9:16' | '1:1' | '9:16-blur'); initially baked by prepare-editor
+  const normalizeFormat = (r) => (r === '1:1' ? '1:1' : r === '9:16-blur' ? '9:16-blur' : '9:16');
+  const [clipFormats, setClipFormats] = useState(initialClips.map(() => normalizeFormat(ratio)));
+  const [reformatting, setReformatting] = useState(false);
+
+  const activeFormat = clipFormats[activeClipIdx] || '9:16';
+  const previewAspect = activeFormat === '1:1' ? '1 / 1' : '9 / 16';
+  // OpenCV trackers only understand 9:16 / 1:1 / 16:9; blur falls back to 9:16 crop there
+  const trackerRatio = activeFormat === '9:16-blur' ? '9:16' : activeFormat;
+
+  const handleFormatChange = async (newFormat) => {
+    if (reformatting || newFormat === activeFormat) return;
+    const current = clips[activeClipIdx];
+    if (!current?.id || !current?.startSec || !current?.endSec) {
+      alert('Clip ini tidak menyimpan data slicing; tidak bisa mengubah format. Silakan proses ulang dari Home.');
+      return;
+    }
+
+    setReformatting(true);
+    try {
+      const res = await fetch('/api/reformat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clipId: current.id,
+          format: newFormat,
+          startSec: current.startSec,
+          endSec: current.endSec,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.videoPath) {
+        setClips((prev) =>
+          prev.map((c, i) =>
+            i === activeClipIdx ? { ...c, videoPath: data.videoPath, faceTracking: false, lipTracking: false, splitScreen: false } : c
+          )
+        );
+        setClipFormats((prev) => prev.map((f, i) => (i === activeClipIdx ? newFormat : f)));
+      } else {
+        alert(`Gagal mengubah format: ${data.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      alert(`Error mengubah format: ${err.message}`);
+    } finally {
+      setReformatting(false);
+    }
+  };
 
   const viralityScore = activeClip.viralityScore || calculateViralityScore({
     hook: activeClip.hook,
@@ -554,7 +601,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
               clipId: currentClip.id,
               sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
               videoPath: currentClip.videoPath,
-              ratio,
+              ratio: trackerRatio,
             }),
           });
           const data = await res.json();
@@ -613,7 +660,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
               clipId: currentClip.id,
               sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
               videoPath: currentClip.videoPath,
-              ratio,
+              ratio: trackerRatio,
             }),
           });
           const data = await res.json();
@@ -672,7 +719,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
               clipId: currentClip.id,
               sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
               videoPath: currentClip.videoPath,
-              ratio,
+              ratio: trackerRatio,
             }),
           });
           const data = await res.json();
@@ -756,9 +803,30 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
           ))}
         </div>
 
+        {/* Per-clip output format switcher */}
+        <div className={editorStyles.formatRow}>
+          <span className={editorStyles.formatLabel}>Format:</span>
+          {[
+            ['9:16', '9:16 Portrait'],
+            ['1:1', '1:1 Square'],
+            ['9:16-blur', '9:16 Blur BG'],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`${editorStyles.formatBtn} ${activeFormat === value ? editorStyles.formatBtnActive : ''}`}
+              disabled={reformatting}
+              onClick={() => handleFormatChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+          {reformatting && <span className={editorStyles.formatHint}>Menyiapkan format baru...</span>}
+        </div>
+
         <div
           className={editorStyles.videoWrapper}
-          style={{ aspectRatio: isMobile ? '9 / 16' : '16 / 9' }}
+          style={{ aspectRatio: previewAspect }}
         >
           <video
             ref={videoRef}

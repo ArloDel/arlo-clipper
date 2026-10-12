@@ -51,6 +51,7 @@ export async function POST(request) {
         style: clip.style || {},
         videoWidth: width,
         videoHeight: height,
+        watermark: clip.watermark || null,
       });
 
       // 3. Build multi-stream filter graph (B-Roll + Subtitles + Ducked BGM + SFX)
@@ -65,6 +66,7 @@ export async function POST(request) {
         duration: clip.duration || 15,
         audioSettings: clip.audioSettings || {},
         brollSettings: clip.brollSettings || {},
+        watermark: clip.watermark || null,
         segments: clip.segments || [],
       });
 

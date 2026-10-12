@@ -41,6 +41,7 @@ yarn-error.log*
 next-env.d.ts
 public/clips/*
 public/cache/*
+public/watermarks/*
 *-player-script.js
 test-models.js
 data/db.json

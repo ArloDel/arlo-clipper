@@ -254,7 +254,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initialStyle }) {
+function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initialStyle, initialWatermark }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -297,6 +297,44 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
+  // Watermark (branding) per clip — defaults from the Home page branding panel
+  const [clipWatermarks, setClipWatermarks] = useState(
+    initialClips.map(() =>
+      initialWatermark
+        ? { ...initialWatermark }
+        : { enabled: false, type: 'text', text: '', imagePath: '', position: 'top-right', sizePct: 6, opacity: 0.7 }
+    )
+  );
+  const [wmUploading, setWmUploading] = useState(false);
+
+  const handleClipWatermark = (patch) => {
+    const next = [...clipWatermarks];
+    next[activeClipIdx] = { ...next[activeClipIdx], ...patch };
+    setClipWatermarks(next);
+  };
+
+  const handleClipLogoUpload = async (e) => {
+    const logoFile = e.target.files?.[0];
+    if (!logoFile) return;
+    setWmUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('logo', logoFile);
+      const res = await fetch('/api/watermark/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok && data.imagePath) {
+        handleClipWatermark({ type: 'image', imagePath: data.imagePath, enabled: true });
+      } else {
+        alert(`Gagal upload logo: ${data.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      alert(`Error upload logo: ${err.message}`);
+    } finally {
+      setWmUploading(false);
+      e.target.value = '';
+    }
+  };
+
   const videoRef = useRef(null);
   const bgmAudioRef = useRef(null);
   const previewAudioRef = useRef(null);
@@ -307,6 +345,16 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const activeStyle = clipStyles[activeClipIdx] || {};
   const activeAudio = clipAudioSettings[activeClipIdx] || {};
   const activeBroll = clipBrollSettings[activeClipIdx] || {};
+  const activeWatermark = clipWatermarks[activeClipIdx] || null;
+
+  // CSS anchor aliases matching the ASS/ffmpeg positions for the live preview
+  const wmPreviewPos = (position) => {
+    const [vertical, horizontal] = String(position || 'top-right').split('-');
+    return {
+      [vertical === 'bottom' ? 'bottom' : 'top']: '2.8%',
+      [horizontal === 'left' ? 'left' : 'right']: '3.5%',
+    };
+  };
 
   // Per-clip output format ('9:16' | '1:1' | '9:16-blur'); initially baked by prepare-editor
   const normalizeFormat = (r) => (r === '1:1' ? '1:1' : r === '9:16-blur' ? '9:16-blur' : '9:16');
@@ -895,6 +943,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       style: clipStyles[i],
       audioSettings: clipAudioSettings[i],
       brollSettings: clipBrollSettings[i],
+      watermark: clipWatermarks[i],
       viralityScore: c.viralityScore || calculateViralityScore(c),
     }));
     onSave(finalClips);
@@ -1048,6 +1097,32 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               segments={activeClip.segments}
               style={activeStyle}
             />
+          )}
+          {/* Watermark live preview (branding) */}
+          {activeWatermark?.enabled && !framingMode && (
+            activeWatermark.type === 'image' && activeWatermark.imagePath ? (
+              <img
+                src={activeWatermark.imagePath}
+                alt="watermark"
+                className={editorStyles.wmImagePreview}
+                style={{
+                  height: `${activeWatermark.sizePct}%`,
+                  opacity: activeWatermark.opacity,
+                  ...(wmPreviewPos(activeWatermark.position)),
+                }}
+              />
+            ) : activeWatermark.text ? (
+              <span
+                className={editorStyles.wmTextPreview}
+                style={{
+                  fontSize: `${activeWatermark.sizePct}cqh`,
+                  opacity: activeWatermark.opacity,
+                  ...(wmPreviewPos(activeWatermark.position)),
+                }}
+              >
+                {activeWatermark.text}
+              </span>
+            ) : null
           )}
         </div>
       </div>
@@ -1763,6 +1838,94 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           </div>
         </div>
 
+        {/* ── Watermark (Branding) Card ── */}
+        <div className={editorStyles.watermarkCard}>
+          <div className={editorStyles.watermarkHeader}>
+            <span className={editorStyles.watermarkTitle}>🏷️ Watermark (Branding)</span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeWatermark?.enabled)}
+                onChange={(e) => handleClipWatermark({ enabled: e.target.checked })}
+              />
+              <span className={editorStyles.switchSlider}></span>
+              <span>Tampilkan</span>
+            </label>
+          </div>
+
+          {activeWatermark?.enabled && (
+            <>
+              <div className={editorStyles.watermarkInputs}>
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Teks / Handle</label>
+                  <input
+                    type="text"
+                    className={editorStyles.input}
+                    value={activeWatermark.text || ''}
+                    onChange={(e) => handleClipWatermark({ type: activeWatermark.imagePath ? 'image' : 'text', text: e.target.value })}
+                    placeholder="@channelmu"
+                    maxLength={60}
+                  />
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Logo (dipakai bila terisi)</label>
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg,.webp"
+                    onChange={handleClipLogoUpload}
+                    disabled={wmUploading}
+                  />
+                  {activeWatermark.imagePath && (
+                    <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>✓ {activeWatermark.imagePath} <button type="button" style={{ cursor: 'pointer', marginLeft: 4 }} onClick={() => handleClipWatermark({ imagePath: '', type: 'text' })}>(hapus logo)</button></p>
+                  )}
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Posisi</label>
+                  <select
+                    className={editorStyles.input}
+                    value={activeWatermark.position || 'top-right'}
+                    onChange={(e) => handleClipWatermark({ position: e.target.value })}
+                  >
+                    <option value="top-right">Kanan Atas</option>
+                    <option value="top-left">Kiri Atas</option>
+                    <option value="bottom-right">Kanan Bawah</option>
+                    <option value="bottom-left">Kiri Bawah</option>
+                  </select>
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Ukuran ({activeWatermark.sizePct}%)</label>
+                  <input
+                    type="range"
+                    min={2}
+                    max={15}
+                    value={activeWatermark.sizePct ?? 6}
+                    onChange={(e) => handleClipWatermark({ sizePct: Number(e.target.value) })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Opacity ({Math.round((activeWatermark.opacity ?? 0.7) * 100)}%) — logo</label>
+                  <input
+                    type="range"
+                    min={10}
+                    max={100}
+                    value={Math.round((activeWatermark.opacity ?? 0.7) * 100)}
+                    onChange={(e) => handleClipWatermark({ opacity: Number(e.target.value) / 100 })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+              </div>
+              <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>
+                Preview tampil di atas video. Hasil render: logo pakai opacity di atas, teks selalu solid dengan outline.
+              </p>
+            </>
+          )}
+        </div>
+
         {onOpenPublish && (
           <button
             type="button"
@@ -1802,6 +1965,22 @@ function EditorialContent() {
   const fontOption = searchParams.get('font') || 'Inter';
   const sizeOption = searchParams.get('size') || 'Medium';
   const colorOption = searchParams.get('color') || '#FFFF00';
+  const wmEnabledParam = searchParams.get('wmEnabled') === 'true';
+  const wmTypeParam = searchParams.get('wmType') === 'image' ? 'image' : 'text';
+  const wmTextParam = searchParams.get('wmText') || '';
+  const wmLogoParam = searchParams.get('wmLogo') || '';
+  const wmPosParam = searchParams.get('wmPos') || 'top-right';
+  const wmSizeParam = Number(searchParams.get('wmSize')) || 6;
+  const wmOpacityParam = Number(searchParams.get('wmOpacity'));
+  const initialWatermark = !wmEnabledParam ? null : {
+    enabled: true,
+    type: wmTypeParam === 'image' && wmLogoParam ? 'image' : 'text',
+    text: wmTextParam,
+    imagePath: wmLogoParam,
+    position: ['top-left', 'top-right', 'bottom-left', 'bottom-right'].includes(wmPosParam) ? wmPosParam : 'top-right',
+    sizePct: wmSizeParam,
+    opacity: Number.isFinite(wmOpacityParam) ? wmOpacityParam : 0.7,
+  };
 
   // States: analyzing -> preparing -> editing -> rendering -> done
   const [status, setStatus] = useState('analyzing');
@@ -1944,6 +2123,7 @@ function EditorialContent() {
               size: sizeOption,
               color: colorOption,
             }}
+            initialWatermark={initialWatermark}
           />
         </main>
       ) : (

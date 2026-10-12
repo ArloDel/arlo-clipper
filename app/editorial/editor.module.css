@@ -145,8 +145,60 @@
   cursor: pointer;
 }
 
+/* ── Watermark (Branding) ── */
+.watermarkCard {
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg-subtle);
+}
+
+.watermarkHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.watermarkTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.watermarkInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wmImagePreview {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.wmTextPreview {
+  position: absolute;
+  z-index: 15;
+  pointer-events: none;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow:
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000,
+    2px 2px 0 #000;
+  white-space: nowrap;
+}
+
 .videoWrapper {
   position: relative;
+  container-type: size;
   width: 100%;
   background: #000000;
   border-radius: var(--radius-md);

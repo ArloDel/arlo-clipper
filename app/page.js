@@ -40,6 +40,14 @@ export default function HomePage() {
   const [size, setSize] = useState('Medium');
   const [color, setColor] = useState('#ffffff');
   const [language, setLanguage] = useState('auto');
+  // Watermark / branding
+  const [wmEnabled, setWmEnabled] = useState(false);
+  const [wmText, setWmText] = useState('');
+  const [wmLogoPath, setWmLogoPath] = useState('');
+  const [wmLogoUploading, setWmLogoUploading] = useState(false);
+  const [wmPos, setWmPos] = useState('top-right');
+  const [wmSize, setWmSize] = useState(6);
+  const [wmOpacity, setWmOpacity] = useState(0.7);
   const [showOptions, setShowOptions] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
@@ -162,6 +170,42 @@ export default function HomePage() {
     });
   };
 
+  const handleWatermarkLogoUpload = async (e) => {
+    const logoFile = e.target.files?.[0];
+    if (!logoFile) return;
+    setWmLogoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('logo', logoFile);
+      const res = await fetch('/api/watermark/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok && data.imagePath) {
+        setWmLogoPath(data.imagePath);
+      } else {
+        alert(`Gagal upload logo: ${data.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      alert(`Error upload logo: ${err.message}`);
+    } finally {
+      setWmLogoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const buildWatermarkParams = () => {
+    const type = wmLogoPath ? 'image' : 'text';
+    const enabled = Boolean(wmEnabled && (wmText.trim() || wmLogoPath));
+    return new URLSearchParams({
+      wmEnabled: enabled.toString(),
+      wmType: enabled ? type : 'text',
+      wmText: wmText.trim(),
+      wmLogo: enabled && type === 'image' ? wmLogoPath : '',
+      wmPos,
+      wmSize: String(wmSize),
+      wmOpacity: String(wmOpacity),
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploadError('');
@@ -178,6 +222,7 @@ export default function HomePage() {
         color,
         language,
       });
+      for (const [k, v] of buildWatermarkParams()) params.append(k, v);
 
       router.push(`/editorial?${params.toString()}`);
     } else {
@@ -202,6 +247,7 @@ export default function HomePage() {
           color,
           language,
         });
+        for (const [k, v] of buildWatermarkParams()) params.append(k, v);
 
         router.push(`/editorial?${params.toString()}`);
       } catch (err) {
@@ -528,6 +574,92 @@ export default function HomePage() {
                     </div>
                   </div>
                 )}
+
+                <div className={styles.optionDivider} />
+
+                {/* Watermark / Branding */}
+                <div className={styles.optionGroup}>
+                  <div className={styles.subtitleToggleRow}>
+                    <div>
+                      <label className={styles.label}>Watermark (Branding)</label>
+                      <p className={styles.labelDesc}>Tulisan atau logo channel di atas video</p>
+                    </div>
+                    <button
+                      type="button"
+                      className={`${styles.switch} ${wmEnabled ? styles.switchOn : ''}`}
+                      onClick={() => setWmEnabled(!wmEnabled)}
+                      aria-label="Toggle watermark"
+                    >
+                      <span className={styles.switchThumb} />
+                    </button>
+                  </div>
+
+                  {wmEnabled && (
+                    <div className={styles.subtitleOptions}>
+                      <div className={styles.subOption}>
+                        <label className={styles.subLabel}>Teks Watermark</label>
+                        <input
+                          type="text"
+                          className={styles.select}
+                          value={wmText}
+                          onChange={(e) => setWmText(e.target.value)}
+                          placeholder="@channelmu"
+                          maxLength={60}
+                        />
+                      </div>
+
+                      <div className={styles.subOption}>
+                        <label className={styles.subLabel}>Logo (opsional — dipakai bila terisi)</label>
+                        <input
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp"
+                          onChange={handleWatermarkLogoUpload}
+                          disabled={wmLogoUploading}
+                          style={{ fontSize: '0.72rem' }}
+                        />
+                        {wmLogoPath && <p className={styles.labelDesc}>✓ {wmLogoPath}</p>}
+                      </div>
+
+                      <div className={styles.subOption}>
+                        <label className={styles.subLabel}>Posisi</label>
+                        <select
+                          className={styles.select}
+                          value={wmPos}
+                          onChange={(e) => setWmPos(e.target.value)}
+                        >
+                          <option value="top-right">Kanan Atas</option>
+                          <option value="top-left">Kiri Atas</option>
+                          <option value="bottom-right">Kanan Bawah</option>
+                          <option value="bottom-left">Kiri Bawah</option>
+                        </select>
+                      </div>
+
+                      <div className={styles.subOption}>
+                        <label className={styles.subLabel}>Ukuran ({wmSize}%)</label>
+                        <input
+                          type="range"
+                          min={2}
+                          max={15}
+                          value={wmSize}
+                          onChange={(e) => setWmSize(Number(e.target.value))}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+
+                      <div className={styles.subOption}>
+                        <label className={styles.subLabel}>Opacity ({Math.round(wmOpacity * 100)}%)</label>
+                        <input
+                          type="range"
+                          min={10}
+                          max={100}
+                          value={Math.round(wmOpacity * 100)}
+                          onChange={(e) => setWmOpacity(Number(e.target.value) / 100)}
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

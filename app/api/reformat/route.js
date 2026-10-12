@@ -16,7 +16,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
  */
 export async function POST(request) {
   try {
-    const { clipId, format, startSec, endSec } = await request.json();
+    const { clipId, format, startSec, endSec, crop } = await request.json();
 
     if (!clipId || typeof clipId !== 'string' || !/^[a-zA-Z0-9_-]{6,64}$/.test(clipId)) {
       return NextResponse.json({ error: 'Invalid clipId' }, { status: 400 });
@@ -45,17 +45,45 @@ export async function POST(request) {
       );
     }
 
-    const outPath = path.join(clipsDir, `${clipId}-raw-${formatTag(resolvedFormat)}.mp4`);
+    const outBase = path.join(clipsDir, `${clipId}-raw-${formatTag(resolvedFormat)}`);
+
     const { width, height } = await getVideoDimensions(sourcePath);
 
+    // Optional manual framing crop (normalized 0..1 source units)
+    let cropRect = null;
+    if (crop) {
+      const { x, y, w, h } = crop;
+      const validShape =
+        [x, y, w, h].every((v) => Number.isFinite(v)) &&
+        w >= 0.05 && h >= 0.05 && w <= 1 && h <= 1 &&
+        x >= -0.02 && y >= -0.02 && x + w <= 1.02 && y + h <= 1.02;
+      if (!validShape) {
+        return NextResponse.json({ error: 'Invalid crop rect' }, { status: 400 });
+      }
+
+      // Aspect-lock: crop box must match the format's aspect (3% tolerance)
+      const targetAspect = resolvedFormat === '1:1' ? 1 : 9 / 16;
+      const cropAspect = (w * width) / (h * height);
+      if (Math.abs(cropAspect - targetAspect) / targetAspect > 0.03) {
+        return NextResponse.json(
+          { error: 'Crop box aspect does not match the selected format' },
+          { status: 400 }
+        );
+      }
+      cropRect = { x, y, w, h };
+    }
+
+    const outPath = cropRect ? `${outBase}-crop.mp4` : `${outBase}.mp4`;
+
     console.log(
-      `[Reformat] clip ${clipId} -> ${resolvedFormat} (${width}x${height}, ${start}s-${end}s)...`
+      `[Reformat] clip ${clipId} -> ${resolvedFormat}${cropRect ? ' (manual crop)' : ''} (${width}x${height})...`
     );
 
+    // Source slice already contains ONLY the clip (prepare-editor sliced it),
+    // so bake the entire file — startSec/endSec are full-video offsets and must
+    // NOT be re-applied as seeks (seeking past EOF yields audio-only stubs).
     await new Promise((resolve, reject) => {
-      configureFormatOutput(ffmpeg(sourcePath), resolvedFormat, width, height)
-        .setStartTime(start)
-        .setDuration(end - start)
+      configureFormatOutput(ffmpeg(sourcePath), resolvedFormat, width, height, cropRect)
         .output(outPath)
         .on('end', resolve)
         .on('error', reject)

@@ -102,6 +102,49 @@
   font-style: italic;
 }
 
+/* ── Manual Framing (pan + zoom) ── */
+.framingLayer {
+  position: absolute;
+  inset: 0;
+  cursor: move;
+  touch-action: none;
+  z-index: 20;
+}
+
+.frameBox {
+  position: absolute;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+.frameBar {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  z-index: 21;
+}
+
+.frameBarLabel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.frameZoomSlider {
+  width: 140px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .videoWrapper {
   position: relative;
   width: 100%;

@@ -318,6 +318,127 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
   // OpenCV trackers only understand 9:16 / 1:1 / 16:9; blur falls back to 9:16 crop there
   const trackerRatio = activeFormat === '9:16-blur' ? '9:16' : activeFormat;
 
+  // ── Manual Framing (pan + zoom over the untouched source slice) ──
+  const [framingMode, setFramingMode] = useState(false);
+  const [frameRect, setFrameRect] = useState(null); // normalized {x,y,w,h} on source
+  const [frameZoom, setFrameZoom] = useState(1);
+  const [sourceAR, setSourceAR] = useState(null); // source video aspect (w/h) from metadata
+  const framingLayerRef = useRef(null);
+  const framingDragRef = useRef(null);
+  const ZOOM_MIN = 0.35;
+
+  const targetAspect = activeFormat === '1:1' ? 1 : 9 / 16;
+
+  const sizeFrameBox = (zoom) => {
+    const ar = sourceAR || 16 / 9;
+    const h = zoom;
+    const w = h * (targetAspect / ar);
+    return { w: Math.min(1, w), h: Math.min(1, h) };
+  };
+
+  const clampFrameRect = (rect) => ({
+    x: Math.min(1 - rect.w, Math.max(0, rect.x)),
+    y: Math.min(1 - rect.h, Math.max(0, rect.y)),
+    w: rect.w,
+    h: rect.h,
+  });
+
+  const enterFraming = () => {
+    const { w, h } = sizeFrameBox(1);
+    setFrameRect(clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h }));
+    setFrameZoom(1);
+    setSourceAR(null);
+    setFramingMode(true);
+  };
+
+  const framingReset = () => {
+    const { w, h } = sizeFrameBox(1);
+    setFrameRect(clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h }));
+    setFrameZoom(1);
+  };
+
+  const exitFraming = () => {
+    setFramingMode(false);
+    setFrameRect(null);
+  };
+
+  // Click anywhere on the source frame moves the box center there, clamped
+  const handleFramingPointerDown = (e) => {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const layer = framingLayerRef.current;
+    if (!layer) return;
+    const rect = layer.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    framingDragRef.current = rect;
+    setFrameRect((prev) =>
+      clampFrameRect({ ...prev, x: px / rect.width - prev.w / 2, y: py / rect.height - prev.h / 2 })
+    );
+  };
+
+  const handleFramingPointerMove = (e) => {
+    if (!framingDragRef.current || !framingDragRef.current.width) return;
+    const rect = framingLayerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    setFrameRect((prev) =>
+      clampFrameRect({ ...prev, x: px / rect.width - prev.w / 2, y: py / rect.height - prev.h / 2 })
+    );
+  };
+
+  const handleFramingPointerUp = () => {
+    framingDragRef.current = null;
+  };
+
+  const handleFrameZoom = (zoom) => {
+    const z = Math.max(ZOOM_MIN, Math.min(1, zoom));
+    setFrameZoom(z);
+    setFrameRect((prev) => {
+      const cx = prev.x + prev.w / 2;
+      const cy = prev.y + prev.h / 2;
+      const { w, h } = sizeFrameBox(z);
+      return clampFrameRect({ x: cx - w / 2, y: cy - h / 2, w, h });
+    });
+  };
+
+  const handleFramingApply = async () => {
+    const current = clips[activeClipIdx];
+    if (!current?.id || !current?.startSec || !current?.endSec) return;
+    setReformatting(true);
+    try {
+      const res = await fetch('/api/reformat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clipId: current.id,
+          format: activeFormat,
+          startSec: current.startSec,
+          endSec: current.endSec,
+          crop: frameRect,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.videoPath) {
+        setClips((prev) =>
+          prev.map((c, i) =>
+            i === activeClipIdx
+              ? { ...c, videoPath: data.videoPath, faceTracking: false, lipTracking: false, splitScreen: false }
+              : c
+          )
+        );
+        exitFraming();
+      } else {
+        alert(`Gagal menerapkan framing: ${data.error || 'Terjadi kesalahan'}`);
+      }
+    } catch (err) {
+      alert(`Error menerapkan framing: ${err.message}`);
+    } finally {
+      setReformatting(false);
+    }
+  };
+
   const handleFormatChange = async (newFormat) => {
     if (reformatting || newFormat === activeFormat) return;
     const current = clips[activeClipIdx];
@@ -821,33 +942,113 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
               {label}
             </button>
           ))}
+          <button
+            type="button"
+            className={`${editorStyles.formatBtn} ${framingMode ? editorStyles.formatBtnActive : ''}`}
+            disabled={activeFormat === '9:16-blur' || reformatting}
+            title={activeFormat === '9:16-blur' ? 'Framing tidak berlaku untuk format Blur Background (komposisi penuh dipertahankan)' : 'Atur posisi & zoom frame secara manual'}
+            onClick={() => (framingMode ? exitFraming() : enterFraming())}
+          >
+            ✋ Framing
+          </button>
+          {framingMode && (
+            <>
+              <button
+                type="button"
+                className={editorStyles.formatBtn}
+                disabled={reformatting}
+                onClick={framingReset}
+              >
+                ↺ Reset
+              </button>
+              <button
+                type="button"
+                className={editorStyles.formatBtn}
+                disabled={reformatting}
+                onClick={handleFramingApply}
+              >
+                ✓ Terapkan
+              </button>
+              <button
+                type="button"
+                className={editorStyles.formatBtn}
+                disabled={reformatting}
+                onClick={exitFraming}
+              >
+                ✕ Batal
+              </button>
+            </>
+          )}
           {reformatting && <span className={editorStyles.formatHint}>Menyiapkan format baru...</span>}
         </div>
 
         <div
           className={editorStyles.videoWrapper}
-          style={{ aspectRatio: previewAspect }}
+          style={{ aspectRatio: framingMode && sourceAR ? `${sourceAR} ` : previewAspect }}
         >
           <video
             ref={videoRef}
-            src={activeClip.videoPath}
-            controls
+            src={framingMode ? (activeClip.sourceVideoPath || activeClip.videoPath) : activeClip.videoPath}
+            controls={!framingMode}
             className={editorStyles.video}
-            key={activeClip.videoPath}
+            key={`${framingMode}:${activeClip.videoPath}`}
+            onLoadedMetadata={(e) => {
+              if (framingMode && e.currentTarget.videoWidth > 0) {
+                setSourceAR(e.currentTarget.videoWidth / e.currentTarget.videoHeight);
+              }
+            }}
           />
+          {framingMode && (
+            <div
+              ref={framingLayerRef}
+              className={editorStyles.framingLayer}
+              onPointerDown={handleFramingPointerDown}
+              onPointerMove={handleFramingPointerMove}
+              onPointerUp={handleFramingPointerUp}
+            >
+              {frameRect && (
+                <div
+                  className={editorStyles.frameBox}
+                  style={{
+                    left: `${frameRect.x * 100}%`,
+                    top: `${frameRect.y * 100}%`,
+                    width: `${frameRect.w * 100}%`,
+                    height: `${frameRect.h * 100}%`,
+                  }}
+                />
+              )}
+            </div>
+          )}
+          {framingMode && (
+            <div className={editorStyles.frameBar}>
+              <span className={editorStyles.frameBarLabel}>Zoom</span>
+              <input
+                type="range"
+                min={Math.round(ZOOM_MIN * 100)}
+                max={100}
+                value={Math.round(frameZoom * 100)}
+                onChange={(e) => handleFrameZoom(Number(e.target.value) / 100)}
+                className={editorStyles.frameZoomSlider}
+              />
+            </div>
+          )}
           {/* Dynamic B-Roll Visual Overlay */}
-          <BrollOverlay
-            key={`broll-${activeClip.id || activeClipIdx}`}
-            videoRef={videoRef}
-            brollSettings={activeBroll}
-          />
+          {!framingMode && (
+            <BrollOverlay
+              key={`broll-${activeClip.id || activeClipIdx}`}
+              videoRef={videoRef}
+              brollSettings={activeBroll}
+            />
+          )}
           {/* Subtitle Overlay */}
-          <SubtitleOverlay
-            key={`sub-${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
-            videoRef={videoRef}
-            segments={activeClip.segments}
-            style={activeStyle}
-          />
+          {!framingMode && (
+            <SubtitleOverlay
+              key={`sub-${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
+              videoRef={videoRef}
+              segments={activeClip.segments}
+              style={activeStyle}
+            />
+          )}
         </div>
       </div>
 
@@ -1789,7 +1990,7 @@ function EditorialContent() {
                   const isActive = status === step.id;
 
                   return (
-                    <div
+        <div
                       key={step.id}
                       className={`${styles.step} ${isActive ? styles.stepActive : ''} ${
                         isCompleted ? styles.stepCompleted : ''

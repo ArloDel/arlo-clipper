@@ -25,7 +25,12 @@ function secondsToTime(seconds) {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { url, localFilePath, fileName } = body;
+    const { url, localFilePath, fileName, language } = body;
+    // Transcription language hint (ISO-639-1). 'auto'/empty = Whisper auto-detect.
+    const whisperLanguage =
+      language && typeof language === 'string' && /^[a-z]{2}$/.test(language.trim().toLowerCase())
+        ? language.trim().toLowerCase()
+        : undefined;
 
     const targetInput = localFilePath || url;
 
@@ -265,6 +270,7 @@ export async function POST(request) {
           file: fs.createReadStream(chunk.path),
           model: 'whisper-large-v3',
           response_format: 'verbose_json',
+          ...(whisperLanguage ? { language: whisperLanguage } : {}),
         });
 
         if (transcription.segments && transcription.segments.length > 0) {

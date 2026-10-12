@@ -254,7 +254,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
+function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initialStyle }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -262,12 +262,12 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio }) {
   const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   
-  // Style settings per clip
+  // Style settings per clip (initial values honor the Home page options)
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
-      font: 'Impact',
-      size: 'Medium',
-      color: '#FFFF00',
+      font: initialStyle?.font || 'Impact',
+      size: initialStyle?.size || 'Medium',
+      color: initialStyle?.color || '#FFFF00',
       outline: true,
       shadow: true,
       animation: 'Pop',
@@ -1797,6 +1797,11 @@ function EditorialContent() {
   const localFilePath = searchParams.get('localFilePath');
   const fileName = searchParams.get('fileName');
   const ratio = searchParams.get('ratio') || '9:16';
+  const language = searchParams.get('language') || 'auto';
+  const subtitlesOption = searchParams.get('subtitles') !== 'false';
+  const fontOption = searchParams.get('font') || 'Inter';
+  const sizeOption = searchParams.get('size') || 'Medium';
+  const colorOption = searchParams.get('color') || '#FFFF00';
 
   // States: analyzing -> preparing -> editing -> rendering -> done
   const [status, setStatus] = useState('analyzing');
@@ -1820,7 +1825,7 @@ function EditorialContent() {
         const analyzeRes = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, localFilePath, fileName }),
+          body: JSON.stringify({ url, localFilePath, fileName, language }),
         });
 
         if (!analyzeRes.ok) {
@@ -1837,7 +1842,7 @@ function EditorialContent() {
         const prepRes = await fetch('/api/prepare-editor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url, localFilePath, clips, ratio }),
+          body: JSON.stringify({ url, localFilePath, clips, ratio, language }),
         });
 
         if (!prepRes.ok) {
@@ -1862,7 +1867,7 @@ function EditorialContent() {
     return () => {
       isMounted = false;
     };
-  }, [url, localFilePath, fileName, ratio]);
+  }, [url, localFilePath, fileName, ratio, language]);
 
   const handleSaveFinal = async (finalClips) => {
     setStatus('rendering');
@@ -1933,6 +1938,12 @@ function EditorialContent() {
             onSave={handleSaveFinal}
             onOpenPublish={setPublishModalClip}
             ratio={ratio}
+            initialStyle={{
+              subtitles: subtitlesOption,
+              font: fontOption,
+              size: sizeOption,
+              color: colorOption,
+            }}
           />
         </main>
       ) : (

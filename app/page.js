@@ -39,6 +39,7 @@ export default function HomePage() {
   const [font, setFont] = useState('Inter');
   const [size, setSize] = useState('Medium');
   const [color, setColor] = useState('#ffffff');
+  const [language, setLanguage] = useState('auto');
   const [showOptions, setShowOptions] = useState(false);
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
 
@@ -175,6 +176,7 @@ export default function HomePage() {
         font,
         size,
         color,
+        language,
       });
 
       router.push(`/editorial?${params.toString()}`);
@@ -198,6 +200,7 @@ export default function HomePage() {
           font,
           size,
           color,
+          language,
         });
 
         router.push(`/editorial?${params.toString()}`);
@@ -441,6 +444,25 @@ export default function HomePage() {
                       <span className={styles.ratioIcon}>9:16</span> Blur Background
                     </button>
                   </div>
+                </div>
+
+                <div className={styles.optionDivider} />
+
+                <div className={styles.optionGroup}>
+                  <label className={styles.label}>Bahasa Transkripsi</label>
+                  <select
+                    className={styles.select}
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                  >
+                    <option value="auto">Auto-detect (default)</option>
+                    <option value="id">Bahasa Indonesia</option>
+                    <option value="en">English</option>
+                    <option value="ms">Malay</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="ar">Arabic</option>
+                  </select>
                 </div>
 
                 <div className={styles.optionDivider} />

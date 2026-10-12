@@ -19,7 +19,12 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { url, localFilePath, ratio = '9:16', clips } = body;
+    const { url, localFilePath, ratio = '9:16', clips, language } = body;
+    // Transcription language hint (ISO-639-1). 'auto'/empty = Whisper auto-detect.
+    const whisperLanguage =
+      language && typeof language === 'string' && /^[a-z]{2}$/.test(language.trim().toLowerCase())
+        ? language.trim().toLowerCase()
+        : undefined;
 
     const targetInput = localFilePath || url;
 
@@ -206,7 +211,8 @@ export async function POST(request) {
         file: fs.createReadStream(clipAudioPath),
         model: 'whisper-large-v3',
         response_format: 'verbose_json',
-        timestamp_granularities: ['word', 'segment']
+        timestamp_granularities: ['word', 'segment'],
+        ...(whisperLanguage ? { language: whisperLanguage } : {}),
       });
 
       // Extract transcript data with word-level timestamps

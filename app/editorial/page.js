@@ -371,11 +371,19 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const [frameRect, setFrameRect] = useState(null); // normalized {x,y,w,h} on source
   const [frameZoom, setFrameZoom] = useState(1);
   const [sourceAR, setSourceAR] = useState(null); // source video aspect (w/h) from metadata
+  const [clipKeyframes, setClipKeyframes] = useState(initialClips.map(() => null)); // per-clip crop keyframes
+  const [keyframes, setKeyframes] = useState(null); // working copy while in framing mode
+  const [activeKfId, setActiveKfId] = useState(null);
   const framingLayerRef = useRef(null);
   const framingDragRef = useRef(null);
+  const kfTimelineRef = useRef(null);
+  const kfDotDragRef = useRef(null);
+  const kfRafRef = useRef(null);
+  const kfIdRef = useRef(1);
   const ZOOM_MIN = 0.35;
 
   const targetAspect = activeFormat === '1:1' ? 1 : 9 / 16;
+  const clipDur = Math.max(1, activeClip.durationSec || (Number(activeClip.endSec) - Number(activeClip.startSec)) || 15);
 
   const sizeFrameBox = (zoom) => {
     const ar = sourceAR || 16 / 9;
@@ -391,23 +399,56 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     h: rect.h,
   });
 
-  const enterFraming = () => {
+  const centerFrameRect = () => {
     const { w, h } = sizeFrameBox(1);
-    setFrameRect(clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h }));
-    setFrameZoom(1);
+    return clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h });
+  };
+
+  // Sync the active keyframe whenever the box moves/zooms (pure updaters only)
+  const shiftBox = (dx, dy) => {
+    setFrameRect((prev) => clampFrameRect({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+    setKeyframes((prev) => {
+      if (!prev) return prev;
+      return prev.map((kf) =>
+        kf._id === activeKfId ? clampFrameRect({ ...kf, x: kf.x + dx, y: kf.y + dy }) : kf
+      );
+    });
+  };
+
+  const placeBoxCenterAt = (pxN, pyN) => {
+    setFrameRect((prev) => clampFrameRect({ ...prev, x: pxN - prev.w / 2, y: pyN - prev.h / 2 }));
+    setKeyframes((prev) => {
+      if (!prev) return prev;
+      return prev.map((kf) =>
+        kf._id === activeKfId ? clampFrameRect({ ...kf, x: pxN - kf.w / 2, y: pyN - kf.h / 2 }) : kf
+      );
+    });
+  };
+
+  const enterFraming = () => {
+    const existing = clipKeyframes[activeClipIdx];
+    const kfs = existing && Array.isArray(existing) ? existing.map((kf) => ({ ...kf })) : [{ _id: nextKfId(), t: 0, ...centerFrameRect() }];
+    setKeyframes(kfs);
+    setActiveKfId(kfs[0]._id);
+    setFrameRect(clampFrameRect(kfs[0]));
+    setFrameZoom(kfs[0]?.h ?? 1);
     setSourceAR(null);
     setFramingMode(true);
   };
 
   const framingReset = () => {
-    const { w, h } = sizeFrameBox(1);
-    setFrameRect(clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h }));
+    const base = { _id: nextKfId(), t: 0, ...centerFrameRect() };
+    setKeyframes([base]);
+    setActiveKfId(base._id);
+    setFrameRect(clampFrameRect(base));
     setFrameZoom(1);
   };
 
   const exitFraming = () => {
     setFramingMode(false);
     setFrameRect(null);
+    setKeyframes(null);
+    setActiveKfId(null);
   };
 
   // Click anywhere on the source frame moves the box center there, clamped
@@ -420,9 +461,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
     framingDragRef.current = rect;
-    setFrameRect((prev) =>
-      clampFrameRect({ ...prev, x: px / rect.width - prev.w / 2, y: py / rect.height - prev.h / 2 })
-    );
+    placeBoxCenterAt(px / rect.width, py / rect.height);
   };
 
   const handleFramingPointerMove = (e) => {
@@ -431,9 +470,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     if (!rect) return;
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
-    setFrameRect((prev) =>
-      clampFrameRect({ ...prev, x: px / rect.width - prev.w / 2, y: py / rect.height - prev.h / 2 })
-    );
+    placeBoxCenterAt(px / rect.width, py / rect.height);
   };
 
   const handleFramingPointerUp = () => {
@@ -443,13 +480,126 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const handleFrameZoom = (zoom) => {
     const z = Math.max(ZOOM_MIN, Math.min(1, zoom));
     setFrameZoom(z);
+    // Keep every keyframe's center; resize all windows so server parity holds
+    const resize = (rect, w, h) => clampFrameRect({ x: rect.x + rect.w / 2 - w / 2, y: rect.y + rect.h / 2 - h / 2, w, h });
     setFrameRect((prev) => {
-      const cx = prev.x + prev.w / 2;
-      const cy = prev.y + prev.h / 2;
       const { w, h } = sizeFrameBox(z);
-      return clampFrameRect({ x: cx - w / 2, y: cy - h / 2, w, h });
+      return resize(prev, w, h);
+    });
+    setKeyframes((prevKfs) => {
+      if (!prevKfs) return prevKfs;
+      const { w, h } = sizeFrameBox(z);
+      return prevKfs.map((kf) => resize(kf, w, h));
     });
   };
+
+  // ── Crop keyframes (animated pan) ──
+  const nextKfId = () => `_kf${kfIdRef.current++}`;
+
+  const kfInterpolateRect = (kfs, t) => {
+    if (!kfs || kfs.length === 0) return frameRect;
+    if (kfs.length === 1) return kfs[0];
+    const time = Math.max(kfs[0].t, Math.min(kfs[kfs.length - 1].t, t));
+    let i = 0;
+    while (i < kfs.length - 2 && kfs[i + 1].t <= time) i++;
+    const k0 = kfs[i];
+    const k1 = kfs[i + 1];
+    const span = Math.max(0.01, k1.t - k0.t);
+    const f = Math.min(1, Math.max(0, (time - k0.t) / span));
+    return {
+      x: k0.x + (k1.x - k0.x) * f,
+      y: k0.y + (k1.y - k0.y) * f,
+      w: k0.w + (k1.w - k0.w) * f,
+      h: k0.h + (k1.h - k0.h) * f,
+    };
+  };
+
+  // Live preview: box follows the video clock while playing (>1 keyframes only)
+  useEffect(() => {
+    if (!framingMode || !keyframes || keyframes.length <= 1) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const tick = () => setFrameRect(kfInterpolateRect(keyframes, video.currentTime));
+    const start = () => {
+      if (!kfRafRef.current) kfRafRef.current = requestAnimationFrame(tick);
+    };
+    const stop = () => {
+      if (kfRafRef.current) {
+        cancelAnimationFrame(kfRafRef.current);
+        kfRafRef.current = null;
+      }
+    };
+    const onSeek = () => setFrameRect(kfInterpolateRect(keyframes, video.currentTime));
+    const onPlay = () => {
+      stop();
+      kfRafRef.current = requestAnimationFrame(function loop() {
+        tick();
+        kfRafRef.current = requestAnimationFrame(loop);
+      });
+    };
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', stop);
+    video.addEventListener('seeked', onSeek);
+    if (!video.paused) onPlay();
+    return () => {
+      stop();
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', stop);
+      video.removeEventListener('seeked', onSeek);
+    };
+  }, [framingMode, keyframes]);
+
+  const kfSelectById = (id) => {
+    setActiveKfId(id);
+    const kf = keyframes?.find((k) => k._id === id);
+    if (kf) setFrameRect(clampFrameRect(kf));
+  };
+
+  const kfAddAt = (t) => {
+    const rectNow = frameRect;
+    const id = nextKfId();
+    setKeyframes((prev) => {
+      const base = prev || [];
+      return [...base, { _id: id, t, x: rectNow.x, y: rectNow.y, w: rectNow.w, h: rectNow.h }].sort((a, b) => a.t - b.t);
+    });
+    setActiveKfId(id);
+  };
+
+  const kfMoveTimeById = (id, t) => {
+    setKeyframes((prev) =>
+      prev
+        ? prev.map((kf) => (kf._id === id ? { ...kf, t: Math.max(0, Math.min(clipDur, t)) } : kf))
+        : prev
+    );
+  };
+
+  const kfSortById = () => {
+    setKeyframes((prev) => (prev ? [...prev].sort((a, b) => a.t - b.t) : prev));
+  };
+
+  const kfRemoveById = (id) => {
+    if (!keyframes || keyframes.length <= 1) return;
+    const next = keyframes.filter((kf) => kf._id !== id);
+    setKeyframes(next);
+    if (activeKfId === id) {
+      const kf = next[0];
+      setActiveKfId(kf._id);
+      setFrameRect(clampFrameRect(kf));
+    }
+  };
+
+  // Timeline: click empty area = add keyframe at that time
+  const kfTimelineDown = (e) => {
+    const track = kfTimelineRef.current;
+    if (!track) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect = track.getBoundingClientRect();
+    const t = Math.max(0, Math.min(clipDur, ((e.clientX - rect.left) / rect.width) * clipDur));
+    kfAddAt(t);
+  };
+  const kfTimelineUp = () => {};
+
+  // Dot drag: move the keyframe's time; resort on release
 
   const handleFramingApply = async () => {
     const current = clips[activeClipIdx];
@@ -464,15 +614,18 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           format: activeFormat,
           startSec: current.startSec,
           endSec: current.endSec,
-          crop: frameRect,
+          cropKeyframes: (keyframes || [{ _id: 'a', t: 0, ...frameRect }]).map(({ t, x, y, w, h }) => ({ t: Math.max(0, Math.min(clipDur, t)), x, y, w, h })),
         }),
       });
       const data = await res.json();
       if (res.ok && data.videoPath) {
+        setClipKeyframes((prev) =>
+          prev.map((kf, i) => (i === activeClipIdx ? (keyframes || [{ t: 0, ...frameRect }]).map((k) => ({ ...k })) : kf))
+        );
         setClips((prev) =>
           prev.map((c, i) =>
             i === activeClipIdx
-              ? { ...c, videoPath: data.videoPath, faceTracking: false, lipTracking: false, splitScreen: false }
+              ? { ...c, videoPath: data.videoPath + `?v=${Date.now()}`, faceTracking: false, lipTracking: false, splitScreen: false }
               : c
           )
         );
@@ -1125,6 +1278,56 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
             ) : null
           )}
         </div>
+
+        {/* Crop keyframe timeline (animated pan) */}
+        {framingMode && keyframes && (
+          <div className={editorStyles.kfTimelineBar}>
+            <span className={editorStyles.kfTimelineLabel}>Crop Timeline</span>
+            <div
+              ref={kfTimelineRef}
+              className={editorStyles.kfTimelineTrack}
+              onPointerDown={kfTimelineDown}
+              onPointerUp={kfTimelineUp}
+            >
+              {keyframes.map((kf) => (
+                <div
+                  key={kf._id}
+                  className={`${editorStyles.kfDot} ${kf._id === activeKfId ? editorStyles.kfDotActive : ''}`}
+                  style={{ left: `${(Math.max(0, Math.min(clipDur, kf.t)) / clipDur) * 100}%` }}
+                  title={`t=${kf.t.toFixed(1)}s`}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    kfSelectById(kf._id);
+                    kfDotDragRef.current = { id: kf._id, startX: e.clientX, startT: kf.t, rect: kfTimelineRef.current.getBoundingClientRect() };
+                  }}
+                  onPointerMove={(e) => {
+                    const d = kfDotDragRef.current;
+                    if (!d || d.id !== kf._id) return;
+                    const dt = ((e.clientX - d.startX) / d.rect.width) * clipDur;
+                    kfMoveTimeById(kf._id, d.startT + dt);
+                  }}
+                  onPointerUp={(e) => {
+                    e.stopPropagation();
+                    kfDotDragRef.current = null;
+                    kfSortById();
+                  }}
+                />
+              ))}
+            </div>
+            <span className={editorStyles.kfHint}>
+              klik garis = tambah keyframe · drag kotak = posisi kf aktif · drag titik = waktu
+            </span>
+            <button
+              type="button"
+              className={editorStyles.formatBtn}
+              onClick={() => kfRemoveById(activeKfId)}
+              disabled={reformatting || keyframes.length <= 1}
+            >
+              Hapus
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={editorStyles.controlsSection}>

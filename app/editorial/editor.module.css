@@ -196,6 +196,61 @@
   white-space: nowrap;
 }
 
+/* ── Crop keyframe timeline (animated pan) ── */
+.kfTimelineBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+}
+
+.kfTimelineLabel {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  white-space: nowrap;
+}
+
+.kfTimelineTrack {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-xs);
+  cursor: crosshair;
+}
+
+.kfDot {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  transform: translateY(-50%);
+  background: var(--text-sub);
+  border: 2px solid var(--bg-surface);
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.kfDotActive {
+  background: var(--accent);
+  border-color: var(--accent-contrast);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.kfHint {
+  font-size: 0.66rem;
+  color: var(--text-sub);
+  max-width: 260px;
+}
+
 .videoWrapper {
   position: relative;
   container-type: size;

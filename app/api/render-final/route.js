@@ -36,7 +36,8 @@ export async function POST(request) {
     for (const clip of clips) {
       console.log(`[Render Final] Processing clip ${index}/${clips.length}...`);
 
-      const rawClipPath = path.join(process.cwd(), 'public', clip.videoPath.replace(/^\//, ''));
+      // strip cache-buster query (?v=) before resolving the file on disk
+      const rawClipPath = path.join(process.cwd(), 'public', clip.videoPath.replace(/^\//, '').split('?')[0]);
       const assPath = path.join(clipsDir, `${clip.id}-subtitle.ass`);
       const finalSubtitledPath = path.join(clipsDir, `${clip.id}-final.mp4`);
 

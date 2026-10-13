@@ -16,7 +16,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
  */
 export async function POST(request) {
   try {
-    const { clipId, format, startSec, endSec, crop } = await request.json();
+    const { clipId, format, startSec, endSec, crop, cropKeyframes } = await request.json();
 
     if (!clipId || typeof clipId !== 'string' || !/^[a-zA-Z0-9_-]{6,64}$/.test(clipId)) {
       return NextResponse.json({ error: 'Invalid clipId' }, { status: 400 });
@@ -49,9 +49,36 @@ export async function POST(request) {
 
     const { width, height } = await getVideoDimensions(sourcePath);
 
-    // Optional manual framing crop (normalized 0..1 source units)
+    // Optional manual framing: either animated-pan keyframes or a single static rect
     let cropRect = null;
-    if (crop) {
+    if (Array.isArray(cropKeyframes) && cropKeyframes.length > 0) {
+      const valid =
+        cropKeyframes.length <= 12 &&
+        cropKeyframes.every((kf) =>
+          kf && Number.isFinite(kf.t) && kf.t >= 0 && kf.t <= 3600 &&
+          Number.isFinite(kf.x) && Number.isFinite(kf.y) &&
+          Number.isFinite(kf.w) && Number.isFinite(kf.h) &&
+          kf.x >= -0.02 && kf.y >= -0.02 && kf.w >= 0.05 && kf.h >= 0.05 && kf.w <= 1 && kf.h <= 1 &&
+          kf.x + kf.w <= 1.02 && kf.y + kf.h <= 1.02
+        );
+      if (!valid) {
+        return NextResponse.json({ error: 'Invalid crop keyframes' }, { status: 400 });
+      }
+
+      // Aspect-lock every keyframe (3% tolerance) + time-sort
+      const targetAspect = resolvedFormat === '1:1' ? 1 : 9 / 16;
+      for (const kf of cropKeyframes) {
+        const kfAspect = (kf.w * width) / (kf.h * height);
+        if (Math.abs(kfAspect - targetAspect) / targetAspect > 0.03) {
+          return NextResponse.json(
+            { error: 'Crop keyframe aspect does not match the selected format' },
+            { status: 400 }
+          );
+        }
+      }
+      cropKeyframes.sort((a, b) => a.t - b.t);
+      cropRect = { keyframes: cropKeyframes.map((kf) => ({ t: kf.t, x: kf.x, y: kf.y, w: kf.w, h: kf.h })) };
+    } else if (crop) {
       const { x, y, w, h } = crop;
       const validShape =
         [x, y, w, h].every((v) => Number.isFinite(v)) &&
@@ -73,10 +100,11 @@ export async function POST(request) {
       cropRect = { x, y, w, h };
     }
 
-    const outPath = cropRect ? `${outBase}-crop.mp4` : `${outBase}.mp4`;
+    const outSuffix = cropRect && cropRect.keyframes ? '-pan' : cropRect ? '-crop' : '';
+    const outPath = `${outBase}${outSuffix}.mp4`;
 
     console.log(
-      `[Reformat] clip ${clipId} -> ${resolvedFormat}${cropRect ? ' (manual crop)' : ''} (${width}x${height})...`
+      `[Reformat] clip ${clipId} -> ${resolvedFormat}${cropRect ? (cropRect.keyframes ? ` (animated pan, ${cropRect.keyframes.length} kf)` : ' (manual crop)') : ''} (${width}x${height})...`
     );
 
     // Source slice already contains ONLY the clip (prepare-editor sliced it),

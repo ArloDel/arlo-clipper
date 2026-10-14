@@ -191,6 +191,9 @@ arlo-clipper/
 │   ├── audioDucking.js               # FFmpeg multi-stream complex filter builder
 │   ├── broll.js                      # Native PNG/SVG visual cards generator
 │   ├── brollCatalog.js               # B-Roll theme catalog & keyword matcher
+│   ├── captionPresets.js             # Bundled one-click caption style presets
+│   ├── videoFormat.js                # Output format baking (9:16 / 1:1 / blur / crop keyframes)
+│   ├── watermark.js                  # Branding watermark config normalizer
 │   ├── db.js                         # JSON database CRUD & pagination helper
 │   ├── localBot.js                   # Channel watcher bot & background timer
 │   ├── socialCopy.js                 # Viral copy, hooks, and hashtag generator

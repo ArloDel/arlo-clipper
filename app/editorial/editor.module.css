@@ -145,6 +145,58 @@
   cursor: pointer;
 }
 
+/* ── Caption style presets ── */
+.presetRowHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.presetApplyAllBtn {
+  background: transparent;
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+  font-size: 0.62rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms var(--ease-out);
+}
+
+.presetApplyAllBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--text-main);
+}
+
+.presetChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.presetChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-sub);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all 150ms var(--ease-out);
+}
+
+.presetChip:hover {
+  border-color: var(--accent);
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
 /* ── Watermark (Branding) ── */
 .watermarkCard {
   border: 1px solid var(--border-hairline);

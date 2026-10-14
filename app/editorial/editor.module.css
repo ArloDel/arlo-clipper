@@ -197,6 +197,13 @@
   background: color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
+.presetChipActive {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 600;
+}
+
 /* ── Watermark (Branding) ── */
 .watermarkCard {
   border: 1px solid var(--border-hairline);

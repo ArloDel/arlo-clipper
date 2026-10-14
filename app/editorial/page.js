@@ -723,6 +723,20 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipStyles(clipStyles.map(() => ({ ...source })));
   };
 
+  /** True when a preset's bundle already matches the active clip's style. */
+  const isPresetActive = (preset) => {
+    const s = clipStyles[activeClipIdx];
+    if (!s) return false;
+    return (
+      s.font === preset.style.font &&
+      s.size === preset.style.size &&
+      String(s.color).toUpperCase() === preset.style.color.toUpperCase() &&
+      Boolean(s.outline) === preset.style.outline &&
+      Boolean(s.shadow) === preset.style.shadow &&
+      s.animation === preset.style.animation
+    );
+  };
+
   const updateAudioSetting = (key, val) => {
     const newAudio = [...clipAudioSettings];
     newAudio[activeClipIdx] = { ...newAudio[activeClipIdx], [key]: val };
@@ -1911,7 +1925,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               <button
                 key={preset.id}
                 type="button"
-                className={editorStyles.presetChip}
+                className={`${editorStyles.presetChip} ${isPresetActive(preset) ? editorStyles.presetChipActive : ''}`}
                 title={`${preset.desc} — ${preset.style.font}, ${preset.style.size}, ${preset.style.animation}`}
                 onClick={() => applyCaptionStyle(preset.style)}
               >

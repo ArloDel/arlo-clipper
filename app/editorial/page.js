@@ -10,6 +10,7 @@ import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
+import { CAPTION_PRESETS } from '@/lib/captionPresets';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
@@ -1879,6 +1880,44 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
         </div>
 
         {/* ── 4. Subtitle Typography & Styles ── */}
+        <div className={editorStyles.controlGroup}>
+          <div className={editorStyles.presetRowHeader}>
+            <label className={editorStyles.controlLabel}>Preset Gaya Caption</label>
+            <button
+              type="button"
+              className={editorStyles.presetApplyAllBtn}
+              onClick={() => {
+                const activeStyle = clipStyles[activeClipIdx];
+                setClipStyles(clipStyles.map(() => ({ ...activeStyle })));
+              }}
+              title="Salin gaya klip aktif ke semua klip"
+            >
+              Terapkan ke semua klip
+            </button>
+          </div>
+          <div className={editorStyles.presetChipRow}>
+            {CAPTION_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={editorStyles.presetChip}
+                title={`${preset.desc} — ${preset.style.font}, ${preset.style.size}, ${preset.style.animation}`}
+                onClick={() => {
+                  updateStyle('font', preset.style.font);
+                  updateStyle('size', preset.style.size);
+                  updateStyle('color', preset.style.color);
+                  updateStyle('outline', preset.style.outline);
+                  updateStyle('shadow', preset.style.shadow);
+                  updateStyle('animation', preset.style.animation);
+                }}
+              >
+                <span>{preset.emoji}</span>
+                <span>{preset.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className={editorStyles.controlGroup}>
           <label className={editorStyles.controlLabel}>Font Family</label>
           <select

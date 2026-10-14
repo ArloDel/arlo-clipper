@@ -709,6 +709,20 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipStyles(newStyles);
   };
 
+  /** Apply a full caption style bundle (preset) to the active clip. */
+  const applyCaptionStyle = (style) => {
+    const newStyles = [...clipStyles];
+    newStyles[activeClipIdx] = { ...newStyles[activeClipIdx], ...style };
+    setClipStyles(newStyles);
+  };
+
+  /** Copy the active clip's caption style onto every clip. */
+  const applyActiveStyleToAll = () => {
+    const source = clipStyles[activeClipIdx];
+    if (!source) return;
+    setClipStyles(clipStyles.map(() => ({ ...source })));
+  };
+
   const updateAudioSetting = (key, val) => {
     const newAudio = [...clipAudioSettings];
     newAudio[activeClipIdx] = { ...newAudio[activeClipIdx], [key]: val };
@@ -1886,10 +1900,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
             <button
               type="button"
               className={editorStyles.presetApplyAllBtn}
-              onClick={() => {
-                const activeStyle = clipStyles[activeClipIdx];
-                setClipStyles(clipStyles.map(() => ({ ...activeStyle })));
-              }}
+              onClick={applyActiveStyleToAll}
               title="Salin gaya klip aktif ke semua klip"
             >
               Terapkan ke semua klip
@@ -1902,14 +1913,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 type="button"
                 className={editorStyles.presetChip}
                 title={`${preset.desc} — ${preset.style.font}, ${preset.style.size}, ${preset.style.animation}`}
-                onClick={() => {
-                  updateStyle('font', preset.style.font);
-                  updateStyle('size', preset.style.size);
-                  updateStyle('color', preset.style.color);
-                  updateStyle('outline', preset.style.outline);
-                  updateStyle('shadow', preset.style.shadow);
-                  updateStyle('animation', preset.style.animation);
-                }}
+                onClick={() => applyCaptionStyle(preset.style)}
               >
                 <span>{preset.emoji}</span>
                 <span>{preset.label}</span>

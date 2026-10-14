@@ -10,7 +10,7 @@ import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
-import { CAPTION_PRESETS } from '@/lib/captionPresets';
+import { CAPTION_PRESETS, DEFAULT_CAPTION_STYLE } from '@/lib/captionPresets';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
@@ -266,12 +266,10 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   // Style settings per clip (initial values honor the Home page options)
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
-      font: initialStyle?.font || 'Impact',
-      size: initialStyle?.size || 'Medium',
-      color: initialStyle?.color || '#FFFF00',
-      outline: true,
-      shadow: true,
-      animation: 'Pop',
+      ...DEFAULT_CAPTION_STYLE,
+      font: initialStyle?.font || DEFAULT_CAPTION_STYLE.font,
+      size: initialStyle?.size || DEFAULT_CAPTION_STYLE.size,
+      color: initialStyle?.color || DEFAULT_CAPTION_STYLE.color,
     }))
   );
 

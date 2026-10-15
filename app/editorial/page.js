@@ -391,7 +391,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     return { w: Math.min(1, w), h: Math.min(1, h) };
   };
 
+  // Spread first so keyframe metadata (_id, t) survives clamping
   const clampFrameRect = (rect) => ({
+    ...rect,
     x: Math.min(1 - rect.w, Math.max(0, rect.x)),
     y: Math.min(1 - rect.h, Math.max(0, rect.y)),
     w: rect.w,

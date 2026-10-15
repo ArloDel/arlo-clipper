@@ -1,12 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import ThemeToggle from '@/app/components/ThemeToggle';
 import WebhookModal, { WebhookTriggerButton } from '@/app/components/WebhookModal';
 import DirectPublishModal, { DirectPublishTriggerButton } from '@/app/components/DirectPublishModal';
-import AppLogo from '@/app/components/AppLogo';
 import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCopy';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
@@ -24,9 +22,7 @@ function getYouTubeId(url) {
 
 function getSegmentWords(seg) {
   if (!seg) return [];
-  if (Array.isArray(seg.words) && seg.words.length > 0) {
-    return seg.words;
-  }
+  if (Array.isArray(seg.words) && seg.words.length > 0) return seg.words;
   const tokens = (seg.text || '').trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [];
   const segDur = Math.max(0.1, (seg.end || 0) - (seg.start || 0));
@@ -45,44 +41,33 @@ function BrollOverlay({ videoRef, brollSettings }) {
     const video = videoRef?.current;
     if (!video) return;
 
-    let animFrameId = null;
-
+    let animId = null;
     const updateTime = () => {
       if (video) {
         setCurrentTime(video.currentTime);
-        if (!video.paused && !video.ended) {
-          animFrameId = requestAnimationFrame(updateTime);
-        }
+        if (!video.paused && !video.ended) animId = requestAnimationFrame(updateTime);
       }
     };
-
-    const handlePlay = () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      animFrameId = requestAnimationFrame(updateTime);
+    const onPlay = () => {
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(updateTime);
     };
-
-    const handlePauseOrSeek = () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
+    const onPause = () => {
+      if (animId) cancelAnimationFrame(animId);
       if (video) setCurrentTime(video.currentTime);
     };
 
-    setCurrentTime(video.currentTime || 0);
-
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('playing', handlePlay);
-    video.addEventListener('pause', handlePauseOrSeek);
-    video.addEventListener('seeking', handlePauseOrSeek);
-    video.addEventListener('seeked', handlePauseOrSeek);
-    video.addEventListener('timeupdate', handlePauseOrSeek);
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+    video.addEventListener('seeked', onPause);
+    video.addEventListener('timeupdate', onPause);
 
     return () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('playing', handlePlay);
-      video.removeEventListener('pause', handlePauseOrSeek);
-      video.removeEventListener('seeking', handlePauseOrSeek);
-      video.removeEventListener('seeked', handlePauseOrSeek);
-      video.removeEventListener('timeupdate', handlePauseOrSeek);
+      if (animId) cancelAnimationFrame(animId);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('seeked', onPause);
+      video.removeEventListener('timeupdate', onPause);
     };
   }, [videoRef]);
 
@@ -108,8 +93,6 @@ function BrollOverlay({ videoRef, brollSettings }) {
   );
 }
 
-/** Live preview of the opening title bar (mirrors the ASS render: visible
- * only during the first `seconds`, then fades out). */
 function TitleBarOverlay({ videoRef, titleBar }) {
   const [currentTime, setCurrentTime] = useState(0);
 
@@ -117,14 +100,11 @@ function TitleBarOverlay({ videoRef, titleBar }) {
     const video = videoRef?.current;
     if (!video) return;
     const onTime = () => setCurrentTime(video.currentTime);
-    onTime();
     video.addEventListener('timeupdate', onTime);
     video.addEventListener('seeked', onTime);
-    video.addEventListener('loadedmetadata', onTime);
     return () => {
       video.removeEventListener('timeupdate', onTime);
       video.removeEventListener('seeked', onTime);
-      video.removeEventListener('loadedmetadata', onTime);
     };
   }, [videoRef]);
 
@@ -133,8 +113,6 @@ function TitleBarOverlay({ videoRef, titleBar }) {
 
   const preset = TITLE_PRESETS.find((p) => p.id === titleBar.preset) || TITLE_PRESETS[0];
   const posStyle = preset.style.position === 'center' ? { top: '50%', transform: 'translateY(-50%)' } : { top: '9%' };
-
-  // fade-out near the end, mirroring the ASS \fad(150,250)
   const remain = (titleBar.seconds || 2.5) - currentTime;
   const opacity = remain < 0.25 ? Math.max(0, remain / 0.25) : currentTime < 0.15 ? currentTime / 0.15 : 1;
 
@@ -160,51 +138,35 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   useEffect(() => {
     const video = videoRef?.current;
     if (!video) return;
-
-    let animFrameId = null;
-
+    let animId = null;
     const updateTime = () => {
       if (video) {
         setCurrentTime(video.currentTime);
-        if (!video.paused && !video.ended) {
-          animFrameId = requestAnimationFrame(updateTime);
-        }
+        if (!video.paused && !video.ended) animId = requestAnimationFrame(updateTime);
       }
     };
-
-    const handlePlay = () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      animFrameId = requestAnimationFrame(updateTime);
+    const onPlay = () => {
+      if (animId) cancelAnimationFrame(animId);
+      animId = requestAnimationFrame(updateTime);
     };
-
-    const handlePauseOrSeek = () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
+    const onPause = () => {
+      if (animId) cancelAnimationFrame(animId);
       if (video) setCurrentTime(video.currentTime);
     };
 
-    setCurrentTime(video.currentTime || 0);
-
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('playing', handlePlay);
-    video.addEventListener('pause', handlePauseOrSeek);
-    video.addEventListener('seeking', handlePauseOrSeek);
-    video.addEventListener('seeked', handlePauseOrSeek);
-    video.addEventListener('timeupdate', handlePauseOrSeek);
-
-    if (!video.paused && !video.ended) {
-      animFrameId = requestAnimationFrame(updateTime);
-    }
+    video.addEventListener('play', onPlay);
+    video.addEventListener('pause', onPause);
+    video.addEventListener('seeked', onPause);
+    video.addEventListener('timeupdate', onPause);
 
     return () => {
-      if (animFrameId) cancelAnimationFrame(animFrameId);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('playing', handlePlay);
-      video.removeEventListener('pause', handlePauseOrSeek);
-      video.removeEventListener('seeking', handlePauseOrSeek);
-      video.removeEventListener('seeked', handlePauseOrSeek);
-      video.removeEventListener('timeupdate', handlePauseOrSeek);
+      if (animId) cancelAnimationFrame(animId);
+      video.removeEventListener('play', onPlay);
+      video.removeEventListener('pause', onPause);
+      video.removeEventListener('seeked', onPause);
+      video.removeEventListener('timeupdate', onPause);
     };
-  }, [videoRef, segments]);
+  }, [videoRef]);
 
   const activeSeg = (segments || []).find((s) => currentTime >= s.start && currentTime <= s.end);
   if (!activeSeg) return null;
@@ -215,27 +177,17 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   const textShadow = [
     style.shadow ? '0px 2px 5px rgba(0,0,0,0.7)' : '',
     style.outline ? '-2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000' : '',
-  ]
-    .filter(Boolean)
-    .join(', ');
+  ].filter(Boolean).join(', ');
 
   const isKaraoke = style.animation === 'Karaoke';
 
   if (isKaraoke) {
     const words = getSegmentWords(activeSeg);
     let highlightColor = style.color || '#FFFF00';
-    if (highlightColor.toLowerCase() === '#ffffff' || highlightColor.toLowerCase() === '#fff') {
-      highlightColor = '#FFFF00';
-    }
+    if (highlightColor.toLowerCase() === '#ffffff') highlightColor = '#FFFF00';
 
     return (
-      <div
-        className={editorStyles.subtitleOverlay}
-        style={{
-          fontFamily: style.font || 'Impact',
-          fontSize: fontSize,
-        }}
-      >
+      <div className={editorStyles.subtitleOverlay} style={{ fontFamily: style.font || 'Impact', fontSize }}>
         <div className={editorStyles.karaokeContainer}>
           {words.map((w, idx) => {
             const isCurrent =
@@ -243,23 +195,15 @@ function SubtitleOverlay({ videoRef, segments, style }) {
               (words[idx + 1] && words[idx + 1].start > w.start
                 ? currentTime < Math.min(w.end + 0.15, words[idx + 1].start)
                 : currentTime <= w.end + 0.15);
-            const isPast =
-              currentTime > (words[idx + 1] ? words[idx + 1].start : w.end + 0.15);
-
-            const wordColor = isCurrent ? highlightColor : '#FFFFFF';
-            const wordShadow = isCurrent
-              ? `0 0 16px ${highlightColor}, 0 0 6px ${highlightColor}${textShadow ? ', ' + textShadow : ', -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000'}`
-              : (textShadow || 'none');
+            const isPast = currentTime > (words[idx + 1] ? words[idx + 1].start : w.end + 0.15);
 
             return (
               <span
                 key={idx}
-                className={`${editorStyles.karaokeWord} ${
-                  isCurrent ? editorStyles.karaokeWordActive : ''
-                } ${isPast ? editorStyles.karaokeWordPast : ''}`}
+                className={`${editorStyles.karaokeWord} ${isCurrent ? editorStyles.karaokeWordActive : ''} ${isPast ? editorStyles.karaokeWordPast : ''}`}
                 style={{
-                  color: wordColor,
-                  textShadow: wordShadow,
+                  color: isCurrent ? highlightColor : '#FFFFFF',
+                  textShadow: isCurrent ? `0 0 16px ${highlightColor}, 0 0 6px ${highlightColor}, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000` : (textShadow || 'none'),
                 }}
               >
                 {w.word}
@@ -273,16 +217,11 @@ function SubtitleOverlay({ videoRef, segments, style }) {
 
   const getAnimationClass = (anim) => {
     switch (anim) {
-      case 'Pop':
-        return editorStyles.animatePop;
-      case 'Slide Up':
-        return editorStyles.animateSlideUp;
-      case 'Blur':
-        return editorStyles.animateBlur;
-      case 'Bounce':
-        return editorStyles.animateBounce;
-      default:
-        return '';
+      case 'Pop': return editorStyles.animatePop;
+      case 'Slide Up': return editorStyles.animateSlideUp;
+      case 'Blur': return editorStyles.animateBlur;
+      case 'Bounce': return editorStyles.animateBounce;
+      default: return '';
     }
   };
 
@@ -292,7 +231,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
       className={`${editorStyles.subtitleOverlay} ${getAnimationClass(style.animation)}`}
       style={{
         fontFamily: style.font || 'Impact',
-        fontSize: fontSize,
+        fontSize,
         color: style.color || '#FFFF00',
         textShadow: textShadow || 'none',
       }}
@@ -302,7 +241,7 @@ function SubtitleOverlay({ videoRef, segments, style }) {
   );
 }
 
-function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initialStyle, initialWatermark }) {
+function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initialStyle, initialWatermark, projectTitle }) {
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [clips, setClips] = useState(initialClips);
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -310,7 +249,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   
-  // Style settings per clip (initial values honor the Home page options)
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
       ...DEFAULT_CAPTION_STYLE,
@@ -320,7 +258,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
-  // Audio settings per clip
   const [clipAudioSettings, setClipAudioSettings] = useState(
     initialClips.map((c) => ({
       bgmTrack: c.audioSettings?.bgmTrack || 'upbeat-energetic',
@@ -332,7 +269,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
-  // B-Roll settings per clip
   const [clipBrollSettings, setClipBrollSettings] = useState(
     initialClips.map((c) => ({
       enabled: c.brollSettings?.enabled !== false,
@@ -343,7 +279,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
-  // Watermark (branding) per clip — defaults from the Home page branding panel
   const [clipWatermarks, setClipWatermarks] = useState(
     initialClips.map(() =>
       initialWatermark
@@ -359,7 +294,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipWatermarks(next);
   };
 
-  // Opening title bar (burned hook) per clip — text defaults to the clip hook
   const [clipTitleBars, setClipTitleBars] = useState(
     initialClips.map((c) => ({
       enabled: false,
@@ -384,7 +318,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const handleTitleEnable = (enabled) => {
     const current = clipTitleBars[activeClipIdx];
     const patch = { enabled };
-    // prefill text from hook on first enable when empty
     if (enabled && !current.text) patch.text = clips[activeClipIdx]?.hook || clips[activeClipIdx]?.title || 'Judul Viral';
     handleClipTitleBar(patch);
   };
@@ -415,7 +348,12 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const bgmAudioRef = useRef(null);
   const previewAudioRef = useRef(null);
   const sfxAudioRef = useRef(null);
+  const rulerRef = useRef(null);
   const [previewingTrackId, setPreviewingTrackId] = useState(null);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoTime, setVideoTime] = useState(0);
+  const [videoDuration, setVideoDuration] = useState(0);
 
   const activeClip = clips[activeClipIdx] || {};
   const activeStyle = clipStyles[activeClipIdx] || {};
@@ -424,7 +362,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const activeWatermark = clipWatermarks[activeClipIdx] || null;
   const activeTitleBar = clipTitleBars[activeClipIdx] || null;
 
-  // CSS anchor aliases matching the ASS/ffmpeg positions for the live preview
   const wmPreviewPos = (position) => {
     const [vertical, horizontal] = String(position || 'top-right').split('-');
     return {
@@ -433,28 +370,24 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     };
   };
 
-  // Per-clip output format ('9:16' | '1:1' | '9:16-blur'); initially baked by prepare-editor
   const normalizeFormat = (r) => (r === '1:1' ? '1:1' : r === '9:16-blur' ? '9:16-blur' : '9:16');
   const [clipFormats, setClipFormats] = useState(initialClips.map(() => normalizeFormat(ratio)));
   const [reformatting, setReformatting] = useState(false);
 
   const activeFormat = clipFormats[activeClipIdx] || '9:16';
   const previewAspect = activeFormat === '1:1' ? '1 / 1' : '9 / 16';
-  // OpenCV trackers only understand 9:16 / 1:1 / 16:9; blur falls back to 9:16 crop there
   const trackerRatio = activeFormat === '9:16-blur' ? '9:16' : activeFormat;
 
-  // ── Manual Framing (pan + zoom over the untouched source slice) ──
   const [framingMode, setFramingMode] = useState(false);
-  const [frameRect, setFrameRect] = useState(null); // normalized {x,y,w,h} on source
+  const [frameRect, setFrameRect] = useState(null);
   const [frameZoom, setFrameZoom] = useState(1);
-  const [sourceAR, setSourceAR] = useState(null); // source video aspect (w/h) from metadata
-  const [clipKeyframes, setClipKeyframes] = useState(initialClips.map(() => null)); // per-clip crop keyframes
-  const [keyframes, setKeyframes] = useState(null); // working copy while in framing mode
+  const [sourceAR, setSourceAR] = useState(null);
+  const [clipKeyframes, setClipKeyframes] = useState(initialClips.map(() => null));
+  const [keyframes, setKeyframes] = useState(null);
   const [activeKfId, setActiveKfId] = useState(null);
   const framingLayerRef = useRef(null);
   const framingDragRef = useRef(null);
   const kfTimelineRef = useRef(null);
-  const kfDotDragRef = useRef(null);
   const kfRafRef = useRef(null);
   const kfIdRef = useRef(1);
   const ZOOM_MIN = 0.35;
@@ -469,7 +402,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     return { w: Math.min(1, w), h: Math.min(1, h) };
   };
 
-  // Spread first so keyframe metadata (_id, t) survives clamping
   const clampFrameRect = (rect) => ({
     ...rect,
     x: Math.min(1 - rect.w, Math.max(0, rect.x)),
@@ -483,7 +415,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     return clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h });
   };
 
-  // Move the framing box (and the active keyframe) so its center sits at a point
   const placeBoxCenterAt = (pxN, pyN) => {
     setFrameRect((prev) => clampFrameRect({ ...prev, x: pxN - prev.w / 2, y: pyN - prev.h / 2 }));
     setKeyframes((prev) => {
@@ -503,6 +434,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setFrameZoom(kfs[0]?.h ?? 1);
     setSourceAR(null);
     setFramingMode(true);
+    setActiveDrawer('cut');
   };
 
   const framingReset = () => {
@@ -520,26 +452,21 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setActiveKfId(null);
   };
 
-  // Click anywhere on the source frame moves the box center there, clamped
   const handleFramingPointerDown = (e) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
     const layer = framingLayerRef.current;
     if (!layer) return;
     const rect = layer.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
     framingDragRef.current = rect;
-    placeBoxCenterAt(px / rect.width, py / rect.height);
+    placeBoxCenterAt((e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
   };
 
   const handleFramingPointerMove = (e) => {
     if (!framingDragRef.current || !framingDragRef.current.width) return;
     const rect = framingLayerRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const px = e.clientX - rect.left;
-    const py = e.clientY - rect.top;
-    placeBoxCenterAt(px / rect.width, py / rect.height);
+    placeBoxCenterAt((e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
   };
 
   const handleFramingPointerUp = () => {
@@ -549,8 +476,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const handleFrameZoom = (zoom) => {
     const z = Math.max(ZOOM_MIN, Math.min(1, zoom));
     setFrameZoom(z);
-    // Keep every keyframe's center; resize all windows so server parity holds
-    // spread the rect first so keyframe metadata (_id, t) is preserved
     const resize = (rect, w, h) =>
       clampFrameRect({ ...rect, x: rect.x + rect.w / 2 - w / 2, y: rect.y + rect.h / 2 - h / 2, w, h });
     setFrameRect((prev) => {
@@ -564,10 +489,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     });
   };
 
-  // ── Crop keyframes (animated pan) ──
   const nextKfId = () => `_kf${kfIdRef.current++}`;
 
-  const kfInterpolateRect = (kfs, t) => {
+  const kfInterpolateRect = useCallback((kfs, t) => {
     if (!kfs || kfs.length === 0) return frameRect;
     if (kfs.length === 1) return kfs[0];
     const time = Math.max(kfs[0].t, Math.min(kfs[kfs.length - 1].t, t));
@@ -583,9 +507,8 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       w: k0.w + (k1.w - k0.w) * f,
       h: k0.h + (k1.h - k0.h) * f,
     };
-  };
+  }, [frameRect]);
 
-  // Live preview: box follows the video clock while playing (>1 keyframes only)
   useEffect(() => {
     if (!framingMode || !keyframes || keyframes.length <= 1) return;
     const video = videoRef.current;
@@ -618,7 +541,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       video.removeEventListener('pause', stop);
       video.removeEventListener('seeked', onSeek);
     };
-  }, [framingMode, keyframes]);
+  }, [framingMode, keyframes, kfInterpolateRect]);
 
   const kfSelectById = (id) => {
     setActiveKfId(id);
@@ -638,9 +561,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
 
   const kfMoveTimeById = (id, t) => {
     setKeyframes((prev) =>
-      prev
-        ? prev.map((kf) => (kf._id === id ? { ...kf, t: Math.max(0, Math.min(clipDur, t)) } : kf))
-        : prev
+      prev ? prev.map((kf) => (kf._id === id ? { ...kf, t: Math.max(0, Math.min(clipDur, t)) } : kf)) : prev
     );
   };
 
@@ -659,7 +580,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }
   };
 
-  // Timeline: click empty area = add keyframe at that time
   const kfTimelineDown = (e) => {
     const track = kfTimelineRef.current;
     if (!track) return;
@@ -668,9 +588,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     const t = Math.max(0, Math.min(clipDur, ((e.clientX - rect.left) / rect.width) * clipDur));
     kfAddAt(t);
   };
-  const kfTimelineUp = () => {};
-
-  // Dot drag: move the keyframe's time; resort on release
 
   const handleFramingApply = async () => {
     const current = clips[activeClipIdx];
@@ -715,7 +632,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     if (reformatting || newFormat === activeFormat) return;
     const current = clips[activeClipIdx];
     if (!current?.id || !current?.startSec || !current?.endSec) {
-      alert('Clip ini tidak menyimpan data slicing; tidak bisa mengubah format. Silakan proses ulang dari Home.');
+      alert('Clip ini tidak menyimpan data slicing; tidak bisa mengubah format.');
       return;
     }
 
@@ -761,15 +678,8 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const handleUpdateHook = (newHook) => {
     const updatedClips = [...clips];
     const curr = updatedClips[activeClipIdx] || {};
-    const newScore = calculateViralityScore({
-      ...curr,
-      hook: newHook,
-    });
-    updatedClips[activeClipIdx] = {
-      ...curr,
-      hook: newHook,
-      viralityScore: newScore,
-    };
+    const newScore = calculateViralityScore({ ...curr, hook: newHook });
+    updatedClips[activeClipIdx] = { ...curr, hook: newHook, viralityScore: newScore };
     setClips(updatedClips);
   };
 
@@ -779,32 +689,16 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipStyles(newStyles);
   };
 
-  /** Apply a full caption style bundle (preset) to the active clip. */
   const applyCaptionStyle = (style) => {
     const newStyles = [...clipStyles];
     newStyles[activeClipIdx] = { ...newStyles[activeClipIdx], ...style };
     setClipStyles(newStyles);
   };
 
-  /** Copy the active clip's caption style onto every clip. */
   const applyActiveStyleToAll = () => {
     const source = clipStyles[activeClipIdx];
     if (!source) return;
     setClipStyles(clipStyles.map(() => ({ ...source })));
-  };
-
-  /** True when a preset's bundle already matches the active clip's style. */
-  const isPresetActive = (preset) => {
-    const s = clipStyles[activeClipIdx];
-    if (!s) return false;
-    return (
-      s.font === preset.style.font &&
-      s.size === preset.style.size &&
-      String(s.color).toUpperCase() === preset.style.color.toUpperCase() &&
-      Boolean(s.outline) === preset.style.outline &&
-      Boolean(s.shadow) === preset.style.shadow &&
-      s.animation === preset.style.animation
-    );
   };
 
   const updateAudioSetting = (key, val) => {
@@ -823,21 +717,14 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     const currentClip = clips[activeClipIdx];
     const newOverlays = detectAutoBroll(currentClip.segments, currentClip.hook || currentClip.title, newTheme);
     const newBroll = [...clipBrollSettings];
-    newBroll[activeClipIdx] = {
-      ...newBroll[activeClipIdx],
-      theme: newTheme,
-      overlays: newOverlays,
-    };
+    newBroll[activeClipIdx] = { ...newBroll[activeClipIdx], theme: newTheme, overlays: newOverlays };
     setClipBrollSettings(newBroll);
   };
 
   const handleRemoveBrollOverlay = (overlayId) => {
     const newBroll = [...clipBrollSettings];
     const currentOverlays = newBroll[activeClipIdx]?.overlays || [];
-    newBroll[activeClipIdx] = {
-      ...newBroll[activeClipIdx],
-      overlays: currentOverlays.filter((o) => o.id !== overlayId),
-    };
+    newBroll[activeClipIdx] = { ...newBroll[activeClipIdx], overlays: currentOverlays.filter((o) => o.id !== overlayId) };
     setClipBrollSettings(newBroll);
   };
 
@@ -857,34 +744,45 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       end: Number((currTime + 2.5).toFixed(2)),
       duration: 2.5,
       assetPath: themeObj.assetPath,
-      keyword: 'Manual Highlight',
-      label: `${themeObj.icon} ${themeObj.name} (Custom)`,
+      keyword: 'Highlight Visual',
+      label: `${themeObj.icon} ${themeObj.name}`,
     };
 
     const newBroll = [...clipBrollSettings];
     const currentOverlays = [...(newBroll[activeClipIdx]?.overlays || []), newOverlay].sort((a, b) => a.start - b.start);
-    newBroll[activeClipIdx] = {
-      ...newBroll[activeClipIdx],
-      overlays: currentOverlays,
-    };
+    newBroll[activeClipIdx] = { ...newBroll[activeClipIdx], overlays: currentOverlays };
     setClipBrollSettings(newBroll);
   };
 
-  // Synchronized in-browser BGM Ducking & SFX triggers with Video
   useEffect(() => {
     const video = videoRef.current;
     const bgm = bgmAudioRef.current;
     const sfx = sfxAudioRef.current;
-    if (!video || !bgm) return;
+    if (!video) return;
+
+    const onPlayState = () => setIsPlaying(true);
+    const onPauseState = () => setIsPlaying(false);
+    const onLoadedMeta = () => {
+      setVideoDuration(video.duration || clipDur);
+      setVideoTime(video.currentTime || 0);
+    };
+    const onTimeUpdate = () => setVideoTime(video.currentTime || 0);
+
+    video.addEventListener('play', onPlayState);
+    video.addEventListener('pause', onPauseState);
+    video.addEventListener('loadedmetadata', onLoadedMeta);
+    video.addEventListener('timeupdate', onTimeUpdate);
 
     const selectedTrack = BGM_TRACKS.find((t) => t.id === activeAudio.bgmTrack && t.id !== 'none');
-    if (!selectedTrack || !selectedTrack.path) {
-      bgm.pause();
-    } else {
-      if (bgm.src !== window.location.origin + selectedTrack.path && !bgm.src.endsWith(selectedTrack.path)) {
-        bgm.src = selectedTrack.path;
+    if (bgm) {
+      if (!selectedTrack || !selectedTrack.path) {
+        bgm.pause();
+      } else {
+        if (bgm.src !== window.location.origin + selectedTrack.path && !bgm.src.endsWith(selectedTrack.path)) {
+          bgm.src = selectedTrack.path;
+        }
+        bgm.loop = true;
       }
-      bgm.loop = true;
     }
 
     const duckFactors = { light: 0.65, medium: 0.35, heavy: 0.15 };
@@ -915,7 +813,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       if (animFrame) cancelAnimationFrame(animFrame);
       animFrame = requestAnimationFrame(smoothVolumeStep);
 
-      // Trigger live preview SFX on hook or key segment starts
       if (activeAudio.sfxEnabled && sfx && !video.paused) {
         const segs = activeClip.segments || [];
         for (let idx = 0; idx < Math.min(segs.length, 5); idx++) {
@@ -931,46 +828,34 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       }
     };
 
-    const handlePlay = () => {
+    const handlePlaySync = () => {
       triggeredSfxTimes.clear();
-      if (selectedTrack) {
+      if (selectedTrack && bgm) {
         bgm.currentTime = (video.currentTime || 0) % 16;
         syncBgmWithVideo();
         bgm.play().catch(() => {});
       }
     };
 
-    const handlePause = () => {
-      bgm.pause();
+    const handlePauseSync = () => {
+      if (bgm) bgm.pause();
       if (animFrame) cancelAnimationFrame(animFrame);
     };
 
-    const handleTimeUpdate = () => {
-      syncBgmWithVideo();
-    };
-
-    const handleSeek = () => {
-      triggeredSfxTimes.clear();
-      if (selectedTrack) {
-        bgm.currentTime = (video.currentTime || 0) % 16;
-        syncBgmWithVideo();
-      }
-    };
-
-    video.addEventListener('play', handlePlay);
-    video.addEventListener('pause', handlePause);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('seeking', handleSeek);
-    video.addEventListener('seeked', handleSeek);
+    video.addEventListener('play', handlePlaySync);
+    video.addEventListener('pause', handlePauseSync);
+    video.addEventListener('timeupdate', syncBgmWithVideo);
 
     return () => {
       if (animFrame) cancelAnimationFrame(animFrame);
-      video.removeEventListener('play', handlePlay);
-      video.removeEventListener('pause', handlePause);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('seeking', handleSeek);
-      video.removeEventListener('seeked', handleSeek);
-      bgm.pause();
+      video.removeEventListener('play', onPlayState);
+      video.removeEventListener('pause', onPauseState);
+      video.removeEventListener('loadedmetadata', onLoadedMeta);
+      video.removeEventListener('timeupdate', onTimeUpdate);
+      video.removeEventListener('play', handlePlaySync);
+      video.removeEventListener('pause', handlePauseSync);
+      video.removeEventListener('timeupdate', syncBgmWithVideo);
+      if (bgm) bgm.pause();
     };
   }, [
     activeClipIdx,
@@ -980,8 +865,28 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     activeAudio.duckingStrength,
     activeAudio.sfxEnabled,
     activeAudio.sfxVolume,
-    activeClip.segments
+    activeClip.segments,
+    clipDur
   ]);
+
+  const togglePlayPause = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
+  };
+
+  const handleRulerSeek = (e) => {
+    const ruler = rulerRef.current;
+    const video = videoRef.current;
+    if (!ruler || !video) return;
+    const rect = ruler.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const effectiveDur = videoDuration || clipDur || 15;
+    const newTime = (clickX / rect.width) * effectiveDur;
+    video.currentTime = newTime;
+    setVideoTime(newTime);
+  };
 
   const handleTogglePreviewTrack = (trackId) => {
     if (previewingTrackId === trackId) {
@@ -1004,13 +909,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     if (enabled) {
       if (currentClip.trackedVideoPath) {
         const updated = [...clips];
-        updated[activeClipIdx] = {
-          ...currentClip,
-          videoPath: currentClip.trackedVideoPath,
-          faceTracking: true,
-          lipTracking: false,
-          splitScreen: false,
-        };
+        updated[activeClipIdx] = { ...currentClip, videoPath: currentClip.trackedVideoPath, faceTracking: true, lipTracking: false, splitScreen: false };
         setClips(updated);
       } else {
         setTrackingLoading(true);
@@ -1018,29 +917,14 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           const res = await fetch('/api/face-track', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clipId: currentClip.id,
-              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
-              videoPath: currentClip.videoPath,
-              ratio: trackerRatio,
-            }),
+            body: JSON.stringify({ clipId: currentClip.id, sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath, videoPath: currentClip.videoPath, ratio: trackerRatio }),
           });
           const data = await res.json();
-          if (!res.ok || !data.success) {
-            throw new Error(data.error || 'Failed to track face');
-          }
+          if (!res.ok || !data.success) throw new Error(data.error || 'Failed to track face');
           const updated = [...clips];
-          updated[activeClipIdx] = {
-            ...currentClip,
-            trackedVideoPath: data.trackedVideoPath,
-            videoPath: data.trackedVideoPath,
-            faceTracking: true,
-            lipTracking: false,
-            splitScreen: false,
-          };
+          updated[activeClipIdx] = { ...currentClip, trackedVideoPath: data.trackedVideoPath, videoPath: data.trackedVideoPath, faceTracking: true, lipTracking: false, splitScreen: false };
           setClips(updated);
         } catch (err) {
-          console.error('Face tracking error:', err);
           alert('Gagal melacak wajah: ' + err.message);
         } finally {
           setTrackingLoading(false);
@@ -1049,11 +933,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     } else {
       const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
       const updated = [...clips];
-      updated[activeClipIdx] = {
-        ...currentClip,
-        videoPath: fallbackVideo,
-        faceTracking: false,
-      };
+      updated[activeClipIdx] = { ...currentClip, videoPath: fallbackVideo, faceTracking: false };
       setClips(updated);
     }
   };
@@ -1063,13 +943,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     if (enabled) {
       if (currentClip.lipTrackedVideoPath) {
         const updated = [...clips];
-        updated[activeClipIdx] = {
-          ...currentClip,
-          videoPath: currentClip.lipTrackedVideoPath,
-          lipTracking: true,
-          faceTracking: false,
-          splitScreen: false,
-        };
+        updated[activeClipIdx] = { ...currentClip, videoPath: currentClip.lipTrackedVideoPath, lipTracking: true, faceTracking: false, splitScreen: false };
         setClips(updated);
       } else {
         setLipTrackingLoading(true);
@@ -1077,29 +951,14 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           const res = await fetch('/api/lip-track', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clipId: currentClip.id,
-              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
-              videoPath: currentClip.videoPath,
-              ratio: trackerRatio,
-            }),
+            body: JSON.stringify({ clipId: currentClip.id, sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath, videoPath: currentClip.videoPath, ratio: trackerRatio }),
           });
           const data = await res.json();
-          if (!res.ok || !data.success) {
-            throw new Error(data.error || 'Failed to track lip movement');
-          }
+          if (!res.ok || !data.success) throw new Error(data.error || 'Failed to track lip');
           const updated = [...clips];
-          updated[activeClipIdx] = {
-            ...currentClip,
-            lipTrackedVideoPath: data.trackedVideoPath,
-            videoPath: data.trackedVideoPath,
-            lipTracking: true,
-            faceTracking: false,
-            splitScreen: false,
-          };
+          updated[activeClipIdx] = { ...currentClip, lipTrackedVideoPath: data.trackedVideoPath, videoPath: data.trackedVideoPath, lipTracking: true, faceTracking: false, splitScreen: false };
           setClips(updated);
         } catch (err) {
-          console.error('Lip tracking error:', err);
           alert('Gagal melacak gerakan bibir: ' + err.message);
         } finally {
           setLipTrackingLoading(false);
@@ -1108,11 +967,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     } else {
       const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
       const updated = [...clips];
-      updated[activeClipIdx] = {
-        ...currentClip,
-        videoPath: fallbackVideo,
-        lipTracking: false,
-      };
+      updated[activeClipIdx] = { ...currentClip, videoPath: fallbackVideo, lipTracking: false };
       setClips(updated);
     }
   };
@@ -1122,13 +977,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     if (enabled) {
       if (currentClip.splitScreenVideoPath) {
         const updated = [...clips];
-        updated[activeClipIdx] = {
-          ...currentClip,
-          videoPath: currentClip.splitScreenVideoPath,
-          splitScreen: true,
-          faceTracking: false,
-          lipTracking: false,
-        };
+        updated[activeClipIdx] = { ...currentClip, videoPath: currentClip.splitScreenVideoPath, splitScreen: true, faceTracking: false, lipTracking: false };
         setClips(updated);
       } else {
         setSplitScreenLoading(true);
@@ -1136,30 +985,15 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           const res = await fetch('/api/split-screen', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              clipId: currentClip.id,
-              sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath,
-              videoPath: currentClip.videoPath,
-              ratio: trackerRatio,
-            }),
+            body: JSON.stringify({ clipId: currentClip.id, sourceVideoPath: currentClip.sourceVideoPath || currentClip.videoPath, videoPath: currentClip.videoPath, ratio: trackerRatio }),
           });
           const data = await res.json();
-          if (!res.ok || !data.success) {
-            throw new Error(data.error || 'Failed to process split screen');
-          }
+          if (!res.ok || !data.success) throw new Error(data.error || 'Failed to process split screen');
           const updated = [...clips];
-          updated[activeClipIdx] = {
-            ...currentClip,
-            splitScreenVideoPath: data.splitScreenVideoPath,
-            videoPath: data.splitScreenVideoPath,
-            splitScreen: true,
-            faceTracking: false,
-            lipTracking: false,
-          };
+          updated[activeClipIdx] = { ...currentClip, splitScreenVideoPath: data.splitScreenVideoPath, videoPath: data.splitScreenVideoPath, splitScreen: true, faceTracking: false, lipTracking: false };
           setClips(updated);
         } catch (err) {
-          console.error('Split screen error:', err);
-          alert('Gagal memproses split screen: ' + err.message);
+          alert('Gagal split screen: ' + err.message);
         } finally {
           setSplitScreenLoading(false);
         }
@@ -1167,11 +1001,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     } else {
       const fallbackVideo = currentClip.centerVideoPath || currentClip.sourceVideoPath || currentClip.videoPath;
       const updated = [...clips];
-      updated[activeClipIdx] = {
-        ...currentClip,
-        videoPath: fallbackVideo,
-        splitScreen: false,
-      };
+      updated[activeClipIdx] = { ...currentClip, videoPath: fallbackVideo, splitScreen: false };
       setClips(updated);
     }
   };
@@ -1184,7 +1014,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
 
     if (navigator?.clipboard?.writeText) {
       navigator.clipboard.writeText(text);
-      setCopyStatus(`Tersalin untuk ${platform === 'youtube' ? 'YouTube Shorts' : platform === 'instagram' ? 'Instagram Reels' : 'TikTok'}!`);
+      setCopyStatus(`Tersalin untuk ${platform === 'youtube' ? 'YouTube Shorts' : platform === 'instagram' ? 'Reels' : 'TikTok'}!`);
       setTimeout(() => setCopyStatus(''), 2500);
     }
   };
@@ -1202,1172 +1032,603 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     onSave(finalClips);
   };
 
+  const [activeDrawer, setActiveDrawer] = useState(null);
+
+  const toggleDrawer = (tabId) => {
+    setActiveDrawer((prev) => (prev === tabId ? null : tabId));
+  };
+
+  const formatTimecode = (sec) => {
+    const s = Math.max(0, Math.floor(sec || 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+  };
+
+  const effectiveDur = videoDuration || clipDur || 15;
+  const playheadProgress = Math.max(0, Math.min(100, (videoTime / effectiveDur) * 100));
+
+  const rulerTicks = [];
+  const totalRulerSeconds = Math.ceil(effectiveDur);
+  for (let s = 0; s <= totalRulerSeconds; s += 5) {
+    const pct = (s / effectiveDur) * 100;
+    if (pct <= 100) {
+      rulerTicks.push({ second: s, label: formatTimecode(s), leftPct: pct });
+    }
+  }
+
   return (
     <div className={editorStyles.editorContainer}>
-      {/* Hidden Audio Players for in-browser BGM sync & preview */}
       <audio ref={bgmAudioRef} style={{ display: 'none' }} />
       <audio ref={sfxAudioRef} style={{ display: 'none' }} />
-      <audio
-        ref={previewAudioRef}
-        style={{ display: 'none' }}
-        onEnded={() => setPreviewingTrackId(null)}
-      />
+      <audio ref={previewAudioRef} style={{ display: 'none' }} onEnded={() => setPreviewingTrackId(null)} />
 
-      <div className={editorStyles.previewSection}>
-        <div className={editorStyles.tabs}>
-          {clips.map((c, i) => (
-            <button
-              key={c.id || i}
-              className={`${editorStyles.tab} ${i === activeClipIdx ? editorStyles.activeTab : ''}`}
-              onClick={() => setActiveClipIdx(i)}
-            >
-              Clip {i + 1}
-            </button>
-          ))}
+      {/* Top Header */}
+      <header className={editorStyles.topHeader}>
+        <div className={editorStyles.headerLeft}>
+          <Link href="/" className={editorStyles.backBtn}>
+            ← Beranda
+          </Link>
+          <div className={editorStyles.projectTitleGroup}>
+            <span className={editorStyles.projectTitle}>{projectTitle || activeClip.hook || activeClip.title || 'Room Tour 2024'}</span>
+            <div className={editorStyles.formatPickerRow}>
+              {[
+                ['9:16', '9:16'],
+                ['1:1', '1:1'],
+                ['9:16-blur', 'Blur BG'],
+              ].map(([val, lbl]) => (
+                <button
+                  key={val}
+                  type="button"
+                  className={`${editorStyles.formatBtn} ${activeFormat === val ? editorStyles.formatBtnActive : ''}`}
+                  disabled={reformatting}
+                  onClick={() => handleFormatChange(val)}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Per-clip output format switcher */}
-        <div className={editorStyles.formatRow}>
-          <span className={editorStyles.formatLabel}>Format:</span>
-          {[
-            ['9:16', '9:16 Portrait'],
-            ['1:1', '1:1 Square'],
-            ['9:16-blur', '9:16 Blur BG'],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={`${editorStyles.formatBtn} ${activeFormat === value ? editorStyles.formatBtnActive : ''}`}
-              disabled={reformatting}
-              onClick={() => handleFormatChange(value)}
-            >
-              {label}
-            </button>
-          ))}
-          <button
-            type="button"
-            className={`${editorStyles.formatBtn} ${framingMode ? editorStyles.formatBtnActive : ''}`}
-            disabled={activeFormat === '9:16-blur' || reformatting}
-            title={activeFormat === '9:16-blur' ? 'Framing tidak berlaku untuk format Blur Background (komposisi penuh dipertahankan)' : 'Atur posisi & zoom frame secara manual'}
-            onClick={() => (framingMode ? exitFraming() : enterFraming())}
-          >
-            ✋ Framing
+        <div className={editorStyles.headerRight}>
+          <Link href="/library" className={editorStyles.backBtn}>
+            Library 📁
+          </Link>
+          <button type="button" className={editorStyles.exportBtn} onClick={handleSave}>
+            🚀 Export & Simpan
           </button>
-          {framingMode && (
-            <>
-              <button
-                type="button"
-                className={editorStyles.formatBtn}
-                disabled={reformatting}
-                onClick={framingReset}
-              >
-                ↺ Reset
-              </button>
-              <button
-                type="button"
-                className={editorStyles.formatBtn}
-                disabled={reformatting}
-                onClick={handleFramingApply}
-              >
-                ✓ Terapkan
-              </button>
-              <button
-                type="button"
-                className={editorStyles.formatBtn}
-                disabled={reformatting}
-                onClick={exitFraming}
-              >
-                ✕ Batal
-              </button>
-            </>
-          )}
-          {reformatting && <span className={editorStyles.formatHint}>Menyiapkan format baru...</span>}
         </div>
+      </header>
 
-        <div
-          className={editorStyles.videoWrapper}
-          style={{ aspectRatio: framingMode && sourceAR ? `${sourceAR} ` : previewAspect }}
-        >
-          <video
-            ref={videoRef}
-            src={framingMode ? (activeClip.sourceVideoPath || activeClip.videoPath) : activeClip.videoPath}
-            controls={!framingMode}
-            className={editorStyles.video}
-            key={`${framingMode}:${activeClip.videoPath}`}
-            onLoadedMetadata={(e) => {
-              if (framingMode && e.currentTarget.videoWidth > 0) {
-                setSourceAR(e.currentTarget.videoWidth / e.currentTarget.videoHeight);
-              }
-            }}
-          />
-          {framingMode && (
-            <div
-              ref={framingLayerRef}
-              className={editorStyles.framingLayer}
-              onPointerDown={handleFramingPointerDown}
-              onPointerMove={handleFramingPointerMove}
-              onPointerUp={handleFramingPointerUp}
-            >
-              {frameRect && (
-                <div
-                  className={editorStyles.frameBox}
-                  style={{
-                    left: `${frameRect.x * 100}%`,
-                    top: `${frameRect.y * 100}%`,
-                    width: `${frameRect.w * 100}%`,
-                    height: `${frameRect.h * 100}%`,
-                  }}
-                />
-              )}
+      {/* Workspace */}
+      <div className={editorStyles.workspaceBody}>
+        <div className={editorStyles.topSplit}>
+          {/* Media Panel */}
+          <div className={editorStyles.panelCard}>
+            <div className={editorStyles.panelHeader}>
+              <h3 className={editorStyles.panelTitle}>
+                Klip Media <span className={editorStyles.clipBadgeCount}>{clips.length}</span>
+              </h3>
             </div>
-          )}
-          {framingMode && (
-            <div className={editorStyles.frameBar}>
-              <span className={editorStyles.frameBarLabel}>Zoom</span>
-              <input
-                type="range"
-                min={Math.round(ZOOM_MIN * 100)}
-                max={100}
-                value={Math.round(frameZoom * 100)}
-                onChange={(e) => handleFrameZoom(Number(e.target.value) / 100)}
-                className={editorStyles.frameZoomSlider}
-              />
+            <div className={editorStyles.mediaGridArea}>
+              <div className={editorStyles.mediaGrid}>
+                {clips.map((c, i) => {
+                  const isSelected = i === activeClipIdx;
+                  const dur = c.durationSec || (Number(c.endSec) - Number(c.startSec)) || 15;
+                  return (
+                    <button
+                      key={c.id || i}
+                      type="button"
+                      className={editorStyles.mediaCard}
+                      onClick={() => setActiveClipIdx(i)}
+                    >
+                      <div className={`${editorStyles.mediaThumbWrapper} ${isSelected ? editorStyles.mediaThumbActive : ''}`}>
+                        <video src={c.videoPath} className={editorStyles.mediaVideoThumb} muted preload="metadata" />
+                        <span className={editorStyles.mediaDurationBadge}>{formatTimecode(dur)}</span>
+                      </div>
+                      <span className={`${editorStyles.mediaCardLabel} ${isSelected ? editorStyles.mediaCardLabelActive : ''}`}>
+                        {c.hook || c.title || `Klip ${i + 1}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
-          {/* Dynamic B-Roll Visual Overlay */}
-          {!framingMode && (
-            <BrollOverlay
-              key={`broll-${activeClip.id || activeClipIdx}`}
-              videoRef={videoRef}
-              brollSettings={activeBroll}
-            />
-          )}
-          {/* Subtitle Overlay */}
-          {!framingMode && (
-            <SubtitleOverlay
-              key={`sub-${activeClip.id || activeClip.videoPath}-${activeClipIdx}`}
-              videoRef={videoRef}
-              segments={activeClip.segments}
-              style={activeStyle}
-            />
-          )}
-          {/* Opening title bar live preview */}
-          {!framingMode && (
-            <TitleBarOverlay
-              videoRef={videoRef}
-              titleBar={activeTitleBar}
-            />
-          )}
-          {/* Watermark live preview (branding) */}
-          {activeWatermark?.enabled && !framingMode && (
-            activeWatermark.type === 'image' && activeWatermark.imagePath ? (
-              <img
-                src={activeWatermark.imagePath}
-                alt="watermark"
-                className={editorStyles.wmImagePreview}
-                style={{
-                  height: `${activeWatermark.sizePct}%`,
-                  opacity: activeWatermark.opacity,
-                  ...(wmPreviewPos(activeWatermark.position)),
-                }}
-              />
-            ) : activeWatermark.text ? (
-              <span
-                className={editorStyles.wmTextPreview}
-                style={{
-                  fontSize: `${activeWatermark.sizePct}cqh`,
-                  opacity: activeWatermark.opacity,
-                  ...(wmPreviewPos(activeWatermark.position)),
-                }}
+            <div className={editorStyles.mediaFooter}>
+              <button type="button" className={editorStyles.applyAllBtn} onClick={applyActiveStyleToAll}>
+                Terapkan Gaya ke Semua
+              </button>
+            </div>
+          </div>
+
+          {/* Playback Panel */}
+          <div className={editorStyles.panelCard}>
+            <div className={editorStyles.panelHeader}>
+              <h3 className={editorStyles.panelTitle}>
+                Pratinjau: {activeClip.hook ? `"${activeClip.hook.slice(0, 40)}..."` : `Klip ${activeClipIdx + 1}`}
+              </h3>
+            </div>
+            <div className={editorStyles.playbackArea}>
+              <div
+                className={editorStyles.previewScreen}
+                style={{ aspectRatio: framingMode && sourceAR ? `${sourceAR} ` : previewAspect }}
               >
-                {activeWatermark.text}
-              </span>
-            ) : null
-          )}
-        </div>
-
-        {/* Crop keyframe timeline (animated pan) */}
-        {framingMode && keyframes && (
-          <div className={editorStyles.kfTimelineBar}>
-            <span className={editorStyles.kfTimelineLabel}>Crop Timeline</span>
-            <div
-              ref={kfTimelineRef}
-              className={editorStyles.kfTimelineTrack}
-              onPointerDown={kfTimelineDown}
-              onPointerUp={kfTimelineUp}
-            >
-              {keyframes.map((rawKf) => {
-                // Normalize defensively: a keyframe missing t must never crash the timeline
-                const kf = { t: 0, x: 0, y: 0, w: 0.316, h: 1, ...rawKf };
-                return (
-                <div
-                  key={kf._id ?? `${kf.t}-${kf.x}`}
-                  className={`${editorStyles.kfDot} ${kf._id === activeKfId ? editorStyles.kfDotActive : ''}`}
-                  style={{ left: `${(Math.max(0, Math.min(clipDur, kf.t)) / clipDur) * 100}%` }}
-                  title={`t=${kf.t.toFixed(1)}s`}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    kfSelectById(kf._id);
-                    kfDotDragRef.current = { id: kf._id, startX: e.clientX, startT: kf.t, rect: kfTimelineRef.current.getBoundingClientRect() };
-                  }}
-                  onPointerMove={(e) => {
-                    const d = kfDotDragRef.current;
-                    if (!d || d.id !== kf._id) return;
-                    const dt = ((e.clientX - d.startX) / d.rect.width) * clipDur;
-                    kfMoveTimeById(kf._id, d.startT + dt);
-                  }}
-                  onPointerUp={(e) => {
-                    e.stopPropagation();
-                    kfDotDragRef.current = null;
-                    kfSortById();
+                <video
+                  ref={videoRef}
+                  src={framingMode ? (activeClip.sourceVideoPath || activeClip.videoPath) : activeClip.videoPath}
+                  className={editorStyles.mainVideo}
+                  key={`${framingMode}:${activeClip.videoPath}`}
+                  playsInline
+                  onClick={togglePlayPause}
+                  onLoadedMetadata={(e) => {
+                    if (framingMode && e.currentTarget.videoWidth > 0) {
+                      setSourceAR(e.currentTarget.videoWidth / e.currentTarget.videoHeight);
+                    }
                   }}
                 />
-                );
-              })}
-            </div>
-            <span className={editorStyles.kfHint}>
-              klik garis = tambah keyframe · drag kotak = posisi kf aktif · drag titik = waktu
-            </span>
-            <button
-              type="button"
-              className={editorStyles.formatBtn}
-              onClick={() => kfRemoveById(activeKfId)}
-              disabled={reformatting || keyframes.length <= 1}
-            >
-              Hapus
-            </button>
-          </div>
-        )}
-      </div>
 
-      <div className={editorStyles.controlsSection}>
-        <div className={editorStyles.controlsHeader}>
-          <h3 className={editorStyles.controlsTitle}>Production Studio</h3>
-          <span className={editorStyles.controlsBadge}>Clip {activeClipIdx + 1}</span>
-        </div>
+                {!isPlaying && !framingMode && (
+                  <button type="button" className={editorStyles.playCenterBtn} onClick={togglePlayPause}>
+                    ▶
+                  </button>
+                )}
 
-        {/* ── 0. AI Virality Score & Hook Analyzer Card ── */}
-        <div className={`${editorStyles.viralityCard} ${viralityScore.score >= 80 ? editorStyles.viralityCardActive : ''}`}>
-          <div className={editorStyles.viralityHeader}>
-            <div className={editorStyles.viralityTitle}>
-              <span>📊 AI Virality & Hook Analyzer</span>
-            </div>
-            <span
-              className={editorStyles.viralityBadgePill}
-              style={{
-                backgroundColor: viralityScore.color ? `${viralityScore.color}22` : 'rgba(16, 185, 129, 0.15)',
-                color: viralityScore.color || '#10b981',
-                borderColor: viralityScore.borderColor || 'rgba(16, 185, 129, 0.3)',
-              }}
-            >
-              <span>{viralityScore.badgeEmoji}</span>
-              <span>{viralityScore.gradeLabel}</span>
-            </span>
-          </div>
+                {framingMode && (
+                  <div
+                    ref={framingLayerRef}
+                    className={editorStyles.framingLayer}
+                    onPointerDown={handleFramingPointerDown}
+                    onPointerMove={handleFramingPointerMove}
+                    onPointerUp={handleFramingPointerUp}
+                  >
+                    {frameRect && (
+                      <div
+                        className={editorStyles.frameBox}
+                        style={{
+                          left: `${frameRect.x * 100}%`,
+                          top: `${frameRect.y * 100}%`,
+                          width: `${frameRect.w * 100}%`,
+                          height: `${frameRect.h * 100}%`,
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
 
-          {/* Prominent Radial/Circular Score Hero Meter */}
-          <div className={editorStyles.viralityScoreHero}>
-            <div
-              className={editorStyles.viralityGaugeWrap}
-              style={{
-                background: `conic-gradient(${viralityScore.color || '#10b981'} ${viralityScore.score * 3.6}deg, var(--bg-subtle) 0deg)`,
-              }}
-            >
-              <div className={editorStyles.viralityGaugeInner}>
-                <span className={editorStyles.viralityScoreValue} style={{ color: viralityScore.color || '#10b981' }}>
-                  {viralityScore.score}
-                </span>
-                <span className={editorStyles.viralityScoreMax}>/ 100</span>
-              </div>
-            </div>
+                {framingMode && (
+                  <div className={editorStyles.frameBar}>
+                    <span className={editorStyles.frameBarLabel}>Zoom</span>
+                    <input
+                      type="range"
+                      min={Math.round(ZOOM_MIN * 100)}
+                      max={100}
+                      value={Math.round(frameZoom * 100)}
+                      onChange={(e) => handleFrameZoom(Number(e.target.value) / 100)}
+                      className={editorStyles.frameZoomSlider}
+                    />
+                    <button type="button" className={editorStyles.formatBtn} onClick={framingReset}>↺</button>
+                    <button type="button" className={editorStyles.formatBtnActive} onClick={handleFramingApply}>✓ Simpan</button>
+                    <button type="button" className={editorStyles.formatBtn} onClick={exitFraming}>✕</button>
+                  </div>
+                )}
 
-            <div className={editorStyles.viralityHeroInfo}>
-              <span
-                className={editorStyles.viralityBadgePill}
-                style={{
-                  backgroundColor: viralityScore.color ? `${viralityScore.color}15` : 'rgba(16, 185, 129, 0.12)',
-                  color: viralityScore.color || '#10b981',
-                  borderColor: viralityScore.borderColor || 'rgba(16, 185, 129, 0.25)',
-                }}
-              >
-                <span>{viralityScore.badgeEmoji}</span>
-                <span>{viralityScore.badge}</span>
-              </span>
-              <p className={editorStyles.viralitySummary}>{viralityScore.summary}</p>
-            </div>
-          </div>
-
-          {/* Editable Hook Input with Realtime Recalculation */}
-          <div className={editorStyles.hookEditorBox}>
-            <div className={editorStyles.hookEditorLabelRow}>
-              <label className={editorStyles.hookEditorLabel}>Opening Hook (First 3s)</label>
-              <span className={editorStyles.hookWordCount}>
-                {viralityScore.breakdown?.hookStrength?.wordCount || 0} kata ({viralityScore.breakdown?.hookStrength?.brevityLabel || 'Optimal'})
-              </span>
-            </div>
-            <textarea
-              className={editorStyles.hookTextarea}
-              value={activeClip.hook || ''}
-              onChange={(e) => handleUpdateHook(e.target.value)}
-              placeholder="Tulis hook kalimat pembuka 3 detik pertama..."
-              rows={2}
-            />
-          </div>
-
-          {/* Sub-Score Breakdown Bars */}
-          <div className={editorStyles.breakdownSection}>
-            {/* 1. Hook Strength */}
-            <div className={editorStyles.breakdownItem}>
-              <div className={editorStyles.breakdownItemTop}>
-                <span className={editorStyles.breakdownItemTitle}>
-                  <span>🎯 Hook Strength</span>
-                  <span className={editorStyles.breakdownItemWeight}>40%</span>
-                </span>
-                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.hookStrength?.score >= 80 ? '#10b981' : viralityScore.breakdown?.hookStrength?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
-                  {viralityScore.breakdown?.hookStrength?.score || 0}/100
-                </span>
-              </div>
-              <div className={editorStyles.breakdownProgressTrack}>
-                <div
-                  className={editorStyles.breakdownProgressBar}
-                  style={{
-                    width: `${viralityScore.breakdown?.hookStrength?.score || 0}%`,
-                    backgroundColor: viralityScore.breakdown?.hookStrength?.score >= 80 ? '#10b981' : viralityScore.breakdown?.hookStrength?.score >= 65 ? '#f59e0b' : '#ef4444',
-                  }}
-                />
-              </div>
-              <div className={editorStyles.breakdownMeta}>
-                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasQuestion ? editorStyles.breakdownChipActive : ''}`}>
-                  {viralityScore.breakdown?.hookStrength?.hasQuestion ? '✓ Question Hook' : '○ Question'}
-                </span>
-                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasDirectAddress ? editorStyles.breakdownChipActive : ''}`}>
-                  {viralityScore.breakdown?.hookStrength?.hasDirectAddress ? '✓ Direct Address (Kamu)' : '○ Direct Address'}
-                </span>
-                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasPowerWords ? editorStyles.breakdownChipActive : ''}`}>
-                  {viralityScore.breakdown?.hookStrength?.hasPowerWords ? `✓ Power Words (${viralityScore.breakdown?.hookStrength?.powerWordsFound?.length || 1})` : '○ Power Words'}
-                </span>
-                <span className={`${editorStyles.breakdownChip} ${viralityScore.breakdown?.hookStrength?.hasNumbers ? editorStyles.breakdownChipActive : ''}`}>
-                  {viralityScore.breakdown?.hookStrength?.hasNumbers ? '✓ Numbers/Data' : '○ Numbers'}
-                </span>
-              </div>
-            </div>
-
-            {/* 2. Speech Pacing / WPM */}
-            <div className={editorStyles.breakdownItem}>
-              <div className={editorStyles.breakdownItemTop}>
-                <span className={editorStyles.breakdownItemTitle}>
-                  <span>⚡ Speech Pacing</span>
-                  <span className={editorStyles.breakdownItemWeight}>30%</span>
-                </span>
-                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.speechPacing?.score >= 80 ? '#3b82f6' : viralityScore.breakdown?.speechPacing?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
-                  {viralityScore.breakdown?.speechPacing?.wpm || 0} WPM ({viralityScore.breakdown?.speechPacing?.score || 0}/100)
-                </span>
-              </div>
-              <div className={editorStyles.breakdownProgressTrack}>
-                <div
-                  className={editorStyles.breakdownProgressBar}
-                  style={{
-                    width: `${viralityScore.breakdown?.speechPacing?.score || 0}%`,
-                    backgroundColor: viralityScore.breakdown?.speechPacing?.score >= 80 ? '#3b82f6' : viralityScore.breakdown?.speechPacing?.score >= 65 ? '#f59e0b' : '#ef4444',
-                  }}
-                />
-              </div>
-              <div className={editorStyles.breakdownMeta}>
-                <span className={`${editorStyles.breakdownChip} ${editorStyles.breakdownChipActive}`}>
-                  {viralityScore.breakdown?.speechPacing?.tempoStatus || 'Optimal Tempo'}
-                </span>
-                <span className={editorStyles.breakdownChip}>
-                  Target: 135–170 WPM
-                </span>
-                {viralityScore.breakdown?.speechPacing?.pauseCount > 0 && (
-                  <span className={editorStyles.breakdownChip} style={{ color: '#f59e0b' }}>
-                    ⚠️ {viralityScore.breakdown?.speechPacing?.pauseCount} pause gap
-                  </span>
+                {!framingMode && <BrollOverlay key={`broll-${activeClip.id || activeClipIdx}`} videoRef={videoRef} brollSettings={activeBroll} />}
+                {!framingMode && <SubtitleOverlay key={`sub-${activeClip.id || activeClip.videoPath}-${activeClipIdx}`} videoRef={videoRef} segments={activeClip.segments} style={activeStyle} />}
+                {!framingMode && <TitleBarOverlay videoRef={videoRef} titleBar={activeTitleBar} />}
+                {activeWatermark?.enabled && !framingMode && (
+                  activeWatermark.type === 'image' && activeWatermark.imagePath ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={activeWatermark.imagePath}
+                      alt="watermark"
+                      className={editorStyles.wmImagePreview}
+                      style={{
+                        height: `${activeWatermark.sizePct}%`,
+                        opacity: activeWatermark.opacity,
+                        ...(wmPreviewPos(activeWatermark.position)),
+                      }}
+                    />
+                  ) : activeWatermark.text ? (
+                    <span
+                      className={editorStyles.wmTextPreview}
+                      style={{
+                        fontSize: `${activeWatermark.sizePct}cqh`,
+                        opacity: activeWatermark.opacity,
+                        ...(wmPreviewPos(activeWatermark.position)),
+                      }}
+                    >
+                      {activeWatermark.text}
+                    </span>
+                  ) : null
                 )}
               </div>
-            </div>
 
-            {/* 3. Emotional Trigger */}
-            <div className={editorStyles.breakdownItem}>
-              <div className={editorStyles.breakdownItemTop}>
-                <span className={editorStyles.breakdownItemTitle}>
-                  <span>🔥 Emotional Trigger</span>
-                  <span className={editorStyles.breakdownItemWeight}>30%</span>
+              <div className={editorStyles.playbackControls}>
+                <span className={editorStyles.timecodeText}>
+                  {formatTimecode(videoTime)} / {formatTimecode(effectiveDur)}
                 </span>
-                <span className={editorStyles.breakdownScoreVal} style={{ color: viralityScore.breakdown?.emotionalTrigger?.score >= 80 ? '#ec4899' : viralityScore.breakdown?.emotionalTrigger?.score >= 65 ? '#f59e0b' : '#ef4444' }}>
-                  {viralityScore.breakdown?.emotionalTrigger?.score || 0}/100
-                </span>
-              </div>
-              <div className={editorStyles.breakdownProgressTrack}>
-                <div
-                  className={editorStyles.breakdownProgressBar}
-                  style={{
-                    width: `${viralityScore.breakdown?.emotionalTrigger?.score || 0}%`,
-                    backgroundColor: viralityScore.breakdown?.emotionalTrigger?.score >= 80 ? '#ec4899' : viralityScore.breakdown?.emotionalTrigger?.score >= 65 ? '#f59e0b' : '#ef4444',
-                  }}
-                />
-              </div>
-              <div className={editorStyles.breakdownMeta}>
-                <span className={`${editorStyles.breakdownChip} ${editorStyles.breakdownChipActive}`}>
-                  {viralityScore.breakdown?.emotionalTrigger?.dominantEmotionEmoji || '🔍'} {viralityScore.breakdown?.emotionalTrigger?.dominantEmotion || 'Curiosity & Mystery'}
-                </span>
-                {Array.isArray(viralityScore.breakdown?.emotionalTrigger?.emotionalKeywords) &&
-                  viralityScore.breakdown?.emotionalTrigger?.emotionalKeywords.map((kw, i) => (
-                    <span key={i} className={editorStyles.breakdownChip}>
-                      #{kw}
-                    </span>
-                  ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Actionable Optimization Tips */}
-          {Array.isArray(viralityScore.tips) && viralityScore.tips.length > 0 && (
-            <div className={editorStyles.tipsCard}>
-              <div className={editorStyles.tipsHeader}>
-                <span>💡 Actionable Optimization Tips</span>
-              </div>
-              <ul className={editorStyles.tipsList}>
-                {viralityScore.tips.map((tip, idx) => (
-                  <li key={idx} className={editorStyles.tipItem}>
-                    <span className={editorStyles.tipBullet}>•</span>
-                    <span>{tip}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* AI Alternative Viral Hooks with 1-Click Apply */}
-          {Array.isArray(viralityScore.alternativeHooks) && viralityScore.alternativeHooks.length > 0 && (
-            <div className={editorStyles.suggestionsBox}>
-              <div className={editorStyles.suggestionsHeader}>
-                <span className={editorStyles.suggestionsTitle}>
-                  <span>✨ AI Hook Suggestions</span>
-                </span>
-              </div>
-              {viralityScore.alternativeHooks.map((alt) => (
-                <div key={alt.id || alt.hook} className={editorStyles.suggestionItem}>
-                  <div className={editorStyles.suggestionTop}>
-                    <span className={editorStyles.suggestionStyleName}>{alt.style}</span>
-                    <span className={editorStyles.suggestionBadge}>{alt.badge}</span>
-                  </div>
-                  <div className={editorStyles.suggestionText}>&ldquo;{alt.hook}&rdquo;</div>
+                <div className={editorStyles.transportButtons}>
                   <button
                     type="button"
-                    className={editorStyles.applyHookBtn}
-                    onClick={() => handleUpdateHook(alt.hook)}
-                    title="Terapkan hook ini ke klip aktif"
+                    className={editorStyles.transportBtn}
+                    onClick={() => setActiveClipIdx((p) => Math.max(0, p - 1))}
+                    title="Klip Sebelumnya"
                   >
-                    <span>⚡ Apply Hook</span>
+                    ⏮
                   </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── 1. OpenCV AI Tracking Toggles ── */}
-        <div className={`${editorStyles.faceTrackingBox} ${activeClip.faceTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
-          <div className={editorStyles.faceTrackingHeader}>
-            <span className={editorStyles.faceTrackingTitle}>
-              <span>Face Tracking</span>
-              <span className={editorStyles.faceTrackingBadge}>OpenCV</span>
-            </span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeClip.faceTracking)}
-                disabled={trackingLoading || lipTrackingLoading || splitScreenLoading}
-                onChange={(e) => handleToggleFaceTracking(e.target.checked)}
-                className={editorStyles.switchInput}
-              />
-              <span className={editorStyles.switchSlider}></span>
-            </label>
-          </div>
-          <p className={editorStyles.faceTrackingDesc}>
-            Otomatis memposisikan framing vertikal 9:16 mengikuti pergerakan wajah pembicara.
-          </p>
-          {trackingLoading && (
-            <div className={editorStyles.faceTrackingLoading}>
-              <div className={editorStyles.spinnerSmall}></div>
-              <span>Melacak wajah dengan OpenCV...</span>
-            </div>
-          )}
-        </div>
-
-        <div className={`${editorStyles.faceTrackingBox} ${activeClip.lipTracking ? editorStyles.faceTrackingBoxActive : ''}`}>
-          <div className={editorStyles.faceTrackingHeader}>
-            <span className={editorStyles.faceTrackingTitle}>
-              <span>Lip Tracking</span>
-              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(236, 72, 153, 0.15)', color: '#ec4899', borderColor: 'rgba(236, 72, 153, 0.3)' }}>Active Speaker</span>
-            </span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeClip.lipTracking)}
-                disabled={lipTrackingLoading || trackingLoading || splitScreenLoading}
-                onChange={(e) => handleToggleLipTracking(e.target.checked)}
-                className={editorStyles.switchInput}
-              />
-              <span className={editorStyles.switchSlider}></span>
-            </label>
-          </div>
-          <p className={editorStyles.faceTrackingDesc}>
-            Mendeteksi gerakan bibir untuk otomatis mengarahkan kamera ke orang yang sedang aktif berbicara.
-          </p>
-          {lipTrackingLoading && (
-            <div className={editorStyles.faceTrackingLoading}>
-              <div className={editorStyles.spinnerSmall}></div>
-              <span>Melacak gerakan bibir dengan OpenCV...</span>
-            </div>
-          )}
-        </div>
-
-        <div className={`${editorStyles.faceTrackingBox} ${activeClip.splitScreen ? editorStyles.faceTrackingBoxActive : ''}`}>
-          <div className={editorStyles.faceTrackingHeader}>
-            <span className={editorStyles.faceTrackingTitle}>
-              <span>Split Screen</span>
-              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(99, 102, 241, 0.18)', color: '#6366f1', borderColor: 'rgba(99, 102, 241, 0.3)' }}>Podcast 2-P</span>
-            </span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeClip.splitScreen)}
-                disabled={splitScreenLoading || trackingLoading || lipTrackingLoading}
-                onChange={(e) => handleToggleSplitScreen(e.target.checked)}
-                className={editorStyles.switchInput}
-              />
-              <span className={editorStyles.switchSlider}></span>
-            </label>
-          </div>
-          <p className={editorStyles.faceTrackingDesc}>
-            Layout vertikal 9:16 bertumpuk otomatis melacak 2 pembicara podcast.
-          </p>
-          {splitScreenLoading && (
-            <div className={editorStyles.faceTrackingLoading}>
-              <div className={editorStyles.spinnerSmall}></div>
-              <span>Memproses split screen podcast...</span>
-            </div>
-          )}
-        </div>
-
-        {/* ── 2. Auto B-Roll Visual Controls ── */}
-        <div className={`${editorStyles.brollBox} ${activeBroll.enabled ? editorStyles.brollBoxActive : ''}`}>
-          <div className={editorStyles.faceTrackingHeader}>
-            <span className={editorStyles.faceTrackingTitle}>
-              <span>Auto B-Roll Overlay</span>
-              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', borderColor: 'rgba(59, 130, 246, 0.3)' }}>Visual AI</span>
-            </span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeBroll.enabled)}
-                onChange={(e) => updateBrollSetting('enabled', e.target.checked)}
-                className={editorStyles.switchInput}
-              />
-              <span className={editorStyles.switchSlider}></span>
-            </label>
-          </div>
-          <p className={editorStyles.faceTrackingDesc}>
-            Menampilkan overlay visual kontekstual otomatis berdasarkan kata kunci Whisper transcript.
-          </p>
-
-          {activeBroll.enabled && (
-            <>
-              <div className={editorStyles.controlGroup}>
-                <label className={editorStyles.controlLabel}>B-Roll Theme Preset</label>
-                <select
-                  value={activeBroll.theme || 'auto'}
-                  onChange={(e) => handleBrollThemeChange(e.target.value)}
-                  className={editorStyles.input}
-                >
-                  <option value="auto">⚡ Auto (Smart Transcript Match)</option>
-                  {BROLL_THEMES.map((th) => (
-                    <option key={th.id} value={th.id}>
-                      {th.icon} {th.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={editorStyles.controlGroup}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label className={editorStyles.controlLabel}>
-                    Active Overlays ({activeBroll.overlays?.length || 0})
-                  </label>
+                  <button type="button" className={editorStyles.playPauseBtn} onClick={togglePlayPause}>
+                    {isPlaying ? '⏸' : '▶'}
+                  </button>
                   <button
                     type="button"
-                    onClick={handleAddBrollAtCurrentTime}
-                    className={editorStyles.addBrollBtn}
-                    title="Tambahkan B-Roll di posisi waktu playhead saat ini"
+                    className={editorStyles.transportBtn}
+                    onClick={() => setActiveClipIdx((p) => Math.min(clips.length - 1, p + 1))}
+                    title="Klip Berikutnya"
                   >
-                    + Add at Current Time
+                    ⏭
                   </button>
                 </div>
-
-                <div className={editorStyles.brollTimelineList}>
-                  {(!activeBroll.overlays || activeBroll.overlays.length === 0) && (
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-sub)' }}>
-                      Belum ada B-Roll untuk klip ini.
-                    </span>
-                  )}
-                  {(activeBroll.overlays || []).map((o) => (
-                    <div key={o.id} className={editorStyles.brollChip}>
-                      <div className={editorStyles.brollChipLeft}>
-                        <span>{o.icon || '🎬'}</span>
-                        <span className={editorStyles.brollChipTime}>
-                          {o.start}s - {o.end}s
-                        </span>
-                        <span className={editorStyles.brollChipLabel}>
-                          {o.keyword ? `"${o.keyword}"` : o.themeName}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveBrollOverlay(o.id)}
-                        className={editorStyles.brollChipRemove}
-                        title="Hapus overlay ini"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* ── 3. Audio & Auto Ducking Controls ── */}
-        <div className={`${editorStyles.audioSectionBox} ${activeAudio.bgmTrack !== 'none' ? editorStyles.audioSectionBoxActive : ''}`}>
-          <div className={editorStyles.faceTrackingHeader}>
-            <span className={editorStyles.faceTrackingTitle}>
-              <span>Audio & BGM Ducking</span>
-              <span className={editorStyles.faceTrackingBadge} style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>Broadcast</span>
-            </span>
-          </div>
-          <p className={editorStyles.faceTrackingDesc}>
-            Musik latar otomatis turun saat ada suara vokal dan naik saat jeda hening.
-          </p>
-
-          <div className={editorStyles.controlGroup}>
-            <label className={editorStyles.controlLabel}>Background Music Track</label>
-            <div className={editorStyles.bgmPickerRow}>
-              <select
-                value={activeAudio.bgmTrack}
-                onChange={(e) => updateAudioSetting('bgmTrack', e.target.value)}
-                className={editorStyles.input}
-              >
-                {BGM_TRACKS.map((track) => (
-                  <option key={track.id} value={track.id}>
-                    {track.name} {track.genre !== 'Off' ? `(${track.genre})` : ''}
-                  </option>
-                ))}
-              </select>
-              {activeAudio.bgmTrack !== 'none' && (
                 <button
                   type="button"
-                  onClick={() => handleTogglePreviewTrack(activeAudio.bgmTrack)}
-                  className={`${editorStyles.previewBgmBtn} ${
-                    previewingTrackId === activeAudio.bgmTrack ? editorStyles.previewBgmBtnActive : ''
-                  }`}
-                  title="Dengarkan preview musik"
+                  className={editorStyles.transportBtn}
+                  onClick={() => videoRef.current?.requestFullscreen?.()}
+                  title="Fullscreen"
                 >
-                  {previewingTrackId === activeAudio.bgmTrack ? '⏹ Stop' : '▶ Sample'}
+                  ⛶
                 </button>
-              )}
+              </div>
             </div>
           </div>
+        </div>
 
-          {activeAudio.bgmTrack !== 'none' && (
-            <>
-              <div className={editorStyles.controlGroup}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <label className={editorStyles.controlLabel}>BGM Master Volume</label>
-                  <span className={editorStyles.volumeBadge}>{Math.round(activeAudio.bgmVolume * 100)}%</span>
+        {/* Timeline Panel */}
+        <div className={editorStyles.timelinePanel}>
+          <div className={editorStyles.timelineBar}>
+            <span className={editorStyles.timelineTitle}>
+              Timeline & Audio Track
+            </span>
+            {clips.length > 1 && (
+              <button
+                type="button"
+                className={editorStyles.deleteClipBtn}
+                onClick={() => {
+                  const nextClips = clips.filter((_, idx) => idx !== activeClipIdx);
+                  setClips(nextClips);
+                  setActiveClipIdx(Math.max(0, activeClipIdx - 1));
+                }}
+              >
+                Hapus Klip Ini
+              </button>
+            )}
+          </div>
+
+          <div className={editorStyles.timelineScroll}>
+            <div ref={rulerRef} className={editorStyles.rulerContainer} onClick={handleRulerSeek}>
+              {rulerTicks.map((mark) => (
+                <div key={mark.second} className={editorStyles.rulerMark} style={{ left: `${mark.leftPct}%` }}>
+                  <span className={editorStyles.rulerNumber}>{mark.label}</span>
+                  <div className={editorStyles.rulerTickLine} />
                 </div>
-                <div className={editorStyles.volumeSliderWrap}>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={activeAudio.bgmVolume}
-                    onChange={(e) => updateAudioSetting('bgmVolume', parseFloat(e.target.value))}
-                    className={editorStyles.volumeSlider}
-                  />
+              ))}
+              <div className={editorStyles.playheadLine} style={{ left: `${playheadProgress}%` }}>
+                <div className={editorStyles.playheadKnob} />
+              </div>
+            </div>
+
+            <div className={editorStyles.tracksWrapper}>
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span style={{ color: 'var(--primary)' }}>T</span>
+                  <span>Teks</span>
                 </div>
-              </div>
-
-              <div className={editorStyles.faceTrackingHeader}>
-                <span className={editorStyles.faceTrackingTitle} style={{ fontSize: '0.78rem' }}>
-                  <span>Auto Audio Ducking</span>
-                </span>
-                <label className={editorStyles.switchLabel}>
-                  <input
-                    type="checkbox"
-                    checked={Boolean(activeAudio.duckingEnabled)}
-                    onChange={(e) => updateAudioSetting('duckingEnabled', e.target.checked)}
-                    className={editorStyles.switchInput}
-                  />
-                  <span className={editorStyles.switchSlider}></span>
-                </label>
-              </div>
-
-              {activeAudio.duckingEnabled && (
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Ducking Intensity</label>
-                  <div className={editorStyles.duckingOptionsGrid}>
-                    <button
-                      type="button"
-                      className={`${editorStyles.duckingOptionBtn} ${
-                        activeAudio.duckingStrength === 'light' ? editorStyles.duckingOptionBtnActive : ''
-                      }`}
-                      onClick={() => updateAudioSetting('duckingStrength', 'light')}
-                    >
-                      Light (35%)
-                    </button>
-                    <button
-                      type="button"
-                      className={`${editorStyles.duckingOptionBtn} ${
-                        activeAudio.duckingStrength === 'medium' ? editorStyles.duckingOptionBtnActive : ''
-                      }`}
-                      onClick={() => updateAudioSetting('duckingStrength', 'medium')}
-                    >
-                      Medium (65%)
-                    </button>
-                    <button
-                      type="button"
-                      className={`${editorStyles.duckingOptionBtn} ${
-                        activeAudio.duckingStrength === 'heavy' ? editorStyles.duckingOptionBtnActive : ''
-                      }`}
-                      onClick={() => updateAudioSetting('duckingStrength', 'heavy')}
-                    >
-                      Heavy (85%)
-                    </button>
+                <div className={`${editorStyles.trackContentArea} ${editorStyles.textTrackHeight}`}>
+                  <div
+                    className={editorStyles.textClipBlock}
+                    style={{ left: '0%', width: '90%' }}
+                    onClick={() => toggleDrawer('captions')}
+                  >
+                    <span>T</span>
+                    <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-
-          <div className={editorStyles.faceTrackingHeader} style={{ paddingTop: '4px' }}>
-            <span className={editorStyles.faceTrackingTitle} style={{ fontSize: '0.78rem' }}>
-              <span>Sound Effects (SFX)</span>
-            </span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeAudio.sfxEnabled)}
-                onChange={(e) => updateAudioSetting('sfxEnabled', e.target.checked)}
-                className={editorStyles.switchInput}
-              />
-              <span className={editorStyles.switchSlider}></span>
-            </label>
-          </div>
-
-          {activeAudio.sfxEnabled && (
-            <div className={editorStyles.controlGroup}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <label className={editorStyles.controlLabel}>SFX Volume</label>
-                <span className={editorStyles.volumeBadge}>{Math.round(activeAudio.sfxVolume * 100)}%</span>
               </div>
-              <div className={editorStyles.volumeSliderWrap}>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={activeAudio.sfxVolume}
-                  onChange={(e) => updateAudioSetting('sfxVolume', parseFloat(e.target.value))}
-                  className={editorStyles.volumeSlider}
-                />
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* ── 4. Subtitle Typography & Styles ── */}
-        <div className={editorStyles.controlGroup}>
-          <div className={editorStyles.presetRowHeader}>
-            <label className={editorStyles.controlLabel}>Preset Gaya Caption</label>
-            <button
-              type="button"
-              className={editorStyles.presetApplyAllBtn}
-              onClick={applyActiveStyleToAll}
-              title="Salin gaya klip aktif ke semua klip"
-            >
-              Terapkan ke semua klip
-            </button>
-          </div>
-          <div className={editorStyles.presetChipRow}>
-            {CAPTION_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                className={`${editorStyles.presetChip} ${isPresetActive(preset) ? editorStyles.presetChipActive : ''}`}
-                title={`${preset.desc} — ${preset.style.font}, ${preset.style.size}, ${preset.style.animation}`}
-                onClick={() => applyCaptionStyle(preset.style)}
-              >
-                <span>{preset.emoji}</span>
-                <span>{preset.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className={editorStyles.controlGroup}>
-          <label className={editorStyles.controlLabel}>Font Family</label>
-          <select
-            value={activeStyle.font}
-            onChange={(e) => updateStyle('font', e.target.value)}
-            className={editorStyles.input}
-          >
-            <option>Impact</option>
-            <option>Inter</option>
-            <option>Roboto</option>
-            <option>Montserrat</option>
-            <option>Bangers</option>
-          </select>
-        </div>
-
-        <div className={editorStyles.controlGroup}>
-          <label className={editorStyles.controlLabel}>Font Size</label>
-          <select
-            value={activeStyle.size}
-            onChange={(e) => updateStyle('size', e.target.value)}
-            className={editorStyles.input}
-          >
-            <option>Small</option>
-            <option>Medium</option>
-            <option>Large</option>
-          </select>
-        </div>
-
-        <div className={editorStyles.controlGroup}>
-          <label className={editorStyles.controlLabel}>Text Color</label>
-          <div className={editorStyles.colorWrap}>
-            <input
-              type="color"
-              value={activeStyle.color}
-              onChange={(e) => updateStyle('color', e.target.value)}
-              className={editorStyles.colorInput}
-            />
-            <span className={editorStyles.colorHex}>{activeStyle.color.toUpperCase()}</span>
-          </div>
-        </div>
-
-        <div className={editorStyles.togglesRow}>
-          <label className={editorStyles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={activeStyle.outline}
-              onChange={(e) => updateStyle('outline', e.target.checked)}
-              className={editorStyles.checkbox}
-            />
-            <span>Text Outline</span>
-          </label>
-
-          <label className={editorStyles.checkboxLabel}>
-            <input
-              type="checkbox"
-              checked={activeStyle.shadow}
-              onChange={(e) => updateStyle('shadow', e.target.checked)}
-              className={editorStyles.checkbox}
-            />
-            <span>Drop Shadow</span>
-          </label>
-        </div>
-
-        <div className={editorStyles.controlGroup}>
-          <label className={editorStyles.controlLabel}>Animation Style</label>
-          <select
-            value={activeStyle.animation}
-            onChange={(e) => updateStyle('animation', e.target.value)}
-            className={editorStyles.input}
-          >
-            <option>None</option>
-            <option>Karaoke</option>
-            <option>Pop</option>
-            <option>Slide Up</option>
-            <option>Blur</option>
-            <option>Bounce</option>
-          </select>
-        </div>
-
-        {/* ── 5. Social Media Copy Panel ── */}
-        <div className={editorStyles.socialCopyCard}>
-          <div className={editorStyles.socialHeader}>
-            <span className={editorStyles.socialTitle}>
-              <span>Social Media Copy</span>
-              <span className={editorStyles.socialBadge}>AI</span>
-            </span>
-            {copyStatus && <span className={editorStyles.copyFeedback}>✓ {copyStatus}</span>}
-          </div>
-
-          <div className={editorStyles.metaInfoRow}>
-            {activeClip.channelName && (
-              <span className={editorStyles.metaPill}>
-                <span>👤</span>
-                <span className={editorStyles.metaPillHighlight}>@{activeClip.channelName}</span>
-              </span>
-            )}
-            {(activeClip.startTime || activeClip.start_time) && (
-              <span className={editorStyles.metaPill}>
-                <span>⏱️</span>
-                <span>{activeClip.startTime || activeClip.start_time} - {activeClip.endTime || activeClip.end_time}</span>
-              </span>
-            )}
-            {activeClip.duration && (
-              <span className={editorStyles.metaPill}>
-                <span>⏳</span>
-                <span>{activeClip.duration}s</span>
-              </span>
-            )}
-          </div>
-
-          {activeClip.hook && (
-            <div className={editorStyles.socialHookBox}>
-              <span className={editorStyles.hookLabel}>Viral Hook</span>
-              <span className={editorStyles.hookText}>&ldquo;{activeClip.hook}&rdquo;</span>
-            </div>
-          )}
-
-          {activeClip.caption && (
-            <div className={editorStyles.socialCaptionText}>
-              {activeClip.caption}
-            </div>
-          )}
-
-          {Array.isArray(activeClip.hashtags) && activeClip.hashtags.length > 0 && (
-            <div className={editorStyles.hashtagsWrap}>
-              {activeClip.hashtags.map((tag, idx) => (
-                <span key={idx} className={editorStyles.tagChip}>{tag}</span>
-              ))}
-            </div>
-          )}
-
-          <div className={editorStyles.platformCopyGrid}>
-            <button
-              type="button"
-              className={editorStyles.platformBtn}
-              onClick={() => handleCopyPlatform('youtube')}
-              title="Copy formatted for YouTube Shorts"
-            >
-              <span className={editorStyles.platformIcon}>🔴</span>
-              <span>YouTube</span>
-            </button>
-            <button
-              type="button"
-              className={editorStyles.platformBtn}
-              onClick={() => handleCopyPlatform('instagram')}
-              title="Copy formatted for Instagram Reels"
-            >
-              <span className={editorStyles.platformIcon}>📸</span>
-              <span>Instagram</span>
-            </button>
-            <button
-              type="button"
-              className={editorStyles.platformBtn}
-              onClick={() => handleCopyPlatform('tiktok')}
-              title="Copy formatted for TikTok"
-            >
-              <span className={editorStyles.platformIcon}>🎵</span>
-              <span>TikTok</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ── Watermark (Branding) Card ── */}
-        <div className={editorStyles.watermarkCard}>
-          <div className={editorStyles.watermarkHeader}>
-            <span className={editorStyles.watermarkTitle}>🏷️ Watermark (Branding)</span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeWatermark?.enabled)}
-                onChange={(e) => handleClipWatermark({ enabled: e.target.checked })}
-              />
-              <span className={editorStyles.switchSlider}></span>
-              <span>Tampilkan</span>
-            </label>
-          </div>
-
-          {activeWatermark?.enabled && (
-            <>
-              <div className={editorStyles.watermarkInputs}>
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Teks / Handle</label>
-                  <input
-                    type="text"
-                    className={editorStyles.input}
-                    value={activeWatermark.text || ''}
-                    onChange={(e) => handleClipWatermark({ type: activeWatermark.imagePath ? 'image' : 'text', text: e.target.value })}
-                    placeholder="@channelmu"
-                    maxLength={60}
-                  />
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span>📹</span>
+                  <span>Video</span>
                 </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Logo (dipakai bila terisi)</label>
-                  <input
-                    type="file"
-                    accept=".png,.jpg,.jpeg,.webp"
-                    onChange={handleClipLogoUpload}
-                    disabled={wmUploading}
-                  />
-                  {activeWatermark.imagePath && (
-                    <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>✓ {activeWatermark.imagePath} <button type="button" style={{ cursor: 'pointer', marginLeft: 4 }} onClick={() => handleClipWatermark({ imagePath: '', type: 'text' })}>(hapus logo)</button></p>
-                  )}
-                </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Posisi</label>
-                  <select
-                    className={editorStyles.input}
-                    value={activeWatermark.position || 'top-right'}
-                    onChange={(e) => handleClipWatermark({ position: e.target.value })}
-                  >
-                    <option value="top-right">Kanan Atas</option>
-                    <option value="top-left">Kiri Atas</option>
-                    <option value="bottom-right">Kanan Bawah</option>
-                    <option value="bottom-left">Kiri Bawah</option>
-                  </select>
-                </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Ukuran ({activeWatermark.sizePct}%)</label>
-                  <input
-                    type="range"
-                    min={2}
-                    max={15}
-                    value={activeWatermark.sizePct ?? 6}
-                    onChange={(e) => handleClipWatermark({ sizePct: Number(e.target.value) })}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Opacity ({Math.round((activeWatermark.opacity ?? 0.7) * 100)}%) — logo</label>
-                  <input
-                    type="range"
-                    min={10}
-                    max={100}
-                    value={Math.round((activeWatermark.opacity ?? 0.7) * 100)}
-                    onChange={(e) => handleClipWatermark({ opacity: Number(e.target.value) / 100 })}
-                    style={{ width: '100%' }}
-                  />
-                </div>
-              </div>
-              <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>
-                Preview tampil di atas video. Hasil render: logo pakai opacity di atas, teks selalu solid dengan outline.
-              </p>
-            </>
-          )}
-        </div>
-
-        {/* ── Opening Title Bar Card ── */}
-        <div className={editorStyles.watermarkCard}>
-          <div className={editorStyles.watermarkHeader}>
-            <span className={editorStyles.watermarkTitle}>🎥 Judul Pembuka</span>
-            <label className={editorStyles.switchLabel}>
-              <input
-                type="checkbox"
-                checked={Boolean(activeTitleBar?.enabled)}
-                onChange={(e) => handleTitleEnable(e.target.checked)}
-              />
-              <span className={editorStyles.switchSlider}></span>
-              <span>Tampilkan</span>
-            </label>
-          </div>
-
-          {activeTitleBar?.enabled && (
-            <>
-              <div className={editorStyles.watermarkInputs}>
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Teks Judul</label>
-                  <input
-                    type="text"
-                    className={editorStyles.input}
-                    value={activeTitleBar.text || ''}
-                    onChange={(e) => handleClipTitleBar({ text: e.target.value })}
-                    maxLength={90}
-                  />
-                </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Preset Gaya</label>
-                  <div className={editorStyles.presetChipRow}>
-                    {TITLE_PRESETS.map((preset) => (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        className={`${editorStyles.presetChip} ${activeTitleBar.preset === preset.id ? editorStyles.presetChipActive : ''}`}
-                        title={preset.desc}
-                        onClick={() => handleTitlePreset(preset.id)}
+                <div className={`${editorStyles.trackContentArea} ${editorStyles.videoTrackHeight}`}>
+                  <div className={editorStyles.videoClipsRow}>
+                    {clips.map((c, i) => (
+                      <div
+                        key={c.id || i}
+                        className={`${editorStyles.videoClipItem} ${i === activeClipIdx ? editorStyles.videoClipSelected : ''}`}
+                        style={{ flex: 1 }}
+                        onClick={() => setActiveClipIdx(i)}
                       >
-                        <span>{preset.emoji}</span>
-                        <span>{preset.label}</span>
-                      </button>
+                        <video src={c.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
+                      </div>
                     ))}
                   </div>
                 </div>
+              </div>
 
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Durasi ({activeTitleBar.seconds}s)</label>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    step={0.5}
-                    value={activeTitleBar.seconds ?? 2.5}
-                    onChange={(e) => handleClipTitleBar({ seconds: Number(e.target.value) })}
-                    style={{ width: '100%' }}
-                  />
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span style={{ color: 'var(--audio)' }}>🎵</span>
+                  <span>Audio</span>
                 </div>
-
-                <div className={editorStyles.controlGroup}>
-                  <label className={editorStyles.controlLabel}>Posisi</label>
-                  <select
-                    className={editorStyles.input}
-                    value={activeTitleBar.position || 'top'}
-                    onChange={(e) => handleClipTitleBar({ position: e.target.value })}
-                  >
-                    <option value="top">Atas</option>
-                    <option value="center">Tengah</option>
-                  </select>
+                <div className={`${editorStyles.trackContentArea} ${editorStyles.audioTrackHeight}`}>
+                  <div className={editorStyles.audioClipBlock} onClick={() => toggleDrawer('audio')}>
+                    <span>🎵 {activeAudio.bgmTrack !== 'none' ? `Voice Over + ${activeAudio.bgmTrack}` : 'Voice Over'}</span>
+                    <svg className={editorStyles.audioWaveform} viewBox="0 0 100 20" preserveAspectRatio="none">
+                      <path d="M0,10 Q5,2 10,10 T20,10 T30,3 T40,17 T50,7 T60,14 T70,5 T80,15 T90,8 T100,10" strokeWidth="2" />
+                    </svg>
+                  </div>
                 </div>
               </div>
-              <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>
-                Muncul {activeTitleBar.seconds}s pertama dengan fade in/out, ter-bakar saat render final.
-              </p>
-            </>
-          )}
+            </div>
+          </div>
         </div>
 
-        {onOpenPublish && (
-          <button
-            type="button"
-            className={editorStyles.publishButton}
-            onClick={() => {
-              const currentClip = clips[activeClipIdx] || {};
-              onOpenPublish({
-                ...currentClip,
-                style: activeStyle,
-                audioSettings: activeAudio,
-                brollSettings: activeBroll,
-              });
-            }}
-          >
-            <span>🚀 Direct Auto-Publish ke Medsos</span>
-          </button>
+        {/* Drawer */}
+        {activeDrawer && (
+          <div className={editorStyles.studioDrawer}>
+            <div className={editorStyles.drawerHeader}>
+              <span className={editorStyles.drawerTitle}>
+                {activeDrawer === 'cut' && '✂️ Potong & Pengaturan Framing Video'}
+                {activeDrawer === 'captions' && '✏️ Gaya Caption, Font & Subtitle'}
+                {activeDrawer === 'audio' && '🔊 Pengaturan Musik Latar & Ducking Suara'}
+                {activeDrawer === 'visual' && '🎨 Branding Watermark & Visual B-Roll'}
+                {activeDrawer === 'ai' && '✦ AI Hook Enhancer & Copywriting Medsos'}
+              </span>
+              <button type="button" className={editorStyles.drawerCloseBtn} onClick={() => setActiveDrawer(null)}>
+                ✕ Tutup
+              </button>
+            </div>
+
+            <div className={editorStyles.drawerContentGrid}>
+              {activeDrawer === 'cut' && (
+                <>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>OpenCV Face Tracking</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeClip.faceTracking)}
+                          disabled={trackingLoading || lipTrackingLoading || splitScreenLoading}
+                          onChange={(e) => handleToggleFaceTracking(e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>OpenCV Lip Tracking</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeClip.lipTracking)}
+                          disabled={lipTrackingLoading || trackingLoading || splitScreenLoading}
+                          onChange={(e) => handleToggleLipTracking(e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Podcast Split Screen</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeClip.splitScreen)}
+                          disabled={splitScreenLoading || trackingLoading || lipTrackingLoading}
+                          onChange={(e) => handleToggleSplitScreen(e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeDrawer === 'captions' && (
+                <>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Preset Gaya Caption</span>
+                    </div>
+                    <div className={editorStyles.presetChipRow}>
+                      {CAPTION_PRESETS.map((preset) => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className={`${editorStyles.presetChip} ${activeStyle.font === preset.style.font && activeStyle.animation === preset.style.animation ? editorStyles.presetChipActive : ''}`}
+                          onClick={() => applyCaptionStyle(preset.style)}
+                        >
+                          <span>{preset.emoji}</span>
+                          <span>{preset.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlGroup}>
+                      <label className={editorStyles.controlLabel}>Font & Animasi</label>
+                      <select value={activeStyle.font} onChange={(e) => updateStyle('font', e.target.value)} className={editorStyles.input}>
+                        <option>Impact</option>
+                        <option>Inter</option>
+                        <option>Roboto</option>
+                        <option>Montserrat</option>
+                        <option>Bangers</option>
+                      </select>
+                      <select value={activeStyle.animation} onChange={(e) => updateStyle('animation', e.target.value)} className={editorStyles.input}>
+                        <option>None</option>
+                        <option>Karaoke</option>
+                        <option>Pop</option>
+                        <option>Slide Up</option>
+                        <option>Blur</option>
+                        <option>Bounce</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeDrawer === 'audio' && (
+                <>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlGroup}>
+                      <label className={editorStyles.controlLabel}>Musik Latar</label>
+                      <select value={activeAudio.bgmTrack} onChange={(e) => updateAudioSetting('bgmTrack', e.target.value)} className={editorStyles.input}>
+                        {BGM_TRACKS.map((track) => (
+                          <option key={track.id} value={track.id}>{track.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Auto Audio Ducking</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeAudio.duckingEnabled)}
+                          onChange={(e) => updateAudioSetting('duckingEnabled', e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeDrawer === 'visual' && (
+                <>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Watermark Channel</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeWatermark?.enabled)}
+                          onChange={(e) => handleClipWatermark({ enabled: e.target.checked })}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                    {activeWatermark?.enabled && (
+                      <input
+                        type="text"
+                        value={activeWatermark.text || ''}
+                        onChange={(e) => handleClipWatermark({ type: 'text', text: e.target.value })}
+                        placeholder="@nama_channel"
+                        className={editorStyles.input}
+                      />
+                    )}
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Auto B-Roll Visual AI</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeBroll.enabled)}
+                          onChange={(e) => updateBrollSetting('enabled', e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeDrawer === 'ai' && (
+                <>
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.viralityScoreHero}>
+                      <div
+                        className={editorStyles.viralityGaugeWrap}
+                        style={{
+                          background: `conic-gradient(${viralityScore.color || '#10b981'} ${viralityScore.score * 3.6}deg, var(--bg-panel) 0deg)`,
+                        }}
+                      >
+                        <div className={editorStyles.viralityGaugeInner}>
+                          <span className={editorStyles.viralityScoreValue} style={{ color: viralityScore.color || '#10b981' }}>
+                            {viralityScore.score}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '13px', fontWeight: 600 }}>{viralityScore.badgeEmoji} {viralityScore.gradeLabel}</span>
+                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>{viralityScore.summary}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <label className={editorStyles.controlLabel}>Opening Hook (3 Detik Pertama)</label>
+                    <textarea
+                      className={editorStyles.hookTextarea}
+                      value={activeClip.hook || ''}
+                      onChange={(e) => handleUpdateHook(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                  <div className={editorStyles.controlCard}>
+                    <label className={editorStyles.controlLabel}>Salin Copy Medsos</label>
+                    <div className={editorStyles.platformCopyGrid}>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('youtube')}>🔴 Shorts</button>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('instagram')}>📸 Reels</button>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('tiktok')}>🎵 TikTok</button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         )}
 
-        <button className={editorStyles.saveButton} onClick={handleSave}>
-          Save to Library <span className={editorStyles.arrow}>→</span>
-        </button>
+        {/* Bottom Mode Bar */}
+        <div className={editorStyles.bottomModeBar}>
+          <div className={editorStyles.segmentedControls}>
+            {[
+              { id: 'cut', label: '1. Potong & Framing', icon: '✂️' },
+              { id: 'captions', label: '2. Caption & Teks', icon: '✏️' },
+              { id: 'audio', label: '3. Audio & Musik', icon: '🔊' },
+              { id: 'visual', label: '4. Visual & Brand', icon: '🎨' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={`${editorStyles.stepTab} ${activeDrawer === tab.id ? editorStyles.stepTabActive : ''}`}
+                onClick={() => toggleDrawer(tab.id)}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className={editorStyles.aiTabBtn}
+            onClick={() => toggleDrawer('ai')}
+          >
+            <span>✦</span>
+            <span>5. AI Virality</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2375,8 +1636,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
 
 function EditorialContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-
   const url = searchParams.get('url');
   const localFilePath = searchParams.get('localFilePath');
   const fileName = searchParams.get('fileName');
@@ -2403,7 +1662,6 @@ function EditorialContent() {
     opacity: Number.isFinite(wmOpacityParam) ? wmOpacityParam : 0.7,
   };
 
-  // States: analyzing -> preparing -> editing -> rendering -> done
   const [status, setStatus] = useState('analyzing');
   const [errorMessage, setErrorMessage] = useState('');
   const [preparedClips, setPreparedClips] = useState([]);
@@ -2417,11 +1675,8 @@ function EditorialContent() {
 
     async function processVideo() {
       try {
-        if (!url && !localFilePath) {
-          throw new Error('No video URL or uploaded file provided.');
-        }
+        if (!url && !localFilePath) throw new Error('No video URL or file provided.');
 
-        // 1. Analyze
         const analyzeRes = await fetch('/api/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2438,7 +1693,6 @@ function EditorialContent() {
 
         if (isMounted) setStatus('preparing');
 
-        // 2. Prepare Editor (Slice & Transcribe)
         const prepRes = await fetch('/api/prepare-editor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2447,7 +1701,7 @@ function EditorialContent() {
 
         if (!prepRes.ok) {
           const prepErr = await prepRes.json().catch(() => ({}));
-          throw new Error(prepErr.error || prepErr.details || 'Failed to prepare clips for editing');
+          throw new Error(prepErr.error || prepErr.details || 'Failed to prepare clips');
         }
         const prepData = await prepRes.json();
 
@@ -2477,9 +1731,7 @@ function EditorialContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clips: finalClips }),
       });
-
       if (!renderRes.ok) throw new Error('Failed to render final clips');
-
       setStatus('done');
     } catch (err) {
       setStatus('error');
@@ -2488,173 +1740,138 @@ function EditorialContent() {
   };
 
   const steps = [
-    { id: 'analyzing', label: 'Analyzing Content', description: 'Transcribing speech & finding hooks' },
-    { id: 'preparing', label: 'Preparing Editor', description: 'Extracting video & slicing segments' },
-    { id: 'rendering', label: 'Rendering Clips', description: 'Burning styled subtitles & audio mixing' },
-    { id: 'done', label: 'Ready', description: 'Saved to your personal library' },
+    { id: 'analyzing', label: 'Menganalisis Konten', description: 'Transkripsi kata & pencarian hook' },
+    { id: 'preparing', label: 'Menyiapkan Editor', description: 'Ekstraksi video & pemotongan klip' },
+    { id: 'rendering', label: 'Merender Klip', description: 'Memasang subtitle & audio mixing' },
+    { id: 'done', label: 'Selesai', description: 'Tersimpan di pustaka Anda' },
   ];
 
   const effectiveStatus = status === 'error' ? 'analyzing' : status;
   const currentStepIndex = steps.findIndex((s) => s.id === effectiveStatus);
 
+  if (status === 'editing') {
+    return (
+      <>
+        <EditorStudio
+          clips={preparedClips}
+          onSave={handleSaveFinal}
+          onOpenPublish={setPublishModalClip}
+          ratio={ratio}
+          initialStyle={{
+            subtitles: subtitlesOption,
+            font: fontOption,
+            size: sizeOption,
+            color: colorOption,
+          }}
+          initialWatermark={initialWatermark}
+          projectTitle={fileName || preparedClips[0]?.title || 'Room Tour 2024'}
+        />
+
+        <WebhookModal isOpen={isWebhookModalOpen} onClose={() => setIsWebhookModalOpen(false)} />
+        <DirectPublishModal isOpen={Boolean(publishModalClip)} clip={publishModalClip} onClose={() => setPublishModalClip(null)} />
+      </>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
-          <AppLogo size={28} showText={false} href="/" />
           <Link href="/" className={styles.backLink}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-            Home
+            ← Beranda
           </Link>
-          <div className={styles.headerTitle}>
-            {status === 'editing' ? 'Realtime Subtitle & Production Studio' : 'Processing Content'}
-          </div>
+          <span className={styles.projectTitle}>{fileName || 'Pemrosesan Video'}</span>
         </div>
         <div className={styles.headerRight}>
           <WebhookTriggerButton onClick={() => setIsWebhookModalOpen(true)} />
-          <ThemeToggle />
           <Link href="/library" className={styles.libraryLink}>
             Library →
           </Link>
         </div>
       </header>
 
-      {status === 'editing' ? (
-        <main className={styles.editorMain}>
-          <EditorStudio
-            clips={preparedClips}
-            onSave={handleSaveFinal}
-            onOpenPublish={setPublishModalClip}
-            ratio={ratio}
-            initialStyle={{
-              subtitles: subtitlesOption,
-              font: fontOption,
-              size: sizeOption,
-              color: colorOption,
-            }}
-            initialWatermark={initialWatermark}
-          />
-        </main>
-      ) : (
-        <main className={styles.mainGrid}>
-          <div className={styles.videoSection}>
-            <div className={styles.videoWrapper}>
-              {localFilePath ? (
-                <video
-                  className={styles.localVideoPlayer}
-                  src={localFilePath}
-                  controls
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-              ) : videoId ? (
-                <iframe
-                  className={styles.iframe}
-                  src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              ) : (
-                <div className={styles.noVideo}>
-                  <div className={styles.noVideoIcon}>🎬</div>
-                  <p className={styles.noVideoTitle}>{fileName || url || 'Video Stream'}</p>
-                  <p className={styles.noVideoSub}>Processing media stream & generating AI hooks...</p>
-                </div>
-              )}
-            </div>
+      <main className={styles.mainGrid}>
+        <div className={styles.videoSection}>
+          <div className={styles.videoWrapper}>
+            {localFilePath ? (
+              <video className={styles.localVideoPlayer} src={localFilePath} controls autoPlay muted loop playsInline />
+            ) : videoId ? (
+              <iframe
+                className={styles.iframe}
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1`}
+                title="YouTube player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div className={styles.noVideo}>
+                <div className={styles.noVideoIcon}>🎬</div>
+                <p className={styles.noVideoTitle}>{fileName || url || 'Stream Video'}</p>
+                <p className={styles.noVideoSub}>Memproses media & mencari hook viral...</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarHeader}>
+            <h2 className={styles.sidebarTitle}>Status Alur</h2>
+            <span className={styles.ratioBadge}>{ratio}</span>
           </div>
 
-          <aside className={styles.sidebar}>
-            <div className={styles.sidebarHeader}>
-              <h2 className={styles.sidebarTitle}>Status Pipeline</h2>
-              <span className={styles.ratioBadge}>{ratio}</span>
+          {status === 'error' ? (
+            <div className={styles.errorCard}>
+              <div className={styles.errorIcon}>!</div>
+              <h3 className={styles.cardTitle}>Gagal Memproses</h3>
+              <p className={styles.cardDesc}>{errorMessage}</p>
+              <Link href="/" className={styles.secondaryButton}>
+                ← Kembali ke Beranda
+              </Link>
             </div>
-
-            {status === 'error' ? (
-              <div className={styles.errorCard}>
-                <div className={styles.errorIcon}>!</div>
-                <h3 className={styles.cardTitle}>Extraction Failed</h3>
-                <p className={styles.cardDesc}>{errorMessage}</p>
-                <Link href="/" className={styles.secondaryButton}>
-                  ← Back to Home
-                </Link>
-              </div>
-            ) : (
-              <div className={styles.stepper}>
-                {steps.map((step, index) => {
-                  const isCompleted = currentStepIndex > index || status === 'done';
-                  const isActive = status === step.id;
-
-                  return (
-        <div
-                      key={step.id}
-                      className={`${styles.step} ${isActive ? styles.stepActive : ''} ${
-                        isCompleted ? styles.stepCompleted : ''
-                      }`}
-                    >
-                      <div className={styles.stepIndicator}>
-                        <div className={styles.dot} />
-                        {index < steps.length - 1 && <div className={styles.line} />}
-                      </div>
-                      <div className={styles.stepContent}>
-                        <div className={styles.stepLabel}>{step.label}</div>
-                        <div className={styles.stepDesc}>{step.description}</div>
-                      </div>
+          ) : (
+            <div className={styles.stepper}>
+              {steps.map((step, index) => {
+                const isCompleted = currentStepIndex > index || status === 'done';
+                const isActive = status === step.id;
+                return (
+                  <div key={step.id} className={`${styles.step} ${isActive ? styles.stepActive : ''} ${isCompleted ? styles.stepCompleted : ''}`}>
+                    <div className={styles.stepIndicator}>
+                      <div className={styles.dot} />
+                      {index < steps.length - 1 && <div className={styles.line} />}
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                    <div className={styles.stepContent}>
+                      <div className={styles.stepLabel}>{step.label}</div>
+                      <div className={styles.stepDesc}>{step.description}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-            {status === 'done' && (
-              <div className={styles.doneCard}>
-                <div className={styles.doneIcon}>✓</div>
-                <h3 className={styles.cardTitle}>Processing Complete</h3>
-                <p className={styles.cardDesc}>All clips rendered and stored in your library.</p>
-                <Link href="/library" className={styles.primaryButton}>
-                  View in Library →
-                </Link>
-              </div>
-            )}
-          </aside>
-        </main>
-      )}
+          {status === 'done' && (
+            <div className={styles.doneCard}>
+              <div className={styles.doneIcon}>✓</div>
+              <h3 className={styles.cardTitle}>Selesai Dirender</h3>
+              <p className={styles.cardDesc}>Klip siap diunduh di pustaka Anda.</p>
+              <Link href="/library" className={styles.primaryButton}>
+                Buka Library →
+              </Link>
+            </div>
+          )}
+        </aside>
+      </main>
 
-      {/* Webhook Automation Settings & Test Modal */}
-      <WebhookModal
-        isOpen={isWebhookModalOpen}
-        onClose={() => setIsWebhookModalOpen(false)}
-      />
-
-      {/* Direct Auto-Publish Modal */}
-      <DirectPublishModal
-        isOpen={Boolean(publishModalClip)}
-        clip={publishModalClip}
-        onClose={() => setPublishModalClip(null)}
-      />
+      <WebhookModal isOpen={isWebhookModalOpen} onClose={() => setIsWebhookModalOpen(false)} />
+      <DirectPublishModal isOpen={Boolean(publishModalClip)} clip={publishModalClip} onClose={() => setPublishModalClip(null)} />
     </div>
   );
 }
 
 export default function EditorialPage() {
   return (
-    <Suspense fallback={<div className={styles.loadingPulse}>Loading editor...</div>}>
+    <Suspense fallback={<div className={styles.loadingPulse}>Memuat editor...</div>}>
       <EditorialContent />
     </Suspense>
   );

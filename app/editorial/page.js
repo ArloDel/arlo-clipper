@@ -405,17 +405,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     return clampFrameRect({ x: (1 - w) / 2, y: (1 - h) / 2, w, h });
   };
 
-  // Sync the active keyframe whenever the box moves/zooms (pure updaters only)
-  const shiftBox = (dx, dy) => {
-    setFrameRect((prev) => clampFrameRect({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-    setKeyframes((prev) => {
-      if (!prev) return prev;
-      return prev.map((kf) =>
-        kf._id === activeKfId ? clampFrameRect({ ...kf, x: kf.x + dx, y: kf.y + dy }) : kf
-      );
-    });
-  };
-
+  // Move the framing box (and the active keyframe) so its center sits at a point
   const placeBoxCenterAt = (pxN, pyN) => {
     setFrameRect((prev) => clampFrameRect({ ...prev, x: pxN - prev.w / 2, y: pyN - prev.h / 2 }));
     setKeyframes((prev) => {

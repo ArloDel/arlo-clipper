@@ -204,6 +204,25 @@
   font-weight: 600;
 }
 
+/* ── Opening title bar preview ── */
+.titlePreview {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  z-index: 16;
+  pointer-events: none;
+  font-weight: 700;
+  line-height: 1.08;
+  text-align: center;
+  word-wrap: break-word;
+  text-shadow:
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000,
+    2px 2px 0 #000,
+    0 4px 8px rgba(0, 0, 0, 0.45);
+}
+
 /* ── Watermark (Branding) ── */
 .watermarkCard {
   border: 1px solid var(--border-hairline);

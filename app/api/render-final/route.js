@@ -53,6 +53,7 @@ export async function POST(request) {
         videoWidth: width,
         videoHeight: height,
         watermark: clip.watermark || null,
+        titleBar: clip.titleBar || null,
       });
 
       // 3. Build multi-stream filter graph (B-Roll + Subtitles + Ducked BGM + SFX)

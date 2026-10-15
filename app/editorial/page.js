@@ -249,6 +249,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
   
+  // Style settings per clip
   const [clipStyles, setClipStyles] = useState(
     initialClips.map(() => ({
       ...DEFAULT_CAPTION_STYLE,
@@ -258,6 +259,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
+  // Audio settings per clip
   const [clipAudioSettings, setClipAudioSettings] = useState(
     initialClips.map((c) => ({
       bgmTrack: c.audioSettings?.bgmTrack || 'upbeat-energetic',
@@ -269,6 +271,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
+  // B-Roll settings per clip
   const [clipBrollSettings, setClipBrollSettings] = useState(
     initialClips.map((c) => ({
       enabled: c.brollSettings?.enabled !== false,
@@ -279,6 +282,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }))
   );
 
+  // Watermark (branding) per clip
   const [clipWatermarks, setClipWatermarks] = useState(
     initialClips.map(() =>
       initialWatermark
@@ -294,6 +298,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipWatermarks(next);
   };
 
+  // Opening title bar per clip
   const [clipTitleBars, setClipTitleBars] = useState(
     initialClips.map((c) => ({
       enabled: false,
@@ -351,6 +356,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const rulerRef = useRef(null);
   const [previewingTrackId, setPreviewingTrackId] = useState(null);
 
+  // Playback state & Scrubbing
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -378,6 +384,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const previewAspect = activeFormat === '1:1' ? '1 / 1' : '9 / 16';
   const trackerRatio = activeFormat === '9:16-blur' ? '9:16' : activeFormat;
 
+  // ── Manual Framing (pan + zoom) ──
   const [framingMode, setFramingMode] = useState(false);
   const [frameRect, setFrameRect] = useState(null);
   const [frameZoom, setFrameZoom] = useState(1);
@@ -754,6 +761,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipBrollSettings(newBroll);
   };
 
+  // Video playback & Audio Ducking sync
   useEffect(() => {
     const video = videoRef.current;
     const bgm = bgmAudioRef.current;
@@ -819,8 +827,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           const segStart = segs[idx]?.start || 0;
           if (Math.abs(video.currentTime - segStart) < 0.25 && !triggeredSfxTimes.has(idx)) {
             triggeredSfxTimes.add(idx);
-            const sfxChoice = idx === 0 ? '/assets/audio/sfx/impact.wav' : idx % 2 === 1 ? '/assets/audio/sfx/pop.wav' : '/assets/audio/sfx/ding.wav';
-            sfx.src = sfxChoice;
+            sfx.src = idx === 0 ? '/assets/audio/sfx/impact.wav' : idx % 2 === 1 ? '/assets/audio/sfx/pop.wav' : '/assets/audio/sfx/ding.wav';
             sfx.volume = activeAudio.sfxVolume || 0.7;
             sfx.play().catch(() => {});
           }
@@ -1032,6 +1039,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     onSave(finalClips);
   };
 
+  // Active step drawer ('cut' | 'captions' | 'audio' | 'visual' | 'ai' | null)
   const [activeDrawer, setActiveDrawer] = useState(null);
 
   const toggleDrawer = (tabId) => {
@@ -1063,7 +1071,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       <audio ref={sfxAudioRef} style={{ display: 'none' }} />
       <audio ref={previewAudioRef} style={{ display: 'none' }} onEnded={() => setPreviewingTrackId(null)} />
 
-      {/* Top Header */}
+      {/* ── 1. Top Header Navigation (Alur Bersih) ── */}
       <header className={editorStyles.topHeader}>
         <div className={editorStyles.headerLeft}>
           <Link href="/" className={editorStyles.backBtn}>
@@ -1101,7 +1109,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
         </div>
       </header>
 
-      {/* Workspace */}
+      {/* ── 2. Workspace Body: Media (Kiri) & Playback (Kanan) ── */}
       <div className={editorStyles.workspaceBody}>
         <div className={editorStyles.topSplit}>
           {/* Media Panel */}
@@ -1244,6 +1252,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 )}
               </div>
 
+              {/* Playback Transport Controls */}
               <div className={editorStyles.playbackControls}>
                 <span className={editorStyles.timecodeText}>
                   {formatTimecode(videoTime)} / {formatTimecode(effectiveDur)}
@@ -1282,7 +1291,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           </div>
         </div>
 
-        {/* Timeline Panel */}
+        {/* ── 3. Timeline Panel (Ruler & 3 Tracks) ── */}
         <div className={editorStyles.timelinePanel}>
           <div className={editorStyles.timelineBar}>
             <span className={editorStyles.timelineTitle}>
@@ -1304,6 +1313,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           </div>
 
           <div className={editorStyles.timelineScroll}>
+            {/* Ruler */}
             <div ref={rulerRef} className={editorStyles.rulerContainer} onClick={handleRulerSeek}>
               {rulerTicks.map((mark) => (
                 <div key={mark.second} className={editorStyles.rulerMark} style={{ left: `${mark.leftPct}%` }}>
@@ -1316,7 +1326,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               </div>
             </div>
 
+            {/* 3 Tracks */}
             <div className={editorStyles.tracksWrapper}>
+              {/* Track 1: Text */}
               <div className={editorStyles.trackRow}>
                 <div className={editorStyles.trackPill}>
                   <span style={{ color: 'var(--primary)' }}>T</span>
@@ -1327,6 +1339,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                     className={editorStyles.textClipBlock}
                     style={{ left: '0%', width: '90%' }}
                     onClick={() => toggleDrawer('captions')}
+                    title="Klik untuk ubah teks / caption"
                   >
                     <span>T</span>
                     <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
@@ -1334,6 +1347,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 </div>
               </div>
 
+              {/* Track 2: Video */}
               <div className={editorStyles.trackRow}>
                 <div className={editorStyles.trackPill}>
                   <span>📹</span>
@@ -1355,13 +1369,18 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 </div>
               </div>
 
+              {/* Track 3: Audio */}
               <div className={editorStyles.trackRow}>
                 <div className={editorStyles.trackPill}>
                   <span style={{ color: 'var(--audio)' }}>🎵</span>
                   <span>Audio</span>
                 </div>
                 <div className={`${editorStyles.trackContentArea} ${editorStyles.audioTrackHeight}`}>
-                  <div className={editorStyles.audioClipBlock} onClick={() => toggleDrawer('audio')}>
+                  <div
+                    className={editorStyles.audioClipBlock}
+                    onClick={() => toggleDrawer('audio')}
+                    title="Klik untuk atur BGM & Ducking"
+                  >
                     <span>🎵 {activeAudio.bgmTrack !== 'none' ? `Voice Over + ${activeAudio.bgmTrack}` : 'Voice Over'}</span>
                     <svg className={editorStyles.audioWaveform} viewBox="0 0 100 20" preserveAspectRatio="none">
                       <path d="M0,10 Q5,2 10,10 T20,10 T30,3 T40,17 T50,7 T60,14 T70,5 T80,15 T90,8 T100,10" strokeWidth="2" />
@@ -1373,7 +1392,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
           </div>
         </div>
 
-        {/* Drawer */}
+        {/* ── 4. Interactive Step Drawer (Terbuka sesuai alur) ── */}
         {activeDrawer && (
           <div className={editorStyles.studioDrawer}>
             <div className={editorStyles.drawerHeader}>
@@ -1390,6 +1409,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
             </div>
 
             <div className={editorStyles.drawerContentGrid}>
+              {/* Tab 1: Potong & Framing */}
               {activeDrawer === 'cut' && (
                 <>
                   <div className={editorStyles.controlCard}>
@@ -1406,7 +1426,11 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <span className={editorStyles.switchSlider}></span>
                       </label>
                     </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
+                      Kamera 9:16 otomatis memusatkan posisi ke wajah pembicara.
+                    </p>
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>OpenCV Lip Tracking</span>
@@ -1421,7 +1445,11 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <span className={editorStyles.switchSlider}></span>
                       </label>
                     </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
+                      Kamera memusatkan ke orang yang saat ini sedang berbicara aktif.
+                    </p>
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>Podcast Split Screen</span>
@@ -1436,10 +1464,30 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <span className={editorStyles.switchSlider}></span>
                       </label>
                     </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
+                      Format split vertikal bertumpuk untuk 2 orang narasumber podcast.
+                    </p>
+                  </div>
+
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Manual Framing</span>
+                      <button
+                        type="button"
+                        className={editorStyles.formatBtnActive}
+                        onClick={() => (framingMode ? exitFraming() : enterFraming())}
+                      >
+                        {framingMode ? 'Tutup Framing' : 'Atur Manual Framing'}
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
+                      Drag langsung kotak di video untuk tentukan posisi crop yang pas.
+                    </p>
                   </div>
                 </>
               )}
 
+              {/* Tab 2: Caption & Teks */}
               {activeDrawer === 'captions' && (
                 <>
                   <div className={editorStyles.controlCard}>
@@ -1460,9 +1508,10 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       ))}
                     </div>
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlGroup}>
-                      <label className={editorStyles.controlLabel}>Font & Animasi</label>
+                      <label className={editorStyles.controlLabel}>Font & Ukuran</label>
                       <select value={activeStyle.font} onChange={(e) => updateStyle('font', e.target.value)} className={editorStyles.input}>
                         <option>Impact</option>
                         <option>Inter</option>
@@ -1470,6 +1519,14 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <option>Montserrat</option>
                         <option>Bangers</option>
                       </select>
+                      <select value={activeStyle.size} onChange={(e) => updateStyle('size', e.target.value)} className={editorStyles.input}>
+                        <option>Small</option>
+                        <option>Medium</option>
+                        <option>Large</option>
+                      </select>
+                    </div>
+                    <div className={editorStyles.controlGroup}>
+                      <label className={editorStyles.controlLabel}>Animasi Teks</label>
                       <select value={activeStyle.animation} onChange={(e) => updateStyle('animation', e.target.value)} className={editorStyles.input}>
                         <option>None</option>
                         <option>Karaoke</option>
@@ -1480,21 +1537,94 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       </select>
                     </div>
                   </div>
+
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Judul Pembuka (Hook Bar)</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeTitleBar?.enabled)}
+                          onChange={(e) => handleTitleEnable(e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                    {activeTitleBar?.enabled && (
+                      <div className={editorStyles.controlGroup}>
+                        <input
+                          type="text"
+                          value={activeTitleBar.text || ''}
+                          onChange={(e) => handleClipTitleBar({ text: e.target.value })}
+                          placeholder="Judul hook pembuka..."
+                          className={editorStyles.input}
+                        />
+                        <div className={editorStyles.presetChipRow}>
+                          {TITLE_PRESETS.map((preset) => (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              className={`${editorStyles.presetChip} ${activeTitleBar.preset === preset.id ? editorStyles.presetChipActive : ''}`}
+                              onClick={() => handleTitlePreset(preset.id)}
+                            >
+                              <span>{preset.emoji}</span>
+                              <span>{preset.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
+              {/* Tab 3: Audio & Musik */}
               {activeDrawer === 'audio' && (
                 <>
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlGroup}>
-                      <label className={editorStyles.controlLabel}>Musik Latar</label>
-                      <select value={activeAudio.bgmTrack} onChange={(e) => updateAudioSetting('bgmTrack', e.target.value)} className={editorStyles.input}>
-                        {BGM_TRACKS.map((track) => (
-                          <option key={track.id} value={track.id}>{track.name}</option>
-                        ))}
-                      </select>
+                      <label className={editorStyles.controlLabel}>Musik Latar (BGM)</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <select
+                          value={activeAudio.bgmTrack}
+                          onChange={(e) => updateAudioSetting('bgmTrack', e.target.value)}
+                          className={editorStyles.input}
+                        >
+                          {BGM_TRACKS.map((track) => (
+                            <option key={track.id} value={track.id}>
+                              {track.name} {track.genre !== 'Off' ? `(${track.genre})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        {activeAudio.bgmTrack !== 'none' && (
+                          <button
+                            type="button"
+                            className={editorStyles.formatBtn}
+                            onClick={() => handleTogglePreviewTrack(activeAudio.bgmTrack)}
+                          >
+                            {previewingTrackId === activeAudio.bgmTrack ? 'Stop' : 'Sample'}
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {activeAudio.bgmTrack !== 'none' && (
+                      <div className={editorStyles.controlGroup}>
+                        <label className={editorStyles.controlLabel}>Volume BGM ({Math.round(activeAudio.bgmVolume * 100)}%)</label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={activeAudio.bgmVolume}
+                          onChange={(e) => updateAudioSetting('bgmVolume', parseFloat(e.target.value))}
+                          style={{ accentColor: 'var(--primary)' }}
+                        />
+                      </div>
+                    )}
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>Auto Audio Ducking</span>
@@ -1508,10 +1638,54 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <span className={editorStyles.switchSlider}></span>
                       </label>
                     </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
+                      Musik otomatis mengecil saat ada suara vokal bicara.
+                    </p>
+                    {activeAudio.duckingEnabled && (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        {['light', 'medium', 'heavy'].map((lvl) => (
+                          <button
+                            key={lvl}
+                            type="button"
+                            className={`${editorStyles.presetChip} ${activeAudio.duckingStrength === lvl ? editorStyles.presetChipActive : ''}`}
+                            onClick={() => updateAudioSetting('duckingStrength', lvl)}
+                          >
+                            {lvl === 'light' ? 'Ringan' : lvl === 'medium' ? 'Sedang' : 'Kuat'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlCardTitle}>
+                      <span>Efek Suara Transisi (SFX)</span>
+                      <label className={editorStyles.switchLabel}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeAudio.sfxEnabled)}
+                          onChange={(e) => updateAudioSetting('sfxEnabled', e.target.checked)}
+                          className={editorStyles.switchInput}
+                        />
+                        <span className={editorStyles.switchSlider}></span>
+                      </label>
+                    </div>
+                    {activeAudio.sfxEnabled && (
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={activeAudio.sfxVolume}
+                        onChange={(e) => updateAudioSetting('sfxVolume', parseFloat(e.target.value))}
+                        style={{ accentColor: 'var(--primary)' }}
+                      />
+                    )}
                   </div>
                 </>
               )}
 
+              {/* Tab 4: Visual & Brand */}
               {activeDrawer === 'visual' && (
                 <>
                   <div className={editorStyles.controlCard}>
@@ -1528,15 +1702,25 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       </label>
                     </div>
                     {activeWatermark?.enabled && (
-                      <input
-                        type="text"
-                        value={activeWatermark.text || ''}
-                        onChange={(e) => handleClipWatermark({ type: 'text', text: e.target.value })}
-                        placeholder="@nama_channel"
-                        className={editorStyles.input}
-                      />
+                      <div className={editorStyles.controlGroup}>
+                        <input
+                          type="text"
+                          value={activeWatermark.text || ''}
+                          onChange={(e) => handleClipWatermark({ type: activeWatermark.imagePath ? 'image' : 'text', text: e.target.value })}
+                          placeholder="@nama_channel"
+                          className={editorStyles.input}
+                        />
+                        <input
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp"
+                          onChange={handleClipLogoUpload}
+                          disabled={wmUploading}
+                          style={{ fontSize: '11px' }}
+                        />
+                      </div>
                     )}
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>Auto B-Roll Visual AI</span>
@@ -1550,10 +1734,40 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <span className={editorStyles.switchSlider}></span>
                       </label>
                     </div>
+                    {activeBroll.enabled && (
+                      <div className={editorStyles.controlGroup}>
+                        <select
+                          value={activeBroll.theme || 'auto'}
+                          onChange={(e) => handleBrollThemeChange(e.target.value)}
+                          className={editorStyles.input}
+                        >
+                          <option value="auto">⚡ Auto Smart Match</option>
+                          {BROLL_THEMES.map((th) => (
+                            <option key={th.id} value={th.id}>{th.icon} {th.name}</option>
+                          ))}
+                        </select>
+                        <button type="button" className={editorStyles.formatBtn} onClick={handleAddBrollAtCurrentTime}>
+                          + Tambah Overlay di Detik Ini
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={editorStyles.controlCard}>
+                    <div className={editorStyles.controlGroup}>
+                      <label className={editorStyles.controlLabel}>Warna Teks Subtitle</label>
+                      <input
+                        type="color"
+                        value={activeStyle.color}
+                        onChange={(e) => updateStyle('color', e.target.value)}
+                        style={{ width: '40px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                      />
+                    </div>
                   </div>
                 </>
               )}
 
+              {/* Tab 5: AI Virality */}
               {activeDrawer === 'ai' && (
                 <>
                   <div className={editorStyles.controlCard}>
@@ -1576,8 +1790,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       </div>
                     </div>
                   </div>
+
                   <div className={editorStyles.controlCard}>
-                    <label className={editorStyles.controlLabel}>Opening Hook (3 Detik Pertama)</label>
+                    <label className={editorStyles.controlLabel}>Edit Opening Hook (3 Detik Pertama)</label>
                     <textarea
                       className={editorStyles.hookTextarea}
                       value={activeClip.hook || ''}
@@ -1585,21 +1800,46 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       rows={2}
                     />
                   </div>
+
                   <div className={editorStyles.controlCard}>
                     <label className={editorStyles.controlLabel}>Salin Copy Medsos</label>
                     <div className={editorStyles.platformCopyGrid}>
-                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('youtube')}>🔴 Shorts</button>
-                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('instagram')}>📸 Reels</button>
-                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('tiktok')}>🎵 TikTok</button>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('youtube')}>
+                        🔴 Shorts
+                      </button>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('instagram')}>
+                        📸 Reels
+                      </button>
+                      <button type="button" className={editorStyles.platformBtn} onClick={() => handleCopyPlatform('tiktok')}>
+                        🎵 TikTok
+                      </button>
                     </div>
+                    {copyStatus && <span style={{ fontSize: '11px', color: '#10b981' }}>✓ {copyStatus}</span>}
                   </div>
+
+                  {onOpenPublish && (
+                    <button
+                      type="button"
+                      className={editorStyles.directPublishBtn}
+                      onClick={() => {
+                        onOpenPublish({
+                          ...activeClip,
+                          style: activeStyle,
+                          audioSettings: activeAudio,
+                          brollSettings: activeBroll,
+                        });
+                      }}
+                    >
+                      🚀 Direct Auto-Publish ke Medsos
+                    </button>
+                  )}
                 </>
               )}
             </div>
           </div>
         )}
 
-        {/* Bottom Mode Bar */}
+        {/* ── 5. Bottom Mode Tabs (Alur Proses 5 Langkah) ── */}
         <div className={editorStyles.bottomModeBar}>
           <div className={editorStyles.segmentedControls}>
             {[

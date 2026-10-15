@@ -1320,9 +1320,12 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               onPointerDown={kfTimelineDown}
               onPointerUp={kfTimelineUp}
             >
-              {keyframes.map((kf) => (
+              {keyframes.map((rawKf) => {
+                // Normalize defensively: a keyframe missing t must never crash the timeline
+                const kf = { t: 0, x: 0, y: 0, w: 0.316, h: 1, ...rawKf };
+                return (
                 <div
-                  key={kf._id}
+                  key={kf._id ?? `${kf.t}-${kf.x}`}
                   className={`${editorStyles.kfDot} ${kf._id === activeKfId ? editorStyles.kfDotActive : ''}`}
                   style={{ left: `${(Math.max(0, Math.min(clipDur, kf.t)) / clipDur) * 100}%` }}
                   title={`t=${kf.t.toFixed(1)}s`}
@@ -1344,7 +1347,8 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                     kfSortById();
                   }}
                 />
-              ))}
+                );
+              })}
             </div>
             <span className={editorStyles.kfHint}>
               klik garis = tambah keyframe · drag kotak = posisi kf aktif · drag titik = waktu

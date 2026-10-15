@@ -11,6 +11,7 @@ import { getYouTubeCopy, getInstagramCopy, getTikTokCopy } from '@/lib/socialCop
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES, detectAutoBroll } from '@/lib/brollCatalog';
 import { CAPTION_PRESETS, DEFAULT_CAPTION_STYLE } from '@/lib/captionPresets';
+import { TITLE_PRESETS } from '@/lib/titlePresets';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import styles from './page.module.css';
 import editorStyles from './editor.module.css';
@@ -103,6 +104,52 @@ function BrollOverlay({ videoRef, brollSettings }) {
         <span>{activeOverlay.icon || '🎬'}</span>
         <span>{activeOverlay.themeName || 'B-Roll'}</span>
       </div>
+    </div>
+  );
+}
+
+/** Live preview of the opening title bar (mirrors the ASS render: visible
+ * only during the first `seconds`, then fades out). */
+function TitleBarOverlay({ videoRef, titleBar }) {
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef?.current;
+    if (!video) return;
+    const onTime = () => setCurrentTime(video.currentTime);
+    onTime();
+    video.addEventListener('timeupdate', onTime);
+    video.addEventListener('seeked', onTime);
+    video.addEventListener('loadedmetadata', onTime);
+    return () => {
+      video.removeEventListener('timeupdate', onTime);
+      video.removeEventListener('seeked', onTime);
+      video.removeEventListener('loadedmetadata', onTime);
+    };
+  }, [videoRef]);
+
+  if (!titleBar?.enabled || !titleBar.text) return null;
+  if (currentTime >= (titleBar.seconds || 2.5)) return null;
+
+  const preset = TITLE_PRESETS.find((p) => p.id === titleBar.preset) || TITLE_PRESETS[0];
+  const posStyle = preset.style.position === 'center' ? { top: '50%', transform: 'translateY(-50%)' } : { top: '9%' };
+
+  // fade-out near the end, mirroring the ASS \fad(150,250)
+  const remain = (titleBar.seconds || 2.5) - currentTime;
+  const opacity = remain < 0.25 ? Math.max(0, remain / 0.25) : currentTime < 0.15 ? currentTime / 0.15 : 1;
+
+  return (
+    <div
+      className={editorStyles.titlePreview}
+      style={{
+        ...posStyle,
+        fontFamily: `${preset.style.font}, sans-serif`,
+        color: preset.style.color,
+        fontSize: `${preset.style.sizePct}cqh`,
+        opacity,
+      }}
+    >
+      {titleBar.text}
     </div>
   );
 }
@@ -312,6 +359,36 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     setClipWatermarks(next);
   };
 
+  // Opening title bar (burned hook) per clip — text defaults to the clip hook
+  const [clipTitleBars, setClipTitleBars] = useState(
+    initialClips.map((c) => ({
+      enabled: false,
+      text: c.hook || c.title || '',
+      preset: 'punch',
+      seconds: 2.5,
+      position: 'top',
+    }))
+  );
+
+  const handleClipTitleBar = (patch) => {
+    const next = [...clipTitleBars];
+    next[activeClipIdx] = { ...next[activeClipIdx], ...patch };
+    setClipTitleBars(next);
+  };
+
+  const handleTitlePreset = (presetId) => {
+    const preset = TITLE_PRESETS.find((p) => p.id === presetId) || TITLE_PRESETS[0];
+    handleClipTitleBar({ preset: preset.id, position: preset.style.position });
+  };
+
+  const handleTitleEnable = (enabled) => {
+    const current = clipTitleBars[activeClipIdx];
+    const patch = { enabled };
+    // prefill text from hook on first enable when empty
+    if (enabled && !current.text) patch.text = clips[activeClipIdx]?.hook || clips[activeClipIdx]?.title || 'Judul Viral';
+    handleClipTitleBar(patch);
+  };
+
   const handleClipLogoUpload = async (e) => {
     const logoFile = e.target.files?.[0];
     if (!logoFile) return;
@@ -345,6 +422,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const activeAudio = clipAudioSettings[activeClipIdx] || {};
   const activeBroll = clipBrollSettings[activeClipIdx] || {};
   const activeWatermark = clipWatermarks[activeClipIdx] || null;
+  const activeTitleBar = clipTitleBars[activeClipIdx] || null;
 
   // CSS anchor aliases matching the ASS/ffmpeg positions for the live preview
   const wmPreviewPos = (position) => {
@@ -1118,6 +1196,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
       audioSettings: clipAudioSettings[i],
       brollSettings: clipBrollSettings[i],
       watermark: clipWatermarks[i],
+      titleBar: clipTitleBars[i],
       viralityScore: c.viralityScore || calculateViralityScore(c),
     }));
     onSave(finalClips);
@@ -1270,6 +1349,13 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               videoRef={videoRef}
               segments={activeClip.segments}
               style={activeStyle}
+            />
+          )}
+          {/* Opening title bar live preview */}
+          {!framingMode && (
+            <TitleBarOverlay
+              videoRef={videoRef}
+              titleBar={activeTitleBar}
             />
           )}
           {/* Watermark live preview (branding) */}
@@ -2177,6 +2263,85 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               </div>
               <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>
                 Preview tampil di atas video. Hasil render: logo pakai opacity di atas, teks selalu solid dengan outline.
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* ── Opening Title Bar Card ── */}
+        <div className={editorStyles.watermarkCard}>
+          <div className={editorStyles.watermarkHeader}>
+            <span className={editorStyles.watermarkTitle}>🎥 Judul Pembuka</span>
+            <label className={editorStyles.switchLabel}>
+              <input
+                type="checkbox"
+                checked={Boolean(activeTitleBar?.enabled)}
+                onChange={(e) => handleTitleEnable(e.target.checked)}
+              />
+              <span className={editorStyles.switchSlider}></span>
+              <span>Tampilkan</span>
+            </label>
+          </div>
+
+          {activeTitleBar?.enabled && (
+            <>
+              <div className={editorStyles.watermarkInputs}>
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Teks Judul</label>
+                  <input
+                    type="text"
+                    className={editorStyles.input}
+                    value={activeTitleBar.text || ''}
+                    onChange={(e) => handleClipTitleBar({ text: e.target.value })}
+                    maxLength={90}
+                  />
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Preset Gaya</label>
+                  <div className={editorStyles.presetChipRow}>
+                    {TITLE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        className={`${editorStyles.presetChip} ${activeTitleBar.preset === preset.id ? editorStyles.presetChipActive : ''}`}
+                        title={preset.desc}
+                        onClick={() => handleTitlePreset(preset.id)}
+                      >
+                        <span>{preset.emoji}</span>
+                        <span>{preset.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Durasi ({activeTitleBar.seconds}s)</label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={5}
+                    step={0.5}
+                    value={activeTitleBar.seconds ?? 2.5}
+                    onChange={(e) => handleClipTitleBar({ seconds: Number(e.target.value) })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div className={editorStyles.controlGroup}>
+                  <label className={editorStyles.controlLabel}>Posisi</label>
+                  <select
+                    className={editorStyles.input}
+                    value={activeTitleBar.position || 'top'}
+                    onChange={(e) => handleClipTitleBar({ position: e.target.value })}
+                  >
+                    <option value="top">Atas</option>
+                    <option value="center">Tengah</option>
+                  </select>
+                </div>
+              </div>
+              <p style={{ fontSize: '0.68rem', color: 'var(--text-sub)', margin: 0 }}>
+                Muncul {activeTitleBar.seconds}s pertama dengan fade in/out, ter-bakar saat render final.
               </p>
             </>
           )}

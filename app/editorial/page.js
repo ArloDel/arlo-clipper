@@ -482,7 +482,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     const z = Math.max(ZOOM_MIN, Math.min(1, zoom));
     setFrameZoom(z);
     // Keep every keyframe's center; resize all windows so server parity holds
-    const resize = (rect, w, h) => clampFrameRect({ x: rect.x + rect.w / 2 - w / 2, y: rect.y + rect.h / 2 - h / 2, w, h });
+    // spread the rect first so keyframe metadata (_id, t) is preserved
+    const resize = (rect, w, h) =>
+      clampFrameRect({ ...rect, x: rect.x + rect.w / 2 - w / 2, y: rect.y + rect.h / 2 - h / 2, w, h });
     setFrameRect((prev) => {
       const { w, h } = sizeFrameBox(z);
       return resize(prev, w, h);

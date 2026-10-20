@@ -248,6 +248,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const [lipTrackingLoading, setLipTrackingLoading] = useState(false);
   const [splitScreenLoading, setSplitScreenLoading] = useState(false);
   const [copyStatus, setCopyStatus] = useState('');
+  const [styleApplied, setStyleApplied] = useState(false);
   
   // Style settings per clip
   const [clipStyles, setClipStyles] = useState(
@@ -706,6 +707,8 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     const source = clipStyles[activeClipIdx];
     if (!source) return;
     setClipStyles(clipStyles.map(() => ({ ...source })));
+    setStyleApplied(true);
+    setTimeout(() => setStyleApplied(false), 2000);
   };
 
   const updateAudioSetting = (key, val) => {
@@ -1144,8 +1147,12 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               </div>
             </div>
             <div className={editorStyles.mediaFooter}>
-              <button type="button" className={editorStyles.applyAllBtn} onClick={applyActiveStyleToAll}>
-                Terapkan Gaya ke Semua
+              <button
+                type="button"
+                className={`${editorStyles.applyAllBtn} ${styleApplied ? editorStyles.applyAllBtnSuccess : ''}`}
+                onClick={applyActiveStyleToAll}
+              >
+                {styleApplied ? '✓ Gaya Diterapkan ke Semua Klip' : 'Terapkan Gaya ke Semua'}
               </button>
             </div>
           </div>
@@ -1493,6 +1500,13 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>Preset Gaya Caption</span>
+                      <button
+                        type="button"
+                        className={`${editorStyles.applyAllBtn} ${styleApplied ? editorStyles.applyAllBtnSuccess : ''}`}
+                        onClick={applyActiveStyleToAll}
+                      >
+                        {styleApplied ? '✓ Diterapkan' : 'Terapkan ke Semua'}
+                      </button>
                     </div>
                     <div className={editorStyles.presetChipRow}>
                       {CAPTION_PRESETS.map((preset) => (

@@ -1118,10 +1118,10 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   key={val}
                   type="button"
                   className={`${editorStyles.formatBtn} ${activeFormat === val ? editorStyles.formatBtnActive : ''}`}
-                  disabled={reformatting}
+                  disabled={Boolean(busyMessage)}
                   onClick={() => handleFormatChange(val)}
                 >
-                  {lbl}
+                  {reformatting && activeFormat === val ? `⏳ ${lbl}` : lbl}
                 </button>
               ))}
             </div>
@@ -1256,9 +1256,11 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       onChange={(e) => handleFrameZoom(Number(e.target.value) / 100)}
                       className={editorStyles.frameZoomSlider}
                     />
-                    <button type="button" className={editorStyles.formatBtn} onClick={framingReset}>↺</button>
-                    <button type="button" className={editorStyles.formatBtnActive} onClick={handleFramingApply}>✓ Simpan</button>
-                    <button type="button" className={editorStyles.formatBtn} onClick={exitFraming}>✕</button>
+                    <button type="button" className={editorStyles.formatBtn} disabled={reformatting} onClick={framingReset}>↺</button>
+                    <button type="button" className={editorStyles.formatBtnActive} disabled={reformatting} onClick={handleFramingApply}>
+                      {reformatting ? '⏳ Menyimpan...' : '✓ Simpan'}
+                    </button>
+                    <button type="button" className={editorStyles.formatBtn} disabled={reformatting} onClick={exitFraming}>✕</button>
                   </div>
                 )}
 
@@ -1525,16 +1527,19 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>OpenCV Face Tracking</span>
-                      <label className={editorStyles.switchLabel}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(activeClip.faceTracking)}
-                          disabled={trackingLoading || lipTrackingLoading || splitScreenLoading}
-                          onChange={(e) => handleToggleFaceTracking(e.target.checked)}
-                          className={editorStyles.switchInput}
-                        />
-                        <span className={editorStyles.switchSlider}></span>
-                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {trackingLoading && <span className={editorStyles.statusPillBusy}>⏳ Memproses...</span>}
+                        <label className={editorStyles.switchLabel}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(activeClip.faceTracking)}
+                            disabled={Boolean(busyMessage)}
+                            onChange={(e) => handleToggleFaceTracking(e.target.checked)}
+                            className={editorStyles.switchInput}
+                          />
+                          <span className={editorStyles.switchSlider}></span>
+                        </label>
+                      </div>
                     </div>
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                       Kamera 9:16 otomatis memusatkan posisi ke wajah pembicara.
@@ -1544,16 +1549,19 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>OpenCV Lip Tracking</span>
-                      <label className={editorStyles.switchLabel}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(activeClip.lipTracking)}
-                          disabled={lipTrackingLoading || trackingLoading || splitScreenLoading}
-                          onChange={(e) => handleToggleLipTracking(e.target.checked)}
-                          className={editorStyles.switchInput}
-                        />
-                        <span className={editorStyles.switchSlider}></span>
-                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {lipTrackingLoading && <span className={editorStyles.statusPillBusy}>⏳ Memproses...</span>}
+                        <label className={editorStyles.switchLabel}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(activeClip.lipTracking)}
+                            disabled={Boolean(busyMessage)}
+                            onChange={(e) => handleToggleLipTracking(e.target.checked)}
+                            className={editorStyles.switchInput}
+                          />
+                          <span className={editorStyles.switchSlider}></span>
+                        </label>
+                      </div>
                     </div>
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                       Kamera memusatkan ke orang yang saat ini sedang berbicara aktif.
@@ -1563,16 +1571,19 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   <div className={editorStyles.controlCard}>
                     <div className={editorStyles.controlCardTitle}>
                       <span>Podcast Split Screen</span>
-                      <label className={editorStyles.switchLabel}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(activeClip.splitScreen)}
-                          disabled={splitScreenLoading || trackingLoading || lipTrackingLoading}
-                          onChange={(e) => handleToggleSplitScreen(e.target.checked)}
-                          className={editorStyles.switchInput}
-                        />
-                        <span className={editorStyles.switchSlider}></span>
-                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {splitScreenLoading && <span className={editorStyles.statusPillBusy}>⏳ Memproses...</span>}
+                        <label className={editorStyles.switchLabel}>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(activeClip.splitScreen)}
+                            disabled={Boolean(busyMessage)}
+                            onChange={(e) => handleToggleSplitScreen(e.target.checked)}
+                            className={editorStyles.switchInput}
+                          />
+                          <span className={editorStyles.switchSlider}></span>
+                        </label>
+                      </div>
                     </div>
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                       Format split vertikal bertumpuk untuk 2 orang narasumber podcast.
@@ -1585,9 +1596,10 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       <button
                         type="button"
                         className={editorStyles.formatBtnActive}
+                        disabled={Boolean(busyMessage)}
                         onClick={() => (framingMode ? exitFraming() : enterFraming())}
                       >
-                        {framingMode ? 'Tutup Framing' : 'Atur Manual Framing'}
+                        {reformatting && framingMode ? '⏳ Menyimpan...' : framingMode ? 'Tutup Framing' : 'Atur Manual Framing'}
                       </button>
                     </div>
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>

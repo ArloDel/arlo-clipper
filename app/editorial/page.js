@@ -887,6 +887,34 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     else video.pause();
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = e.target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target?.isContentEditable) return;
+      const video = videoRef.current;
+      if (!video) return;
+      const maxDur = video.duration || videoDuration || clipDur || 15;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (video.paused) video.play().catch(() => {});
+        else video.pause();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        const next = Math.max(0, (video.currentTime || 0) - 1);
+        video.currentTime = next;
+        setVideoTime(next);
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        const next = Math.min(maxDur, (video.currentTime || 0) + 1);
+        video.currentTime = next;
+        setVideoTime(next);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [videoDuration, clipDur]);
+
   const seekToClientX = (clientX) => {
     const ruler = rulerRef.current;
     const video = videoRef.current;

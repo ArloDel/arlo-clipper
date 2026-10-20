@@ -1138,9 +1138,9 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
         </div>
       </header>
 
-      {/* ── 2. Workspace Body: Media (Kiri) & Playback (Kanan) ── */}
+      {/* ── 2. Workspace Body: Media (Kiri), Playback (Tengah), & Inspector (Kanan) ── */}
       <div className={editorStyles.workspaceBody}>
-        <div className={editorStyles.topSplit}>
+        <div className={`${editorStyles.topSplit} ${activeDrawer ? editorStyles.topSplitWithInspector : ''}`}>
           {/* Media Panel */}
           <div className={editorStyles.panelCard}>
             <div className={editorStyles.panelHeader}>
@@ -1332,181 +1332,10 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
               </div>
             </div>
           </div>
-        </div>
 
-        {/* ── 3. Timeline Panel (Ruler & 3 Tracks) ── */}
-        <div className={editorStyles.timelinePanel}>
-          <div className={editorStyles.timelineBar}>
-            <span className={editorStyles.timelineTitle}>
-              Timeline & Audio Track
-            </span>
-            {clips.length > 1 && (
-              <button
-                type="button"
-                className={editorStyles.deleteClipBtn}
-                onClick={() => {
-                  const nextClips = clips.filter((_, idx) => idx !== activeClipIdx);
-                  setClips(nextClips);
-                  setActiveClipIdx(Math.max(0, activeClipIdx - 1));
-                }}
-              >
-                Hapus Klip Ini
-              </button>
-            )}
-          </div>
-
-          <div className={editorStyles.timelineScroll}>
-            {/* Ruler */}
-            <div
-              ref={rulerRef}
-              className={editorStyles.rulerContainer}
-              onPointerDown={handleRulerPointerDown}
-              onPointerMove={handleRulerPointerMove}
-              onPointerUp={handleRulerPointerUp}
-              onPointerCancel={handleRulerPointerUp}
-            >
-              {rulerTicks.map((mark) => (
-                <div key={mark.second} className={editorStyles.rulerMark} style={{ left: `${mark.leftPct}%` }}>
-                  <span className={editorStyles.rulerNumber}>{mark.label}</span>
-                  <div className={editorStyles.rulerTickLine} />
-                </div>
-              ))}
-              <div className={editorStyles.playheadLine} style={{ left: `${playheadProgress}%` }}>
-                <div className={editorStyles.playheadKnob} />
-              </div>
-            </div>
-
-            {/* 3 Tracks */}
-            <div className={editorStyles.tracksWrapper}>
-              {/* Track 1: Text */}
-              <div className={editorStyles.trackRow}>
-                <div className={editorStyles.trackPill}>
-                  <span style={{ color: 'var(--primary)' }}>T</span>
-                  <span>Teks</span>
-                </div>
-                <div className={`${editorStyles.trackContentArea} ${editorStyles.textTrackHeight}`}>
-                  {Array.isArray(activeClip.segments) && activeClip.segments.length > 0 ? (
-                    activeClip.segments.map((seg, idx) => {
-                      const leftPct = Math.max(0, Math.min(96, ((seg.start || 0) / effectiveDur) * 100));
-                      const widthPct = Math.max(4, Math.min(100 - leftPct, (((seg.end || seg.start + 1) - (seg.start || 0)) / effectiveDur) * 100));
-                      const isCurrent = videoTime >= (seg.start || 0) && videoTime <= (seg.end || 0);
-                      return (
-                        <div
-                          key={`${idx}-${seg.start}`}
-                          className={`${editorStyles.textClipBlock} ${isCurrent ? editorStyles.textClipBlockActive : ''}`}
-                          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                          onClick={() => {
-                            if (videoRef.current) {
-                              videoRef.current.currentTime = seg.start || 0;
-                              setVideoTime(seg.start || 0);
-                            }
-                            setActiveDrawer('captions');
-                          }}
-                          title={`${formatTimecode(seg.start)} - ${seg.text}`}
-                        >
-                          <span>{seg.text}</span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div
-                      className={editorStyles.textClipBlock}
-                      style={{ left: '0%', width: '90%' }}
-                      onClick={() => toggleDrawer('captions')}
-                      title="Klik untuk ubah teks / caption"
-                    >
-                      <span>T</span>
-                      <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Track 2: Video (100% Active Clip + B-Roll Markers) */}
-              <div className={editorStyles.trackRow}>
-                <div className={editorStyles.trackPill}>
-                  <span>📹</span>
-                  <span>Video</span>
-                </div>
-                <div
-                  className={`${editorStyles.trackContentArea} ${editorStyles.videoTrackHeight}`}
-                  onClick={(e) => seekToClientX(e.clientX)}
-                  title="Klik di sepanjang track video untuk loncat ke detik tersebut"
-                >
-                  <div className={editorStyles.videoClipsRow}>
-                    <div
-                      className={`${editorStyles.videoClipItem} ${editorStyles.videoClipSelected}`}
-                      style={{ flex: 1 }}
-                    >
-                      <video src={activeClip.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
-                      {activeBroll?.enabled &&
-                        Array.isArray(activeBroll.overlays) &&
-                        activeBroll.overlays.map((ov) => {
-                          const leftPct = Math.max(0, Math.min(94, ((ov.start || 0) / effectiveDur) * 100));
-                          const widthPct = Math.max(6, Math.min(100 - leftPct, ((ov.duration || 2.5) / effectiveDur) * 100));
-                          return (
-                            <div
-                              key={ov.id}
-                              className={editorStyles.brollTimelineChip}
-                              style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (videoRef.current) {
-                                  videoRef.current.currentTime = ov.start || 0;
-                                  setVideoTime(ov.start || 0);
-                                }
-                                setActiveDrawer('visual');
-                              }}
-                              title={`B-Roll: ${ov.label || ov.themeName} (${formatTimecode(ov.start)})`}
-                            >
-                              <span>{ov.icon || '🎬'} {ov.themeName || 'B-Roll'}</span>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRemoveBrollOverlay(ov.id);
-                                }}
-                                title="Hapus B-Roll ini"
-                                style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.8 }}
-                              >
-                                ✕
-                              </span>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Track 3: Audio */}
-              <div className={editorStyles.trackRow}>
-                <div className={editorStyles.trackPill}>
-                  <span style={{ color: 'var(--audio)' }}>🎵</span>
-                  <span>Audio</span>
-                </div>
-                <div className={`${editorStyles.trackContentArea} ${editorStyles.audioTrackHeight}`}>
-                  <div
-                    className={editorStyles.audioClipBlock}
-                    style={{ width: '100%' }}
-                    onClick={() => toggleDrawer('audio')}
-                    title="Klik untuk atur BGM & Ducking"
-                  >
-                    <span>🎵 {activeAudio.bgmTrack !== 'none' ? `Voice Over + ${activeAudio.bgmTrack}` : 'Voice Over'}</span>
-                    <svg className={editorStyles.audioWaveform} viewBox="0 0 100 20" preserveAspectRatio="none">
-                      <path d="M0,10 Q5,2 10,10 T20,10 T30,3 T40,17 T50,7 T60,14 T70,5 T80,15 T90,8 T100,10" strokeWidth="2" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 4. Interactive Step Drawer (Terbuka sesuai alur) ── */}
-        {activeDrawer && (
-          <div className={editorStyles.studioDrawer}>
+          {/* ── 3. Interactive Step Inspector (Ter-docking di kanan tanpa dorong layout) ── */}
+          {activeDrawer && (
+            <div className={editorStyles.studioDrawer}>
             <div className={editorStyles.drawerHeader}>
               <span className={editorStyles.drawerTitle}>
                 {activeDrawer === 'cut' && '✂️ Potong & Pengaturan Framing Video'}
@@ -1985,6 +1814,177 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
             </div>
           </div>
         )}
+        </div>
+
+        {/* ── 4. Timeline Panel (Ruler & 3 Tracks — Selalu Terlihat Tanpa Loncat) ── */}
+        <div className={editorStyles.timelinePanel}>
+          <div className={editorStyles.timelineBar}>
+            <span className={editorStyles.timelineTitle}>
+              Timeline & Audio Track
+            </span>
+            {clips.length > 1 && (
+              <button
+                type="button"
+                className={editorStyles.deleteClipBtn}
+                onClick={() => {
+                  const nextClips = clips.filter((_, idx) => idx !== activeClipIdx);
+                  setClips(nextClips);
+                  setActiveClipIdx(Math.max(0, activeClipIdx - 1));
+                }}
+              >
+                Hapus Klip Ini
+              </button>
+            )}
+          </div>
+
+          <div className={editorStyles.timelineScroll}>
+            {/* Ruler */}
+            <div
+              ref={rulerRef}
+              className={editorStyles.rulerContainer}
+              onPointerDown={handleRulerPointerDown}
+              onPointerMove={handleRulerPointerMove}
+              onPointerUp={handleRulerPointerUp}
+              onPointerCancel={handleRulerPointerUp}
+            >
+              {rulerTicks.map((mark) => (
+                <div key={mark.second} className={editorStyles.rulerMark} style={{ left: `${mark.leftPct}%` }}>
+                  <span className={editorStyles.rulerNumber}>{mark.label}</span>
+                  <div className={editorStyles.rulerTickLine} />
+                </div>
+              ))}
+              <div className={editorStyles.playheadLine} style={{ left: `${playheadProgress}%` }}>
+                <div className={editorStyles.playheadKnob} />
+              </div>
+            </div>
+
+            {/* 3 Tracks */}
+            <div className={editorStyles.tracksWrapper}>
+              {/* Track 1: Text */}
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span style={{ color: 'var(--primary)' }}>T</span>
+                  <span>Teks</span>
+                </div>
+                <div className={`${editorStyles.trackContentArea} ${editorStyles.textTrackHeight}`}>
+                  {Array.isArray(activeClip.segments) && activeClip.segments.length > 0 ? (
+                    activeClip.segments.map((seg, idx) => {
+                      const leftPct = Math.max(0, Math.min(96, ((seg.start || 0) / effectiveDur) * 100));
+                      const widthPct = Math.max(4, Math.min(100 - leftPct, (((seg.end || seg.start + 1) - (seg.start || 0)) / effectiveDur) * 100));
+                      const isCurrent = videoTime >= (seg.start || 0) && videoTime <= (seg.end || 0);
+                      return (
+                        <div
+                          key={`${idx}-${seg.start}`}
+                          className={`${editorStyles.textClipBlock} ${isCurrent ? editorStyles.textClipBlockActive : ''}`}
+                          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                          onClick={() => {
+                            if (videoRef.current) {
+                              videoRef.current.currentTime = seg.start || 0;
+                              setVideoTime(seg.start || 0);
+                            }
+                            setActiveDrawer('captions');
+                          }}
+                          title={`${formatTimecode(seg.start)} - ${seg.text}`}
+                        >
+                          <span>{seg.text}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div
+                      className={editorStyles.textClipBlock}
+                      style={{ left: '0%', width: '90%' }}
+                      onClick={() => toggleDrawer('captions')}
+                      title="Klik untuk ubah teks / caption"
+                    >
+                      <span>T</span>
+                      <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Track 2: Video (100% Active Clip + B-Roll Markers) */}
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span>📹</span>
+                  <span>Video</span>
+                </div>
+                <div
+                  className={`${editorStyles.trackContentArea} ${editorStyles.videoTrackHeight}`}
+                  onClick={(e) => seekToClientX(e.clientX)}
+                  title="Klik di sepanjang track video untuk loncat ke detik tersebut"
+                >
+                  <div className={editorStyles.videoClipsRow}>
+                    <div
+                      className={`${editorStyles.videoClipItem} ${editorStyles.videoClipSelected}`}
+                      style={{ flex: 1 }}
+                    >
+                      <video src={activeClip.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
+                      {activeBroll?.enabled &&
+                        Array.isArray(activeBroll.overlays) &&
+                        activeBroll.overlays.map((ov) => {
+                          const leftPct = Math.max(0, Math.min(94, ((ov.start || 0) / effectiveDur) * 100));
+                          const widthPct = Math.max(6, Math.min(100 - leftPct, ((ov.duration || 2.5) / effectiveDur) * 100));
+                          return (
+                            <div
+                              key={ov.id}
+                              className={editorStyles.brollTimelineChip}
+                              style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (videoRef.current) {
+                                  videoRef.current.currentTime = ov.start || 0;
+                                  setVideoTime(ov.start || 0);
+                                }
+                                setActiveDrawer('visual');
+                              }}
+                              title={`B-Roll: ${ov.label || ov.themeName} (${formatTimecode(ov.start)})`}
+                            >
+                              <span>{ov.icon || '🎬'} {ov.themeName || 'B-Roll'}</span>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveBrollOverlay(ov.id);
+                                }}
+                                title="Hapus B-Roll ini"
+                                style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.8 }}
+                              >
+                                ✕
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Track 3: Audio */}
+              <div className={editorStyles.trackRow}>
+                <div className={editorStyles.trackPill}>
+                  <span style={{ color: 'var(--audio)' }}>🎵</span>
+                  <span>Audio</span>
+                </div>
+                <div className={`${editorStyles.trackContentArea} ${editorStyles.audioTrackHeight}`}>
+                  <div
+                    className={editorStyles.audioClipBlock}
+                    style={{ width: '100%' }}
+                    onClick={() => toggleDrawer('audio')}
+                    title="Klik untuk atur BGM & Ducking"
+                  >
+                    <span>🎵 {activeAudio.bgmTrack !== 'none' ? `Voice Over + ${activeAudio.bgmTrack}` : 'Voice Over'}</span>
+                    <svg className={editorStyles.audioWaveform} viewBox="0 0 100 20" preserveAspectRatio="none">
+                      <path d="M0,10 Q5,2 10,10 T20,10 T30,3 T40,17 T50,7 T60,14 T70,5 T80,15 T90,8 T100,10" strokeWidth="2" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* ── 5. Bottom Mode Tabs (Alur Proses 5 Langkah) ── */}
         <div className={editorStyles.bottomModeBar}>

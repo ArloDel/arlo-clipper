@@ -163,16 +163,28 @@
   gap: 14px;
 }
 
-/* Upper Split: Media (35%) | Playback (65%) */
+/* Upper Split: Media (35%) | Playback (65%) | Optional Right Inspector */
 .topSplit {
   display: grid;
   grid-template-columns: 380px 1fr;
   gap: 14px;
   min-height: 400px;
+  align-items: stretch;
+}
+
+.topSplitWithInspector {
+  grid-template-columns: 330px 1fr 370px;
+}
+
+@media (max-width: 1120px) {
+  .topSplitWithInspector {
+    grid-template-columns: 320px 1fr;
+  }
 }
 
 @media (max-width: 960px) {
-  .topSplit {
+  .topSplit,
+  .topSplitWithInspector {
     grid-template-columns: 1fr;
   }
 }
@@ -744,6 +756,9 @@
 
 /* ── Bottom Mode Tabs (Sesuai Alur Proses) ── */
 .bottomModeBar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 35;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -751,6 +766,7 @@
   background: var(--bg-panel);
   border-radius: var(--radius-panel);
   border: var(--border-panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 .segmentedControls {
@@ -802,33 +818,46 @@
   box-shadow: 0 3px 12px rgba(75, 59, 240, 0.4);
 }
 
-/* ── Interactive Drawer Sheet ── */
+/* ── Interactive Docked Inspector / Drawer Sheet ── */
 .studioDrawer {
   background: var(--bg-panel);
   border-radius: var(--radius-panel);
   border: var(--border-panel);
-  padding: 18px;
+  padding: 0 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  animation: slideUp 0.2s ease-out;
+  gap: 12px;
+  max-height: 440px;
+  overflow-y: auto;
+  animation: slideUp 0.16s ease-out;
+}
+
+@media (max-width: 1120px) {
+  .studioDrawer {
+    grid-column: 1 / -1;
+    max-height: 280px;
+  }
 }
 
 @keyframes slideUp {
-  0% { transform: translateY(10px); opacity: 0; }
+  0% { transform: translateY(6px); opacity: 0; }
   100% { transform: translateY(0); opacity: 1; }
 }
 
 .drawerHeader {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-panel);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 12px;
+  padding: 14px 0 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .drawerTitle {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -845,8 +874,14 @@
 
 .drawerContentGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 1120px) {
+  .drawerContentGrid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
 }
 
 /* ── Overlays: Framing, Captions, Title, Watermark ── */

@@ -1536,6 +1536,36 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                         <option>Bounce</option>
                       </select>
                     </div>
+                    <div className={editorStyles.controlGroup}>
+                      <label className={editorStyles.controlLabel}>Warna & Efek Teks</label>
+                      <div className={editorStyles.colorPickerRow}>
+                        <label className={editorStyles.colorSwatchGroup}>
+                          <input
+                            type="color"
+                            value={activeStyle.color || '#FFFF00'}
+                            onChange={(e) => updateStyle('color', e.target.value)}
+                            className={editorStyles.colorInput}
+                          />
+                          <span className={editorStyles.colorHexCode}>{activeStyle.color || '#FFFF00'}</span>
+                        </label>
+                        <div className={editorStyles.effectToggleRow}>
+                          <button
+                            type="button"
+                            className={`${editorStyles.presetChip} ${activeStyle.outline ? editorStyles.presetChipActive : ''}`}
+                            onClick={() => updateStyle('outline', !activeStyle.outline)}
+                          >
+                            Outline
+                          </button>
+                          <button
+                            type="button"
+                            className={`${editorStyles.presetChip} ${activeStyle.shadow ? editorStyles.presetChipActive : ''}`}
+                            onClick={() => updateStyle('shadow', !activeStyle.shadow)}
+                          >
+                            Shadow
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className={editorStyles.controlCard}>

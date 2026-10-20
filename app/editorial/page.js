@@ -1402,24 +1402,60 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 </div>
               </div>
 
-              {/* Track 2: Video */}
+              {/* Track 2: Video (100% Active Clip + B-Roll Markers) */}
               <div className={editorStyles.trackRow}>
                 <div className={editorStyles.trackPill}>
                   <span>📹</span>
                   <span>Video</span>
                 </div>
-                <div className={`${editorStyles.trackContentArea} ${editorStyles.videoTrackHeight}`}>
+                <div
+                  className={`${editorStyles.trackContentArea} ${editorStyles.videoTrackHeight}`}
+                  onClick={(e) => seekToClientX(e.clientX)}
+                  title="Klik di sepanjang track video untuk loncat ke detik tersebut"
+                >
                   <div className={editorStyles.videoClipsRow}>
-                    {clips.map((c, i) => (
-                      <div
-                        key={c.id || i}
-                        className={`${editorStyles.videoClipItem} ${i === activeClipIdx ? editorStyles.videoClipSelected : ''}`}
-                        style={{ flex: 1 }}
-                        onClick={() => setActiveClipIdx(i)}
-                      >
-                        <video src={c.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
-                      </div>
-                    ))}
+                    <div
+                      className={`${editorStyles.videoClipItem} ${editorStyles.videoClipSelected}`}
+                      style={{ flex: 1 }}
+                    >
+                      <video src={activeClip.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
+                      {activeBroll?.enabled &&
+                        Array.isArray(activeBroll.overlays) &&
+                        activeBroll.overlays.map((ov) => {
+                          const leftPct = Math.max(0, Math.min(94, ((ov.start || 0) / effectiveDur) * 100));
+                          const widthPct = Math.max(6, Math.min(100 - leftPct, ((ov.duration || 2.5) / effectiveDur) * 100));
+                          return (
+                            <div
+                              key={ov.id}
+                              className={editorStyles.brollTimelineChip}
+                              style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (videoRef.current) {
+                                  videoRef.current.currentTime = ov.start || 0;
+                                  setVideoTime(ov.start || 0);
+                                }
+                                setActiveDrawer('visual');
+                              }}
+                              title={`B-Roll: ${ov.label || ov.themeName} (${formatTimecode(ov.start)})`}
+                            >
+                              <span>{ov.icon || '🎬'} {ov.themeName || 'B-Roll'}</span>
+                              <span
+                                role="button"
+                                tabIndex={0}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveBrollOverlay(ov.id);
+                                }}
+                                title="Hapus B-Roll ini"
+                                style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.8 }}
+                              >
+                                ✕
+                              </span>
+                            </div>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1433,6 +1469,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                 <div className={`${editorStyles.trackContentArea} ${editorStyles.audioTrackHeight}`}>
                   <div
                     className={editorStyles.audioClipBlock}
+                    style={{ width: '100%' }}
                     onClick={() => toggleDrawer('audio')}
                     title="Klik untuk atur BGM & Ducking"
                   >

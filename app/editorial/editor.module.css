@@ -487,8 +487,9 @@
   height: 22px;
   margin-left: 90px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
+  cursor: ew-resize;
   user-select: none;
+  touch-action: none;
 }
 
 .rulerMark {
@@ -517,24 +518,25 @@
 .playheadLine {
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: -148px;
   width: 2px;
   background: #ffffff;
   pointer-events: none;
-  z-index: 20;
+  z-index: 25;
   transform: translateX(-50%);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.65);
 }
 
 .playheadKnob {
   position: absolute;
-  top: -4px;
+  top: -3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #ffffff;
+  border: 2px solid var(--primary);
 }
 
 .tracksWrapper {
@@ -579,20 +581,49 @@
 
 .textClipBlock {
   position: absolute;
-  height: 28px;
-  background: var(--primary);
+  height: 26px;
+  background: rgba(75, 59, 240, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: var(--radius-clip);
   color: #ffffff;
   display: flex;
   align-items: center;
-  padding: 0 10px;
-  gap: 6px;
-  font-size: 12px;
+  padding: 0 8px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.textClipBlock:hover,
+.textClipBlockActive {
+  background: var(--primary);
+  border-color: var(--selection);
+  z-index: 2;
+}
+
+.brollTimelineChip {
+  position: absolute;
+  bottom: 4px;
+  height: 20px;
+  background: rgba(14, 14, 16, 0.85);
+  border: 1px solid var(--selection);
+  border-radius: 4px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: 4;
 }
 
 .videoTrackHeight {

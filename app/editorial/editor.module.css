@@ -313,6 +313,12 @@
   color: #ffffff;
 }
 
+.applyAllBtnSuccess {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
 /* Playback Panel */
 .playbackArea {
   flex: 1;
@@ -1023,6 +1029,46 @@
 .input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.colorPickerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.colorSwatchGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 4px 8px;
+}
+
+.colorInput {
+  width: 26px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.colorHexCode {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.effectToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .switchLabel {

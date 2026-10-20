@@ -1072,6 +1072,8 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
   };
 
+  const withSingleFrameThumb = (src) => (src ? (src.includes('#') ? src : `${src}#t=0.1`) : '');
+
   const effectiveDur = videoDuration || clipDur || 15;
   const playheadProgress = Math.max(0, Math.min(100, (videoTime / effectiveDur) * 100));
 
@@ -1161,7 +1163,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       onClick={() => setActiveClipIdx(i)}
                     >
                       <div className={`${editorStyles.mediaThumbWrapper} ${isSelected ? editorStyles.mediaThumbActive : ''}`}>
-                        <video src={c.videoPath} className={editorStyles.mediaVideoThumb} muted preload="metadata" />
+                        <video src={withSingleFrameThumb(c.videoPath)} className={editorStyles.mediaVideoThumb} muted playsInline preload="metadata" />
                         <span className={editorStyles.mediaDurationBadge}>{formatTimecode(dur)}</span>
                       </div>
                       <span className={`${editorStyles.mediaCardLabel} ${isSelected ? editorStyles.mediaCardLabelActive : ''}`}>
@@ -1920,7 +1922,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       className={`${editorStyles.videoClipItem} ${editorStyles.videoClipSelected}`}
                       style={{ flex: 1 }}
                     >
-                      <video src={activeClip.videoPath} className={editorStyles.videoClipThumb} muted preload="metadata" />
+                      <video src={withSingleFrameThumb(activeClip.videoPath)} className={editorStyles.videoClipThumb} muted playsInline preload="metadata" />
                       {activeBroll?.enabled &&
                         Array.isArray(activeBroll.overlays) &&
                         activeBroll.overlays.map((ov) => {

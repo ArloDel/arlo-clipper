@@ -376,6 +376,61 @@
   transform: translate(-50%, -50%) scale(1.08);
 }
 
+.processingOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(14, 14, 16, 0.78);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  z-index: 30;
+  color: #ffffff;
+  text-align: center;
+  padding: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.processingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--primary-soft);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.processingLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.processingSubLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.statusPillBusy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--selection);
+  background: rgba(245, 166, 35, 0.14);
+  border: 1px solid rgba(245, 166, 35, 0.35);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+}
+
 .playbackControls {
   display: flex;
   align-items: center;

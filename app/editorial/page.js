@@ -1752,18 +1752,6 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                       </div>
                     )}
                   </div>
-
-                  <div className={editorStyles.controlCard}>
-                    <div className={editorStyles.controlGroup}>
-                      <label className={editorStyles.controlLabel}>Warna Teks Subtitle</label>
-                      <input
-                        type="color"
-                        value={activeStyle.color}
-                        onChange={(e) => updateStyle('color', e.target.value)}
-                        style={{ width: '40px', height: '36px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                      />
-                    </div>
-                  </div>
                 </>
               )}
 

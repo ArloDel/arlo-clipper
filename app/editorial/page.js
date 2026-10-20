@@ -1339,8 +1339,41 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   >
                     ⏮
                   </button>
-                  <button type="button" className={editorStyles.playPauseBtn} onClick={togglePlayPause}>
+                  <button
+                    type="button"
+                    className={editorStyles.transportBtn}
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (!video) return;
+                      const next = Math.max(0, (video.currentTime || 0) - 1);
+                      video.currentTime = next;
+                      setVideoTime(next);
+                    }}
+                    title="Mundur 1 Detik (Shortcut: ←)"
+                  >
+                    -1s
+                  </button>
+                  <button
+                    type="button"
+                    className={editorStyles.playPauseBtn}
+                    onClick={togglePlayPause}
+                    title="Play / Pause (Shortcut: Space)"
+                  >
                     {isPlaying ? '⏸' : '▶'}
+                  </button>
+                  <button
+                    type="button"
+                    className={editorStyles.transportBtn}
+                    onClick={() => {
+                      const video = videoRef.current;
+                      if (!video) return;
+                      const next = Math.min(effectiveDur, (video.currentTime || 0) + 1);
+                      video.currentTime = next;
+                      setVideoTime(next);
+                    }}
+                    title="Maju 1 Detik (Shortcut: →)"
+                  >
+                    +1s
                   </button>
                   <button
                     type="button"

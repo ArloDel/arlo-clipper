@@ -355,6 +355,7 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
   const previewAudioRef = useRef(null);
   const sfxAudioRef = useRef(null);
   const rulerRef = useRef(null);
+  const scrubbingRef = useRef(false);
   const [previewingTrackId, setPreviewingTrackId] = useState(null);
 
   // Playback state & Scrubbing
@@ -886,16 +887,31 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     else video.pause();
   };
 
-  const handleRulerSeek = (e) => {
+  const seekToClientX = (clientX) => {
     const ruler = rulerRef.current;
     const video = videoRef.current;
     if (!ruler || !video) return;
     const rect = ruler.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+    const clickX = Math.max(0, Math.min(rect.width, clientX - rect.left));
     const effectiveDur = videoDuration || clipDur || 15;
     const newTime = (clickX / rect.width) * effectiveDur;
     video.currentTime = newTime;
     setVideoTime(newTime);
+  };
+
+  const handleRulerPointerDown = (e) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    scrubbingRef.current = true;
+    seekToClientX(e.clientX);
+  };
+
+  const handleRulerPointerMove = (e) => {
+    if (!scrubbingRef.current) return;
+    seekToClientX(e.clientX);
+  };
+
+  const handleRulerPointerUp = () => {
+    scrubbingRef.current = false;
   };
 
   const handleTogglePreviewTrack = (trackId) => {
@@ -1321,7 +1337,14 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
 
           <div className={editorStyles.timelineScroll}>
             {/* Ruler */}
-            <div ref={rulerRef} className={editorStyles.rulerContainer} onClick={handleRulerSeek}>
+            <div
+              ref={rulerRef}
+              className={editorStyles.rulerContainer}
+              onPointerDown={handleRulerPointerDown}
+              onPointerMove={handleRulerPointerMove}
+              onPointerUp={handleRulerPointerUp}
+              onPointerCancel={handleRulerPointerUp}
+            >
               {rulerTicks.map((mark) => (
                 <div key={mark.second} className={editorStyles.rulerMark} style={{ left: `${mark.leftPct}%` }}>
                   <span className={editorStyles.rulerNumber}>{mark.label}</span>

@@ -1365,15 +1365,40 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   <span>Teks</span>
                 </div>
                 <div className={`${editorStyles.trackContentArea} ${editorStyles.textTrackHeight}`}>
-                  <div
-                    className={editorStyles.textClipBlock}
-                    style={{ left: '0%', width: '90%' }}
-                    onClick={() => toggleDrawer('captions')}
-                    title="Klik untuk ubah teks / caption"
-                  >
-                    <span>T</span>
-                    <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
-                  </div>
+                  {Array.isArray(activeClip.segments) && activeClip.segments.length > 0 ? (
+                    activeClip.segments.map((seg, idx) => {
+                      const leftPct = Math.max(0, Math.min(96, ((seg.start || 0) / effectiveDur) * 100));
+                      const widthPct = Math.max(4, Math.min(100 - leftPct, (((seg.end || seg.start + 1) - (seg.start || 0)) / effectiveDur) * 100));
+                      const isCurrent = videoTime >= (seg.start || 0) && videoTime <= (seg.end || 0);
+                      return (
+                        <div
+                          key={`${idx}-${seg.start}`}
+                          className={`${editorStyles.textClipBlock} ${isCurrent ? editorStyles.textClipBlockActive : ''}`}
+                          style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                          onClick={() => {
+                            if (videoRef.current) {
+                              videoRef.current.currentTime = seg.start || 0;
+                              setVideoTime(seg.start || 0);
+                            }
+                            setActiveDrawer('captions');
+                          }}
+                          title={`${formatTimecode(seg.start)} - ${seg.text}`}
+                        >
+                          <span>{seg.text}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div
+                      className={editorStyles.textClipBlock}
+                      style={{ left: '0%', width: '90%' }}
+                      onClick={() => toggleDrawer('captions')}
+                      title="Klik untuk ubah teks / caption"
+                    >
+                      <span>T</span>
+                      <span>{activeClip.hook || activeClip.title || 'Subtitle Klip'}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

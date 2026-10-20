@@ -1084,6 +1084,16 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
     }
   }
 
+  const busyMessage = trackingLoading
+    ? 'OpenCV sedang melacak wajah pembicara...'
+    : lipTrackingLoading
+      ? 'OpenCV sedang mendeteksi gerakan bibir aktif...'
+      : splitScreenLoading
+        ? 'Membuat layout Podcast Split Screen...'
+        : reformatting
+          ? 'Merender ulang rasio & framing video...'
+          : '';
+
   return (
     <div className={editorStyles.editorContainer}>
       <audio ref={bgmAudioRef} style={{ display: 'none' }} />
@@ -1199,10 +1209,18 @@ function EditorStudio({ clips: initialClips, onSave, onOpenPublish, ratio, initi
                   }}
                 />
 
-                {!isPlaying && !framingMode && (
+                {!isPlaying && !framingMode && !busyMessage && (
                   <button type="button" className={editorStyles.playCenterBtn} onClick={togglePlayPause}>
                     ▶
                   </button>
+                )}
+
+                {busyMessage && (
+                  <div className={editorStyles.processingOverlay} role="status" aria-live="polite">
+                    <div className={editorStyles.processingSpinner} />
+                    <span className={editorStyles.processingLabel}>{busyMessage}</span>
+                    <span className={editorStyles.processingSubLabel}>Mohon tunggu beberapa detik...</span>
+                  </div>
                 )}
 
                 {framingMode && (

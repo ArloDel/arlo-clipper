@@ -15,6 +15,7 @@ import {
   getWebhookLogs,
   clearWebhookLogs,
   dispatchWebhookEvent,
+  isSecretMatch,
 } from '../lib/webhooks.js';
 
 import { processWebhookVideoJob } from '../lib/webhookPipeline.js';
@@ -95,7 +96,14 @@ console.log('✓ Tampered payload correctly rejected');
 // 1.5 Wrong secret detection
 const isWrongSecretValid = verifyHmacSignature(payloadStr, signature, 'wrong_secret_key');
 assert.strictEqual(isWrongSecretValid, false, 'Wrong secret must fail verification');
-console.log('✓ Wrong secret correctly rejected\n');
+console.log('✓ Wrong secret correctly rejected');
+
+// 1.6 Timing-Safe Secret Match & Default Secret Bypass Prevention
+assert.strictEqual(isSecretMatch('my_secret_token_abc', 'my_secret_token_abc'), true, 'Exact secret match must pass');
+assert.strictEqual(isSecretMatch('MY_SECRET_TOKEN_ABC', 'my_secret_token_abc'), false, 'Case-mismatched secret must fail');
+assert.strictEqual(isSecretMatch('admin123', 'my_secret_token_abc'), false, 'Hardcoded admin123 must be rejected');
+assert.strictEqual(isSecretMatch('arlo_clipper_secret_key', 'my_secret_token_abc'), false, 'Hardcoded arlo_clipper_secret_key must be rejected');
+console.log('✓ Timing-safe secret matching and hardcoded bypass prevention verified\n');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test 2: Webhook Activity Logger & Persistence

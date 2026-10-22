@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+import { isSafeId, resolvePublicFile } from '@/lib/safePath';
 
 export async function POST(request) {
   try {
@@ -10,6 +11,10 @@ export async function POST(request) {
 
     if (!clipId || (!sourceVideoPath && !videoPath)) {
       return NextResponse.json({ error: 'Missing clipId or videoPath' }, { status: 400 });
+    }
+
+    if (!isSafeId(clipId)) {
+      return NextResponse.json({ error: 'Invalid clipId' }, { status: 400 });
     }
 
     const clipsDir = path.join(process.cwd(), 'public', 'clips');
@@ -31,12 +36,14 @@ export async function POST(request) {
     }
 
     // Determine input file: prefer full source (16:9) for best tracking field of view
-    const rawInputRelative = (sourceVideoPath || videoPath).replace(/^\//, '');
-    const inputFilePath = path.join(process.cwd(), 'public', rawInputRelative);
+    const inputFilePath = resolvePublicFile(sourceVideoPath || videoPath);
+    if (!inputFilePath) {
+      return NextResponse.json({ error: 'Invalid video path' }, { status: 400 });
+    }
 
     if (!fs.existsSync(inputFilePath)) {
       return NextResponse.json(
-        { error: `Input video file not found at ${inputFilePath}` },
+        { error: 'Input video file not found' },
         { status: 404 }
       );
     }

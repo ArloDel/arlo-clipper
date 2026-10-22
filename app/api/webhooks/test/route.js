@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { dispatchWebhookEvent, getWebhookSecret } from '@/lib/webhooks';
+import { dispatchWebhookEvent, getWebhookSecret, validateOutboundUrl } from '@/lib/webhooks';
 
 export async function POST(request) {
   try {
@@ -9,6 +9,14 @@ export async function POST(request) {
     if (!callbackUrl) {
       return NextResponse.json(
         { error: 'Missing callbackUrl to test' },
+        { status: 400 }
+      );
+    }
+
+    const urlCheck = validateOutboundUrl(callbackUrl);
+    if (!urlCheck.valid) {
+      return NextResponse.json(
+        { error: urlCheck.error },
         { status: 400 }
       );
     }

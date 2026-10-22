@@ -1,21 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getWebhookSecret, verifyHmacSignature } from '@/lib/webhooks';
+import { getWebhookSecret, verifyHmacSignature, isSecretMatch } from '@/lib/webhooks';
 import { processWebhookVideoJob } from '@/lib/webhookPipeline';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES } from '@/lib/brollCatalog';
-
-export function isSecretMatch(candidate, expected) {
-  if (!candidate || !expected) return false;
-  const c = Buffer.from(String(candidate).trim());
-  const e = Buffer.from(String(expected).trim());
-  if (c.length !== e.length) return false;
-  try {
-    return crypto.timingSafeEqual(c, e);
-  } catch {
-    return false;
-  }
-}
 
 function authenticateRequest(request, rawBody, bodySecret) {
   const configuredSecret = getWebhookSecret();

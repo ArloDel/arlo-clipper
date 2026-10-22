@@ -5,13 +5,16 @@ import { processWebhookVideoJob } from '@/lib/webhookPipeline';
 import { BGM_TRACKS } from '@/lib/audioCatalog';
 import { BROLL_THEMES } from '@/lib/brollCatalog';
 
-function isSecretMatch(candidate, expected) {
+export function isSecretMatch(candidate, expected) {
   if (!candidate || !expected) return false;
-  const c = String(candidate).trim();
-  const e = String(expected).trim();
-  if (c === e) return true;
-  if (c.toLowerCase() === e.toLowerCase()) return true;
-  return false;
+  const c = Buffer.from(String(candidate).trim());
+  const e = Buffer.from(String(expected).trim());
+  if (c.length !== e.length) return false;
+  try {
+    return crypto.timingSafeEqual(c, e);
+  } catch {
+    return false;
+  }
 }
 
 function authenticateRequest(request, rawBody, bodySecret) {

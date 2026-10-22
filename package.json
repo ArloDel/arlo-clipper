@@ -16,7 +16,8 @@
     "test:publishers": "node scripts/test_social_publishers.mjs",
     "test:filters": "node scripts/test_publish_filters.mjs",
     "test:multi-source": "node scripts/test_multi_source_input.mjs",
-    "test:captions": "node scripts/test_caption_presets.mjs"
+    "test:captions": "node scripts/test_caption_presets.mjs",
+    "test:auth": "node scripts/test_auth_protection.mjs"
   },
   "dependencies": {
     "@cloudflare/kumo": "^2.8.0",

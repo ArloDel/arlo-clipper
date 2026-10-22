@@ -11,6 +11,7 @@ import ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import { calculateViralityScore } from '@/lib/viralityScore';
 import { resolveSource } from '@/lib/sourceResolver';
 import { downloadDirectStream } from '@/lib/sourceStreamer';
+import { resolvePublicFile } from '@/lib/safePath';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 ffmpeg.setFfprobePath(ffprobeInstaller.path);
@@ -99,9 +100,12 @@ export async function POST(request) {
 
     if (sourceInfo.isLocal) {
       // Direct local file audio extraction via FFmpeg
-      let fullDiskPath = sourceInfo.localFilePath;
-      if (!fs.existsSync(fullDiskPath)) {
-        fullDiskPath = path.join(process.cwd(), 'public', sourceInfo.localFilePath.replace(/^\//, ''));
+      const fullDiskPath = resolvePublicFile(sourceInfo.localFilePath);
+      if (!fullDiskPath) {
+        return NextResponse.json(
+          { error: 'Path file lokal tidak diizinkan. Hanya file di /uploads atau /clips.' },
+          { status: 400 }
+        );
       }
       if (!fs.existsSync(fullDiskPath)) {
         return NextResponse.json(

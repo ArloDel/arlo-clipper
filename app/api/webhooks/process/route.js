@@ -25,8 +25,6 @@ function authenticateRequest(request, rawBody, bodySecret) {
 
   const validSecrets = [
     configuredSecret,
-    'arlo_clipper_secret_key',
-    'admin123',
     process.env.ADMIN_PASSWORD,
   ].filter(Boolean);
 
